@@ -1,5 +1,7 @@
 # Grounded Support Agent
 
+![The agent showing which checks each answer passed](screenshot.png)
+
 A customer support agent for a UK wealth management firm, built to answer only
 what it can evidence — and to prove, in code, that it does.
 
