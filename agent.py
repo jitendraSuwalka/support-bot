@@ -1,28 +1,41 @@
 """
-Step 9 — closing the remaining gaps.
+Grounded support agent — retrieval, verification and escalation.
 
-Three weaknesses were found by testing step8. This file addresses them
-honestly: two are eliminated, one is reduced, one is documented as
-irreducible.
+A customer support assistant for a UK wealth management firm. It answers only
+what it can evidence, quotes volatile data verbatim, and hands to a human when
+it cannot help.
 
-  WEAKNESS 1 — Extrapolated specifics.  ELIMINATED.
-      The bot derived "evelyn.com/offices" by truncating a deeper URL it had
-      been given. Plausible, probably correct, not in the evidence. The LLM
-      verifier waved it through. FIX: check_citations() — deterministic code
-      that extracts every URL and number from the answer and requires an exact
-      match in the evidence. Code cannot be persuaded.
+Every hard guarantee here lives in Python rather than in the system prompt,
+because a prompt is a strong suggestion and nothing more. The three guards,
+in the order they run:
 
-  WEAKNESS 2 — Negation blindness.  REDUCED.
-      "not branch opening hours" matched a query about branches, because
-      lexical search sees words, not meaning. FIX: rerank() — retrieve widely,
-      then have a model judge each candidate. Reading beats counting.
+  CITATION GUARD — deterministic.
+      Every URL and number in an answer must match the evidence exactly.
+      Added after the agent derived "evelyn.com/offices" by truncating a
+      deeper URL it had been given: plausible, probably correct, not in the
+      evidence, and waved through by the LLM checker. Code cannot be
+      persuaded that something looks right.
 
-  WEAKNESS 3 — Model non-determinism.  IRREDUCIBLE.
-      Same input can give different output. No prompt fixes this. It is why
-      every guarantee in this file lives in Python, not in a prompt, and why
-      the audit trail exists.
+  GROUNDEDNESS CHECK — an independent model call.
+      Reads the finished answer back against its evidence and flags
+      unsupported claims, then forces a rewrite. Separate from the model that
+      wrote the answer, because a model asked to critique its own output
+      defends it. Reports three states, including "unavailable" — a check
+      that fails silently while reporting success is worse than no check.
+
+  ESCALATION POLICY — deterministic, stateful.
+      Clarify once, then escalate. Enforced in code, so an unanswerable
+      question always reaches a human regardless of what the model decides.
+
+Retrieval is two-stage: BM25 lexical scoring for recall, then an LLM rerank
+for precision. Lexical scoring counts words and cannot see that "not branch
+opening hours" is a denial; reranking reads.
+
+Model non-determinism is irreducible. That is why the guarantees are in code
+and why every answer carries an audit trail of its raw evidence.
 
 Personal learning project. Not affiliated with Evelyn Partners.
+Run `python evaluate.py` for the test suite.
 """
 
 import json

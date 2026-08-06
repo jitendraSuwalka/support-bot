@@ -13,7 +13,8 @@ requirements with tests attached, rather than as instructions in a prompt and
 a hope.
 
 ```
-python step10.py       # run the agent
+python app.py          # web interface
+python agent.py        # same agent, in the terminal
 python evaluate.py     # 52 tests, ~1 second, no API calls
 ```
 
@@ -295,7 +296,7 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-Create `.env` in the project root:
+Copy `.env.example` to `.env` and add your key:
 
 ```
 ANTHROPIC_API_KEY=sk-ant-...
@@ -304,7 +305,8 @@ ANTHROPIC_API_KEY=sk-ant-...
 Then:
 
 ```bash
-python step10.py                # interactive agent
+python app.py                   # web interface at http://127.0.0.1:7860
+python agent.py                 # same agent, in the terminal
 python evaluate.py              # test suite, free
 python evaluate.py --live       # includes real API calls
 ```
@@ -315,11 +317,12 @@ python evaluate.py --live       # includes real API calls
 
 | File | Purpose |
 |---|---|
-| `step10.py` | The agent — tools, retrieval, guards, policy, loop |
+| `agent.py` | The agent — tools, retrieval, guards, policy, loop |
 | `knowledge_base.py` | 12 sourced entries, each with a traceable URL |
 | `evaluate.py` | 52 tests, fake model, optional live suite |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
-| `requirements.txt` | Pinned dependencies |
+| `requirements.txt` | Dependencies |
+| `archive/` | Earlier build stages, kept to show how each guard arose |
 
 ### Try these
 
@@ -344,3 +347,9 @@ python evaluate.py --live       # includes real API calls
    than terminal output.
 4. **Expand the live suite** into a labelled regression set with pass
    thresholds, run before every change.
+
+---
+
+## Licence
+
+MIT — see [LICENSE](LICENSE).

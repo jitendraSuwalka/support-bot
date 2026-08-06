@@ -11,7 +11,7 @@ DESIGN NOTE
     it means something.
 
 ARCHITECTURE NOTE
-    This module does not modify step10.py. The agent prints its pipeline
+    This module does not modify agent.py. The agent prints its pipeline
     events to stdout; here that stream is captured and parsed. That keeps a
     single source of truth for agent behaviour, so all 52 tests in
     evaluate.py remain valid without change -- a wrapper cannot silently
@@ -27,7 +27,7 @@ from contextlib import redirect_stdout
 
 import gradio as gr
 
-import step10 as agent
+import agent
 
 
 # stdout is process-wide, so capture must be serialised. Gradio serves
