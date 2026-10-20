@@ -20,13 +20,13 @@ def test_log_inside_a_run_is_captured_on_the_trace():
     assert trace.find("demo")[0].data == {"detail": 42}
 
 
-def test_render_is_one_line_per_event():
+def test_render_is_one_line_per_event_with_its_data():
     trace = Trace()
-    trace.log("tool", "search_knowledge_base({'query': 'offices'})")
     trace.log("citations_clean", "citations: clean")
+    trace.log("unsupported", "UNSUPPORTED CLAIMS", claims=["added a promise"])
     assert trace.render().splitlines() == [
-        "[tool] search_knowledge_base({'query': 'offices'})",
         "[citations_clean] citations: clean",
+        "[unsupported] UNSUPPORTED CLAIMS  (claims=['added a promise'])",
     ]
 
 

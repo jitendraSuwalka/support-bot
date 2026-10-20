@@ -53,10 +53,21 @@ def test_term_frequency_raises_the_score():
     )
 
 
-def test_unknown_query_words_lower_the_normalised_score():
+def test_words_the_corpus_has_never_seen_do_not_change_the_score():
     known = agent.score_documents({"bristol", "office"})[0][0]
     with_noise = agent.score_documents({"bristol", "office", "zzzunknownzzz"})[0][0]
-    assert with_noise < known
+    assert with_noise == known
+
+
+def test_expansion_terms_absent_from_the_corpus_cannot_sink_a_real_match():
+    # The live failure: "Do you have a Manchester office?" plus a typical
+    # expansion set scored 0.146 against a floor of 0.15 and returned NO_MATCH,
+    # although the offices entry names Manchester.
+    expansion = {"branch", "location", "address", "city", "premises", "local", "visit", "nearby"}
+    tokens = set(agent.tokenize("Do you have a Manchester office?")) | expansion
+    best_score, _, best_entry = agent.score_documents(tokens)[0]
+    assert best_entry["topic"] == "office locations bristol local offices"
+    assert best_score >= agent.RELEVANCE_FLOOR + 0.3, f"{best_score:.3f} vs floor"
 
 
 def test_good_matches_clear_the_floor_with_margin_not_by_luck():

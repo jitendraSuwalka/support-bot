@@ -84,8 +84,8 @@ REQUIRE_EVIDENCE = SETTINGS.require_evidence
 
 VOLATILE_TOOLS = {"look_up_client_query"}
 EXPIRED_NOTICE = (
-    "[This earlier result has expired and may no longer be accurate. "
-    "Call the tool again if you need this information.]"
+    "[This earlier result has expired. Do not rely on it or repeat it. Look the "
+    "reference up afresh only if the customer asks about it again.]"
 )
 
 SWITCHBOARD = "0117 496 0100"
@@ -123,7 +123,15 @@ class Trace:
         return [event for event in self.events if event.kind == kind]
 
     def render(self) -> str:
-        return "\n".join(f"[{event.kind}] {event.message}" for event in self.events)
+        """One line per event; structured data follows the message when present."""
+        lines = []
+        for event in self.events:
+            line = f"[{event.kind}] {event.message}"
+            if event.data:
+                details = ", ".join(f"{key}={value!r}" for key, value in event.data.items())
+                line += f"  ({details})"
+            lines.append(line)
+        return "\n".join(lines)
 
 
 _CURRENT_TRACE: contextvars.ContextVar[Trace | None] = contextvars.ContextVar(
@@ -366,13 +374,10 @@ def build_index():
         term: math.log(1 + (total - df + 0.5) / (df + 0.5))
         for term, df in document_frequency.items()
     }
-    # A term the corpus has never seen is maximally informative; it also
-    # cannot match, so it only lowers the normalised score of the query.
-    unknown_idf = math.log(1 + (total + 0.5) / 0.5)
-    return documents, idf, unknown_idf
+    return documents, idf
 
 
-DOCUMENTS, IDF, UNKNOWN_IDF = build_index()
+DOCUMENTS, IDF = build_index()
 AVG_DOC_LENGTH = sum(document["length"] for document in DOCUMENTS) / len(DOCUMENTS)
 
 
@@ -400,15 +405,21 @@ def score_documents(query_tokens):
     """BM25 (Robertson/Spärck Jones idf, tf saturation, length normalisation).
 
     Scores are divided by the query's saturation ceiling — the score a document
-    would get if every query term appeared in it with unbounded frequency — so
-    they fall between 0 and 1 and the relevance floor means the same thing for
-    a two-word query as for a ten-word one.
+    would get if every query term the corpus knows appeared in it with unbounded
+    frequency — so they fall between 0 and 1 and the relevance floor means the
+    same thing for a two-word query as for a ten-word one.
+
+    Query terms the corpus has never seen are left out of the ceiling. Query
+    expansion routinely adds words such as "premises" or "location" that no
+    entry contains; an earlier version counted them at full weight, and the
+    inflated ceiling pushed "Do you have a Manchester office?" below the
+    relevance floor even though the offices entry names Manchester.
     """
-    query_tokens = set(query_tokens)
-    ceiling = sum(IDF.get(term, UNKNOWN_IDF) * (K1 + 1) for term in query_tokens) or 1.0
+    known_terms = {term for term in query_tokens if term in IDF}
+    ceiling = sum(IDF[term] * (K1 + 1) for term in known_terms) or 1.0
     results = []
     for document in DOCUMENTS:
-        matched = query_tokens & document["tf"].keys()
+        matched = known_terms & document["tf"].keys()
         if not matched:
             continue
         length_norm = K1 * (1 - B + B * document["length"] / AVG_DOC_LENGTH)
@@ -624,7 +635,9 @@ FAITHFULNESS RULES — these override helpfulness:
 
 CONDUCT RULES:
 7. You are NOT a financial adviser. Escalate all advice questions immediately.
-8. Multi-part questions: call a tool for each part.
+8. Multi-part questions: call a tool for each part. Answer only the customer's
+   latest message: do not repeat earlier answers or re-fetch references from
+   earlier turns unless the customer asks about them again.
 9. Never ask for account numbers, passwords, dates of birth, NI numbers or
    card details.
 10. Be brief and plain. Two short paragraphs maximum.
