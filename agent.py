@@ -1,7 +1,8 @@
 """
 Grounded support agent — retrieval, verification and escalation.
 
-A customer support assistant for a UK wealth management firm. It answers only
+A customer support assistant for Fernhill Wealth, a fictional UK wealth
+management firm. It answers only
 what it can evidence, quotes volatile data verbatim, and hands to a human when
 it cannot help.
 
@@ -11,7 +12,7 @@ in the order they run:
 
   CITATION GUARD — deterministic.
       Every URL and number in an answer must match the evidence exactly.
-      Added after the agent derived "evelyn.com/offices" by truncating a
+      Added after the agent derived "fernhillwealth.example/offices" by truncating a
       deeper URL it had been given: plausible, probably correct, not in the
       evidence, and waved through by the LLM checker. Code cannot be
       persuaded that something looks right.
@@ -34,7 +35,7 @@ opening hours" is a denial; reranking reads.
 Model non-determinism is irreducible. That is why the guarantees are in code
 and why every answer carries an audit trail of its raw evidence.
 
-Personal learning project. Not affiliated with Evelyn Partners.
+Personal learning project. Fernhill Wealth is invented; see knowledge_base.py.
 Run `python evaluate.py` for the test suite.
 """
 
@@ -168,7 +169,7 @@ def check_citations(answer, evidence):
     """Require every URL and number in the answer to appear in the evidence.
 
     This is the only guarantee in the whole system that cannot be talked out
-    of. The LLM verifier passed 'evelyn.com/offices' because it looked right
+    of. The LLM verifier passed 'fernhillwealth.example/offices' because it looked right
     and was a substring of a longer URL. This function demands an EXACT match
     after normalisation, so truncating a path to guess a parent is caught.
 
@@ -454,10 +455,10 @@ def search_knowledge_base(query):
 # =========================================================
 
 CLIENT_QUERIES = {
-    "EP-1001": "Received 1 Aug. With your adviser. Response due by 6 Aug.",
-    "EP-1002": "Documents verified. Awaiting your signature to proceed.",
-    "EP-1003": "Closed 28 July. Summary letter posted to your address.",
-    "EP-1004": "Escalated to the Client Resolution team on 4 Aug.",
+    "FW-1001": "Received 1 Aug. With your adviser. Response due by 6 Aug.",
+    "FW-1002": "Documents verified. Awaiting your signature to proceed.",
+    "FW-1003": "Closed 28 July. Summary letter posted to your address.",
+    "FW-1004": "Escalated to the Client Resolution team on 4 Aug.",
 }
 
 
@@ -482,7 +483,7 @@ def escalate_to_adviser(reason, summary):
     print(f"      {summary}")
     return (
         "Escalation logged. Tell the customer a qualified adviser will contact "
-        "them, and give the switchboard number 020 7131 4000."
+        "them, and give the switchboard number 0117 496 0100."
     )
 
 
@@ -511,14 +512,14 @@ tools = [
     {
         "name": "look_up_client_query",
         "description": (
-            "Look up the live status of a client query by reference, format EP-XXXX. "
+            "Look up the live status of a client query by reference, format FW-XXXX. "
             "This data changes: always call it fresh, even for a reference looked up "
             "earlier. The result contains STATUS_VERBATIM, which must be reproduced "
             "exactly."
         ),
         "input_schema": {
             "type": "object",
-            "properties": {"reference": {"type": "string", "description": "e.g. EP-1002"}},
+            "properties": {"reference": {"type": "string", "description": "e.g. FW-1002"}},
             "required": ["reference"],
         },
     },
@@ -541,7 +542,7 @@ tools = [
     },
 ]
 
-SYSTEM_PROMPT = """You are a customer support assistant for Evelyn Partners, a UK wealth
+SYSTEM_PROMPT = """You are a customer support assistant for Fernhill Wealth, a UK wealth
 management firm.
 
 FAITHFULNESS RULES — these override helpfulness:
@@ -742,7 +743,7 @@ def rewrite_after_escalation(messages):
                 "message as one short, coherent reply that: says plainly you do not "
                 "have the information; states that it HAS BEEN passed to a qualified "
                 "adviser who will be in touch; gives the switchboard number "
-                "020 7131 4000. Do not offer to escalate, since it has already "
+                "0117 496 0100. Do not offer to escalate, since it has already "
                 "happened, and do not ask the customer any question. Do not call "
                 "any tools."
             ),
@@ -865,7 +866,7 @@ def run_agent(messages, state):
             )
         messages.append({"role": "user", "content": tool_results})
 
-    return "Sorry, I could not complete that. Please call 020 7131 4000."
+    return "Sorry, I could not complete that. Please call 0117 496 0100."
 
 
 if __name__ == "__main__":

@@ -4,7 +4,8 @@
 
 ![The agent showing which checks each answer passed](screenshot.png)
 
-A customer support agent for a UK wealth management firm, built to answer only
+A customer support agent for Fernhill Wealth — a fictional UK wealth-management
+firm — built to answer only
 what it can evidence — and to prove, in code, that it does.
 
 The interesting part is not that an LLM can call tools. It is that a support
@@ -20,9 +21,13 @@ python agent.py        # same agent, in the terminal
 pytest                 # 52 tests, under a second, no API calls
 ```
 
-> **Disclaimer.** A personal learning project, not affiliated with or endorsed
-> by Evelyn Partners. The knowledge base is paraphrased from publicly available
-> web pages; client records are invented. No real client data is used anywhere.
+> **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
+> firms present their services, complaints procedures and client support —
+> informed by my own experience working in the sector — but every policy,
+> address, client record and phone number is invented. The website lives on the
+> reserved `.example` domain and the phone numbers come from Ofcom's film-and-
+> drama ranges, so the agent can never direct a real customer to a real place.
+> A personal learning project; no real client data is used anywhere.
 
 ---
 
@@ -143,8 +148,8 @@ score for that query fell from 0.76 to 0.43 — lower, and honest.
 
 ### 3. Extrapolated URLs
 
-**Symptom.** Given `https://www.evelyn.com/offices/bristol/`, the bot told the
-customer to visit `evelyn.com/offices` — a parent path it inferred.
+**Symptom.** Given `https://www.fernhillwealth.example/offices/bristol/`, the bot told the
+customer to visit `fernhillwealth.example/offices` — a parent path it inferred.
 
 **Why the LLM fact-checker passed it.** It looked right, and it is a substring
 of a URL that was supplied.
@@ -343,7 +348,7 @@ pytest -m live                  # the opt-in tests that call the real API
 
 | Input | Demonstrates |
 |---|---|
-| `What's the status of EP-1001?` | Verbatim quoting, no embellishment |
+| `What's the status of FW-1001?` | Verbatim quoting, no embellishment |
 | `Should I move my pension into equities?` | Immediate escalation, zero advice |
 | `Can I visit a branch on Sunday?` | Reranker rejecting a negation match |
 | `Do you have a Manchester office?` | Honest uncertainty, no invented URL |

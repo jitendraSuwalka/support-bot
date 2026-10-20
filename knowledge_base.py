@@ -1,63 +1,73 @@
 """
-Knowledge base for the Evelyn Partners support bot demo.
+Knowledge base for the Fernhill Wealth support agent.
 
-SOURCE: All entries below are paraphrased from publicly available pages on
-        www.evelyn.com, retrieved and verified on 6 August 2026.
-        No client data, no internal systems, no invented facts.
+FERNHILL WEALTH IS FICTIONAL. It is modelled on how UK wealth-management firms
+present their services, complaints procedures and client support, so that the
+agent can be tested against realistic material without naming, quoting or
+impersonating any real firm.
 
-NOTE:   This is a personal learning project and is not affiliated with,
-        endorsed by, or an official product of Evelyn Partners.
+Everything below is invented and safe by construction:
+  - The website lives on the `.example` domain, which is reserved by internet
+    standard (RFC 2606) and can never belong to a real organisation.
+  - Telephone numbers come from the ranges Ofcom sets aside for film and drama
+    (020 7946 0xxx, 0117 496 0xxx, 0808 157 0xxx), so the agent can never hand
+    a customer a real person's number.
+  - The one real number quoted is the Financial Ombudsman Service, a public
+    body whose contact details every UK regulated firm is required to give.
 
-MAINTENANCE: Facts drift. Each entry carries a `source` URL so any answer the
-        bot gives can be traced back and re-checked. Re-verify periodically.
+MAINTENANCE: each entry carries a `source` URL so an answer can be traced to
+the page it came from. Keep `topic` strings stable; the retrieval tests rank
+entries by them.
 """
 
 KNOWLEDGE_BASE = [
     {
         "topic": "company overview who we are",
         "content": (
-            "Evelyn Partners is a UK wealth management firm offering financial planning "
-            "and investment management. It was formed in 2020 from the merger of Tilney "
-            "and Smith & Williamson, and traces its history back to 1836. As at "
-            "31 December 2025 it held £68.6 billion in assets under management."
+            "Fernhill Wealth is a UK wealth management firm offering financial planning "
+            "and investment management to private clients, families and trustees. It was "
+            "founded in Bristol in 1998 and now has six offices across England and "
+            "Scotland. As at 31 December 2025 it managed £9.4 billion of client assets."
         ),
-        "source": "https://www.evelyn.com/services/financial-planning/",
+        "source": "https://www.fernhillwealth.example/about-us/",
     },
     {
         "topic": "main phone number general enquiries switchboard",
         "content": (
-            "The main switchboard number is 020 7131 4000. Use this for general enquiries, "
-            "for business enquiries, or if you are unsure who to speak to. Some financial "
-            "services calls are recorded for regulatory purposes."
+            "The main switchboard number is 0117 496 0100. Use this for general "
+            "enquiries, for business enquiries, or if you are unsure who to speak to. "
+            "Lines are open 08:30 to 18:00, Monday to Friday. Calls may be recorded for "
+            "regulatory purposes."
         ),
-        "source": "https://www.evelyn.com/contact-us/",
+        "source": "https://www.fernhillwealth.example/contact-us/",
     },
     {
         "topic": "booking an appointment becoming a new client",
         "content": (
-            "People considering becoming a client can book an introductory appointment "
-            "through the Book an Appointment page, or request a call back at a convenient "
-            "time. The new client enquiry line is 0203 131 6167."
+            "People considering becoming a client can book a free introductory "
+            "appointment through the Book an Appointment page, or request a call back at a "
+            "convenient time. The new client enquiry line is 0808 157 0450, which is free "
+            "to call from UK landlines and mobiles."
         ),
-        "source": "https://www.evelyn.com/book-an-appointment/",
+        "source": "https://www.fernhillwealth.example/book-an-appointment/",
     },
     {
         "topic": "callback times when you can be called",
         "content": (
             "When requesting a call back, the times offered on the booking form run from "
             "09:00 to 17:00 on the hour, with a final 17:45 slot. The form also asks for "
-            "your preferred date. Note these are callback slots, not branch opening hours."
+            "your preferred date. Note these are callback slots, not office opening hours."
         ),
-        "source": "https://www.evelyn.com/contact-us/",
+        "source": "https://www.fernhillwealth.example/contact-us/",
     },
     {
         "topic": "client portal login and access problems",
         "content": (
-            "Existing clients log in through the client login page on the website. If you "
+            "Existing clients log in through the client portal link on the website. If you "
             "are having trouble getting into the portal, there is a dedicated portal access "
-            "helpline on 020 7189 9950."
+            "helpline on 0117 496 0233, open 09:00 to 17:30 on working days."
         ),
-        "source": "https://www.evelyn.com/contact-us/client-support-hub/",
+        "source": "https://www.fernhillwealth.example/client-support/portal/",
     },
     {
         "topic": "updating personal details account queries statements valuations",
@@ -66,21 +76,21 @@ KNOWLEDGE_BASE = [
             "requesting statements or valuations, checking your portfolio balance or recent "
             "transactions, or asking about your fee structure, the recommended route is to "
             "speak to your own adviser directly. If you do not know who your adviser is, "
-            "call 020 7131 4000 and the team will connect you."
+            "call 0117 496 0100 and the team will connect you."
         ),
-        "source": "https://www.evelyn.com/contact-us/client-support-hub/",
+        "source": "https://www.fernhillwealth.example/client-support/",
     },
     {
         "topic": "how to make a complaint",
         "content": (
             "Complaints can be made by letter, telephone, email or in person, and may be "
             "raised with anyone in the firm. The Client Resolution team can be reached by "
-            "email at clientresolution@evelyn.com, by phone on 01344 828000, or by post to "
-            "Client Resolution, Evelyn Partners, Maxis 2, 43 Western Road, Bracknell, "
-            "RG12 1RF. If someone is complaining on your behalf, written permission is "
-            "required. There is no charge for making a complaint."
+            "email at complaints@fernhillwealth.example, by phone on 0117 496 0355, or by "
+            "post to Client Resolution, Fernhill Wealth, Fernhill House, 22 Harbourside "
+            "Walk, Bristol, BS1 5XY. If someone is complaining on your behalf, written "
+            "permission is required. There is no charge for making a complaint."
         ),
-        "source": "https://www.evelyn.com/legal-compliance-regulatory/complaints-procedure/",
+        "source": "https://www.fernhillwealth.example/complaints/",
     },
     {
         "topic": "complaint timescales what happens next ombudsman",
@@ -92,7 +102,7 @@ KNOWLEDGE_BASE = [
             "eight weeks pass without resolution, you can refer the matter free of charge to "
             "the Financial Ombudsman Service on 0800 023 4567."
         ),
-        "source": "https://www.evelyn.com/legal-compliance-regulatory/complaints-procedure/",
+        "source": "https://www.fernhillwealth.example/complaints/",
     },
     {
         "topic": "financial planning service what it covers",
@@ -102,19 +112,19 @@ KNOWLEDGE_BASE = [
             "and retirement planning, tax planning, financial protection, inheritance tax "
             "and estate planning, cashflow modelling, investing for children, and support "
             "through life-changing events such as divorce or long-term care. All financial "
-            "planners either hold or are working towards Certified or Chartered status."
+            "planners either hold or are working towards Chartered status."
         ),
-        "source": "https://www.evelyn.com/services/financial-planning/",
+        "source": "https://www.fernhillwealth.example/services/financial-planning/",
     },
     {
         "topic": "office locations bristol local offices",
         "content": (
-            "There are 21 offices across the UK, Ireland and the Channel Islands, listed on "
-            "the Offices page. The Bristol office is at 4th Floor, EQ, Victoria Street, "
-            "Bristol, BS1 6AX, a short walk from Temple Meads station. Advisers are also "
-            "available for telephone meetings."
+            "There are six offices: Bristol, London, Manchester, Edinburgh, Leeds and "
+            "Birmingham, listed on the Offices page. The Bristol head office is at Fernhill "
+            "House, 22 Harbourside Walk, Bristol, BS1 5XY, a short walk from Temple Meads "
+            "station. Advisers are also available for telephone and video meetings."
         ),
-        "source": "https://www.evelyn.com/offices/bristol/",
+        "source": "https://www.fernhillwealth.example/offices/bristol/",
     },
     {
         "topic": "closing or transferring an account",
@@ -124,7 +134,7 @@ KNOWLEDGE_BASE = [
             "your fee structure, discuss investment performance, compare offers, or "
             "reconsider your financial plan before you decide."
         ),
-        "source": "https://www.evelyn.com/contact-us/client-support-hub/",
+        "source": "https://www.fernhillwealth.example/client-support/",
     },
     {
         "topic": "bereavement divorce power of attorney life events support",
@@ -134,6 +144,6 @@ KNOWLEDGE_BASE = [
             "situations are handled by a specialist team rather than through the standard "
             "enquiry channels."
         ),
-        "source": "https://www.evelyn.com/legal-compliance-regulatory/help-and-support/",
+        "source": "https://www.fernhillwealth.example/client-support/life-events/",
     },
 ]

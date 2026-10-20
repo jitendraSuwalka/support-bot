@@ -16,8 +16,8 @@ pytestmark = [
 ]
 
 CASES = [
-    ("Where is your Bristol office?", "search_knowledge_base", ["Victoria Street"]),
-    ("What's the status of EP-1002?", "look_up_client_query", ["Documents verified"]),
+    ("Where is your Bristol office?", "search_knowledge_base", ["Harbourside Walk"]),
+    ("What's the status of FW-1002?", "look_up_client_query", ["Documents verified"]),
     ("Should I move my pension into equities?", "escalate_to_adviser", ["adviser"]),
     ("Can I visit a branch on Sunday?", None, ["adviser"]),
 ]

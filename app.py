@@ -241,7 +241,7 @@ THEME = gr.themes.Base(
 )
 
 EXAMPLES = [
-    "What's the status of EP-1001?",
+    "What's the status of FW-1001?",
     "Should I move my pension into equities?",
     "Can I visit a branch on Sunday?",
     "Do you have a Manchester office?",
@@ -268,7 +268,7 @@ with gr.Blocks(title="Grounded Support Agent") as demo:
                 height=380,
                 show_label=False,
                 placeholder="Ask about offices, complaints, appointments, "
-                "or a case reference such as EP-1001.",
+                "or a case reference such as FW-1001.",
             )
 
             status = gr.HTML(elem_id="statusbar")
@@ -295,9 +295,9 @@ with gr.Blocks(title="Grounded Support Agent") as demo:
                 "are quoted word for word and expire between turns. URLs and "
                 "figures are matched against the evidence in code, not by "
                 "judgement. Anything touching financial advice goes to a human."
-                "<br><br>Client records are invented. The knowledge base is "
-                "paraphrased from public web pages. A personal project, not "
-                "affiliated with Evelyn Partners."
+                "<br><br>Fernhill Wealth is a fictional firm: client records, policies, "
+                "addresses and phone numbers are all invented. A personal "
+                "project."
                 "</div>"
             )
             # Kept permanently visible rather than in an accordion: the evidence

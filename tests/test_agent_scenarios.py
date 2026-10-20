@@ -19,12 +19,12 @@ def customer_facing(answer):
 def test_verbatim_status_survives_the_pipeline_unchanged(run_scenario):
     answers, _, _ = run_scenario(
         script=[
-            tool_reply("look_up_client_query", {"reference": "EP-1001"}),
+            tool_reply("look_up_client_query", {"reference": "FW-1001"}),
             text_reply(
-                'Status for EP-1001: "Received 1 Aug. With your adviser. Response due by 6 Aug."'
+                'Status for FW-1001: "Received 1 Aug. With your adviser. Response due by 6 Aug."'
             ),
         ],
-        user_messages=["Is EP-1001 done?"],
+        user_messages=["Is FW-1001 done?"],
     )
     assert "Received 1 Aug. With your adviser. Response due by 6 Aug." in answers[0]
 
@@ -32,10 +32,10 @@ def test_verbatim_status_survives_the_pipeline_unchanged(run_scenario):
 def test_audit_trail_is_attached(run_scenario):
     answers, _, _ = run_scenario(
         script=[
-            tool_reply("look_up_client_query", {"reference": "EP-1001"}),
-            text_reply('Status for EP-1001: "Received 1 Aug."'),
+            tool_reply("look_up_client_query", {"reference": "FW-1001"}),
+            text_reply('Status for FW-1001: "Received 1 Aug."'),
         ],
-        user_messages=["Is EP-1001 done?"],
+        user_messages=["Is FW-1001 done?"],
     )
     assert "audit trail" in answers[0]
 
@@ -47,20 +47,20 @@ def test_truncated_url_triggers_an_automatic_rewrite(run_scenario):
     answers, _, _ = run_scenario(
         script=[
             tool_reply("search_knowledge_base", {"query": "offices"}),
-            text_reply("We have offices. See evelyn.com/offices for the list."),
+            text_reply("We have offices. See fernhillwealth.example/offices for the list."),
             text_reply("We have offices across the UK, Ireland and the Channel Islands."),
         ],
         user_messages=["Do you have a Manchester office?"],
         helper={"rerank": '{"relevant": [0]}'},
     )
-    assert "evelyn.com/offices for the list" not in answers[0]
+    assert "fernhillwealth.example/offices for the list" not in answers[0]
 
 
 def test_rewrite_is_flagged_to_the_reader(run_scenario):
     answers, _, _ = run_scenario(
         script=[
             tool_reply("search_knowledge_base", {"query": "offices"}),
-            text_reply("We have offices. See evelyn.com/offices for the list."),
+            text_reply("We have offices. See fernhillwealth.example/offices for the list."),
             text_reply("We have offices across the UK, Ireland and the Channel Islands."),
         ],
         user_messages=["Do you have a Manchester office?"],
@@ -80,7 +80,7 @@ QUIZ_SCRIPT = [
     text_reply("Still unclear — can you tell me more about where you saw it?"),
     text_reply(
         "I don't have information about that. It has been passed to a "
-        "qualified adviser who will contact you. You can call 020 7131 4000."
+        "qualified adviser who will contact you. You can call 0117 496 0100."
     ),
 ]
 QUIZ_TURNS = ["quiz", "just the quiz thing"]
@@ -109,7 +109,7 @@ def test_turn_two_no_dangling_question_after_escalation(run_scenario):
 
 def test_turn_two_switchboard_number_is_present(run_scenario):
     answers, _, _ = run_scenario(QUIZ_SCRIPT, QUIZ_TURNS, helper=QUIZ_HELPER)
-    assert "020 7131 4000" in answers[1]
+    assert "0117 496 0100" in answers[1]
 
 
 # --- model escalates itself: policy must stand down ---------------------
@@ -119,7 +119,7 @@ def test_model_led_escalation_does_not_trigger_a_second_one(run_scenario):
     answers, _, _ = run_scenario(
         script=[
             tool_reply("escalate_to_adviser", {"reason": "advice", "summary": "pension advice"}),
-            text_reply("A qualified adviser will contact you. Call 020 7131 4000."),
+            text_reply("A qualified adviser will contact you. Call 0117 496 0100."),
         ],
         user_messages=["Should I move my pension into equities?"],
     )
@@ -149,22 +149,22 @@ def test_a_real_question_does_force_a_tool_call(run_scenario):
 
 
 # --- a broken tool must not kill the conversation -----------------------
-# The fallback reply quotes 020 7131 4000, which is NOT in the evidence (the
+# The fallback reply quotes 0117 496 0100, which is NOT in the evidence (the
 # tool crashed), so the citation guard correctly fires and demands a rewrite.
 # A hardcoded phone number in an answer is an unsupported claim like any other.
 
 CRASH_SCRIPT = [
     tool_reply("look_up_client_query", {"wrong_argument": "x"}),
-    text_reply("Sorry, I could not look that up. Please call 020 7131 4000."),
+    text_reply("Sorry, I could not look that up. Please call 0117 496 0100."),
     text_reply("Sorry, I could not look that up. Please contact your adviser."),
 ]
 
 
 def test_a_tool_crash_is_caught_and_the_agent_still_replies(run_scenario):
-    answers, _, _ = run_scenario(CRASH_SCRIPT, ["Check EP-1001"])
+    answers, _, _ = run_scenario(CRASH_SCRIPT, ["Check FW-1001"])
     assert len(answers[0]) > 0
 
 
 def test_an_unsupported_fallback_number_is_stripped_by_the_guard(run_scenario):
-    answers, _, _ = run_scenario(CRASH_SCRIPT, ["Check EP-1001"])
-    assert "020 7131 4000" not in answers[0].split("--- audit")[0]
+    answers, _, _ = run_scenario(CRASH_SCRIPT, ["Check FW-1001"])
+    assert "0117 496 0100" not in answers[0].split("--- audit")[0]

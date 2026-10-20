@@ -4,13 +4,13 @@ import agent
 
 EVIDENCE = (
     "There are 21 offices across the UK. Call 0800 023 4567. "
-    "Source: https://www.evelyn.com/offices/bristol/"
+    "Source: https://www.fernhillwealth.example/offices/bristol/"
 )
 
 
 def test_truncated_url_is_caught():
     # The real bug from testing: a parent path derived from a deeper URL.
-    violations = agent.check_citations("See evelyn.com/offices", EVIDENCE)
+    violations = agent.check_citations("See fernhillwealth.example/offices", EVIDENCE)
     assert any("shorten" in v for v in violations), violations
 
 
@@ -23,7 +23,8 @@ def test_invented_phone_number_is_caught():
 
 
 def test_exact_url_passes():
-    assert agent.check_citations("See https://www.evelyn.com/offices/bristol/", EVIDENCE) == []
+    answer = "See https://www.fernhillwealth.example/offices/bristol/"
+    assert agent.check_citations(answer, EVIDENCE) == []
 
 
 def test_correct_numbers_pass():
