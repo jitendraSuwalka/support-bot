@@ -4,7 +4,7 @@ import agent
 
 
 def top(query, extra=""):
-    tokens = agent.tokenize(query) | agent.tokenize(extra)
+    tokens = set(agent.tokenize(query)) | set(agent.tokenize(extra))
     scored = [r for r in agent.score_documents(tokens) if r[0] >= agent.RELEVANCE_FLOOR]
     return [entry["topic"] for _, _, entry in scored[:2]]
 
@@ -31,6 +31,32 @@ def test_stopwords_drop_generic_query_words():
 
 def test_plurals_fold_together():
     assert agent.tokenize("offices") == agent.tokenize("office")
+
+
+def test_tokenize_keeps_repeats_because_bm25_needs_term_frequency():
+    assert agent.tokenize("complaint about a complaint") == ["complaint", "complaint"]
+
+
+def test_scores_are_normalised_between_zero_and_one():
+    for query in ("bristol office", "complaint ombudsman eight weeks", "portal login"):
+        for score, _, _ in agent.score_documents(set(agent.tokenize(query))):
+            assert 0.0 <= score <= 1.0, (query, score)
+
+
+def test_term_frequency_raises_the_score():
+    # The complaints entry mentions "complaint" several times; the timescales
+    # entry mentions it once. Pure overlap would score them equally.
+    scored = {entry["topic"]: score for score, _, entry in agent.score_documents({"complaint"})}
+    assert (
+        scored["how to make a complaint"]
+        > scored["complaint timescales what happens next ombudsman"]
+    )
+
+
+def test_unknown_query_words_lower_the_normalised_score():
+    known = agent.score_documents({"bristol", "office"})[0][0]
+    with_noise = agent.score_documents({"bristol", "office", "zzzunknownzzz"})[0][0]
+    assert with_noise < known
 
 
 def test_good_matches_clear_the_floor_with_margin_not_by_luck():

@@ -84,17 +84,20 @@ def tool_reply(name, tool_input, call_id="t1", text=None):
 
 @pytest.fixture
 def run_scenario(monkeypatch):
-    """Run user turns through the real ``run_agent`` against a scripted model."""
+    """Run user turns through the real ``run_agent`` against a scripted model.
+
+    Returns one AgentResult per user turn, the policy state, and the fake client.
+    """
 
     def _run(script, user_messages, helper=None, state=None):
         fake = FakeClient(script, helper)
         monkeypatch.setattr(agent, "client", fake)
         messages = []
         state = state if state is not None else {"unclear_turns": 0}
-        answers = []
+        results = []
         for text in user_messages:
             messages.append({"role": "user", "content": text})
-            answers.append(agent.run_agent(messages, state))
-        return answers, state, fake
+            results.append(agent.run_agent(messages, state))
+        return results, state, fake
 
     return _run

@@ -2,20 +2,26 @@
 Grounded support agent — retrieval, verification and escalation.
 
 A customer support assistant for Fernhill Wealth, a fictional UK wealth
-management firm. It answers only
-what it can evidence, quotes volatile data verbatim, and hands to a human when
-it cannot help.
+management firm. It answers only what it can evidence, quotes volatile data
+verbatim, and hands to a human when it cannot help.
 
 Every hard guarantee here lives in Python rather than in the system prompt,
-because a prompt is a strong suggestion and nothing more. The three guards,
-in the order they run:
+because a prompt is a strong suggestion and nothing more. The guards, in the
+order they run:
+
+  EVIDENCE GUARD — deterministic.
+      A real question must be answered from a tool result. If the model
+      answers from memory it is told to look the question up; if it still
+      does not, the turn is treated as unanswerable and escalated. Current
+      models reject forced tool use (tool_choice "any"), so the guarantee is
+      enforced after the fact in code instead of before the fact by the API.
 
   CITATION GUARD — deterministic.
       Every URL and number in an answer must match the evidence exactly.
-      Added after the agent derived "fernhillwealth.example/offices" by truncating a
-      deeper URL it had been given: plausible, probably correct, not in the
-      evidence, and waved through by the LLM checker. Code cannot be
-      persuaded that something looks right.
+      Added after the agent derived "fernhillwealth.example/offices" by
+      truncating a deeper URL it had been given: plausible, probably correct,
+      not in the evidence, and waved through by the LLM checker. Code cannot
+      be persuaded that something looks right.
 
   GROUNDEDNESS CHECK — an independent model call.
       Reads the finished answer back against its evidence and flags
@@ -29,35 +35,52 @@ in the order they run:
       question always reaches a human regardless of what the model decides.
 
 Retrieval is two-stage: BM25 lexical scoring for recall, then an LLM rerank
-for precision. Lexical scoring counts words and cannot see that "not branch
+for precision. Lexical scoring counts words and cannot see that "not office
 opening hours" is a denial; reranking reads.
 
+Every run returns an AgentResult: the customer-facing answer, the notes about
+what the guards did, the raw evidence, and a structured trace of every
+pipeline event. Nothing is communicated through stdout.
+
 Model non-determinism is irreducible. That is why the guarantees are in code
-and why every answer carries an audit trail of its raw evidence.
+and why every answer carries its evidence.
 
 Personal learning project. Fernhill Wealth is invented; see knowledge_base.py.
-Run `python evaluate.py` for the test suite.
+Run `pytest` for the test suite.
 """
 
+from __future__ import annotations
+
+import contextvars
 import json
 import math
 import re
+from collections import Counter
+from dataclasses import dataclass, field
 
 from anthropic import Anthropic
 from dotenv import load_dotenv
 
+from config import Settings
 from knowledge_base import KNOWLEDGE_BASE
 
 load_dotenv()
 client = Anthropic()
 
-MAIN_MODEL = "claude-sonnet-5"
-HELPER_MODEL = "claude-haiku-4-5-20251001"
+SETTINGS = Settings.from_env()
 
-MAX_STEPS = 8
-RELEVANCE_FLOOR = 0.15  # deliberately loose: rerank does the real filtering
-CANDIDATES = 5  # retrieve widely...
-TOP_K = 2  # ...then keep only what survives reranking
+MAIN_MODEL = SETTINGS.main_model
+HELPER_MODEL = SETTINGS.helper_model
+
+MAX_STEPS = SETTINGS.max_steps
+RELEVANCE_FLOOR = SETTINGS.relevance_floor
+CANDIDATES = SETTINGS.candidates
+TOP_K = SETTINGS.top_k
+
+USE_RERANK = SETTINGS.use_rerank
+VERIFY_ANSWERS = SETTINGS.verify_answers
+CHECK_CITATIONS = SETTINGS.check_citations
+REQUIRE_EVIDENCE = SETTINGS.require_evidence
 
 VOLATILE_TOOLS = {"look_up_client_query"}
 EXPIRED_NOTICE = (
@@ -65,11 +88,83 @@ EXPIRED_NOTICE = (
     "Call the tool again if you need this information.]"
 )
 
-FORCE_TOOL_FIRST = True
-USE_RERANK = True
-VERIFY_ANSWERS = True
-CHECK_CITATIONS = True
-SHOW_AUDIT = True
+SWITCHBOARD = "0117 496 0100"
+
+
+# =========================================================
+# TRACE — structured record of what the pipeline did
+# =========================================================
+
+
+@dataclass
+class Event:
+    kind: str
+    message: str
+    data: dict = field(default_factory=dict)
+
+
+class Trace:
+    """An ordered list of pipeline events for one turn.
+
+    The web interface, the tests and the audit log all read this instead of
+    parsing printed text, so wording changes cannot silently break them.
+    """
+
+    def __init__(self):
+        self.events: list[Event] = []
+
+    def log(self, kind: str, message: str, **data) -> None:
+        self.events.append(Event(kind, message, data))
+
+    def kinds(self) -> list[str]:
+        return [event.kind for event in self.events]
+
+    def find(self, kind: str) -> list[Event]:
+        return [event for event in self.events if event.kind == kind]
+
+    def render(self) -> str:
+        return "\n".join(f"[{event.kind}] {event.message}" for event in self.events)
+
+
+_CURRENT_TRACE: contextvars.ContextVar[Trace | None] = contextvars.ContextVar(
+    "support_bot_trace", default=None
+)
+
+
+def log(kind: str, message: str, **data) -> None:
+    """Record an event on the current turn's trace.
+
+    Outside a run (for example a function called directly from the terminal)
+    there is no trace, so the event is printed instead — nothing is lost.
+    """
+    trace = _CURRENT_TRACE.get()
+    if trace is None:
+        print(f"  [{kind}] {message}")
+    else:
+        trace.log(kind, message, **data)
+
+
+@dataclass
+class AgentResult:
+    """What one turn produces. `answer` is the only part a customer sees."""
+
+    answer: str
+    notes: list[str]
+    evidence: list[str]
+    trace: Trace
+    escalated: bool
+    tools_used: list[str]
+    models: dict
+
+    def render(self) -> str:
+        """Terminal view: the answer, then the notes and the raw evidence."""
+        text = self.answer
+        if self.notes:
+            text += "\n\n  [" + "; ".join(self.notes) + "]"
+        if self.evidence:
+            text += "\n\n  --- audit trail (raw evidence) ---\n  "
+            text += "\n\n".join(self.evidence).replace("\n", "\n  ")
+        return text
 
 
 # =========================================================
@@ -121,28 +216,32 @@ def extract_json(text):
     return None
 
 
-def call_json(prompt, max_tokens=600, attempts=2):
+def text_of(response) -> str:
+    return "".join(block.text for block in response.content if block.type == "text")
+
+
+def call_json(prompt, max_tokens=None, attempts=2):
     """Call the helper model and parse JSON, with one retry. None on failure."""
     for attempt in range(attempts):
         try:
             response = client.messages.create(
                 model=HELPER_MODEL,
-                max_tokens=max_tokens,
+                max_tokens=max_tokens or SETTINGS.helper_max_tokens,
+                output_config={"effort": SETTINGS.helper_effort},
                 messages=[{"role": "user", "content": prompt}],
             )
-            text = "".join(b.text for b in response.content if b.type == "text")
-            payload = extract_json(text)
+            payload = extract_json(text_of(response))
             if payload is None:
-                raise ValueError(f"no JSON in {text[:70]!r}")
+                raise ValueError("no JSON in helper response")
             return json.loads(payload)
         except Exception as error:
             if attempt == attempts - 1:
-                print(f"  [helper call failed: {error}]")
+                log("helper_failed", f"helper call failed: {error}", error=str(error))
                 return None
 
 
 # =========================================================
-# WEAKNESS 1 — DETERMINISTIC CITATION CHECK
+# CITATION GUARD — deterministic
 # =========================================================
 
 URL_PATTERN = re.compile(r"(?:https?://)?(?:[a-z0-9-]+\.)+[a-z]{2,}(?:/[^\s,;)\]\"']*)?", re.I)
@@ -161,17 +260,29 @@ def normalise_url(url):
 
 
 def normalise_number(text):
-    """Reduce to digits only, so '0800 023 4567' == '08000234567'."""
+    """Reduce to digits only, so '0117 496 0100' == '01174960100'."""
     return re.sub(r"\D", "", text)
+
+
+def number_tokens(text):
+    """Every number in a text, as a set of digit strings.
+
+    Each number is a token in its own right. An earlier version joined all the
+    evidence digits into one string and tested substrings against it, which
+    let any figure pass if its digits happened to appear across the join of two
+    unrelated numbers — "0119 98" against "FW-1001 ... 1998", for example.
+    """
+    return {normalise_number(match) for match in NUMBER_PATTERN.findall(text)} - {""}
 
 
 def check_citations(answer, evidence):
     """Require every URL and number in the answer to appear in the evidence.
 
     This is the only guarantee in the whole system that cannot be talked out
-    of. The LLM verifier passed 'fernhillwealth.example/offices' because it looked right
-    and was a substring of a longer URL. This function demands an EXACT match
-    after normalisation, so truncating a path to guess a parent is caught.
+    of. The LLM verifier passed 'fernhillwealth.example/offices' because it
+    looked right and was a substring of a longer URL. This function demands an
+    EXACT match after normalisation, so truncating a path to guess a parent is
+    caught, and so is a number assembled from pieces of other numbers.
 
     Returns a list of violations. Empty list means clean.
     """
@@ -197,136 +308,72 @@ def check_citations(answer, evidence):
         else:
             violations.append(f"URL '{raw}' does not appear in the evidence at all.")
 
-    evidence_digits = normalise_number(evidence)
+    evidence_numbers = number_tokens(evidence)
     for raw in NUMBER_PATTERN.findall(answer):
         digits = normalise_number(raw)
         if not digits or digits in NUMBER_ALLOWLIST:
             continue
-        if digits not in evidence_digits:
+        if digits not in evidence_numbers:
             violations.append(f"Number '{raw.strip()}' does not appear in the evidence.")
 
     return violations
 
 
 # =========================================================
-# RETRIEVAL
+# RETRIEVAL — BM25, normalised to the query's ceiling
 # =========================================================
 
 STOPWORDS = {
-    "the",
-    "a",
-    "an",
-    "is",
-    "are",
-    "was",
-    "were",
-    "to",
-    "of",
-    "and",
-    "or",
-    "i",
-    "im",
-    "my",
-    "me",
-    "we",
-    "you",
-    "your",
-    "how",
-    "do",
-    "does",
-    "did",
-    "what",
-    "when",
-    "where",
-    "which",
-    "who",
-    "can",
-    "could",
-    "would",
-    "should",
-    "for",
-    "in",
-    "on",
-    "at",
-    "it",
-    "this",
-    "that",
-    "with",
-    "about",
-    "from",
-    "have",
-    "has",
-    "had",
-    "be",
-    "been",
-    "get",
-    "got",
-    "any",
-    "please",
-    "thanks",
-    "long",
-    "take",
-    "takes",
-    "make",
-    "made",
-    "need",
-    "want",
-    "know",
-    "tell",
-    "help",
-    "like",
-    "just",
-    "also",
-    "there",
-    "their",
-    "am",
-    "if",
-    "so",
-    "but",
-    "not",
-    "no",
-    "yes",
-    "all",
-    "out",
-    "up",
-    "by",
-    "as",
-}
+    "the", "a", "an", "is", "are", "was", "were", "to", "of", "and", "or",
+    "i", "im", "my", "me", "we", "you", "your", "how", "do", "does", "did",
+    "what", "when", "where", "which", "who", "can", "could", "would", "should",
+    "for", "in", "on", "at", "it", "this", "that", "with", "about", "from",
+    "have", "has", "had", "be", "been", "get", "got", "any", "please", "thanks",
+    "long", "take", "takes", "make", "made", "need", "want", "know", "tell",
+    "help", "like", "just", "also", "there", "their", "am", "if", "so", "but",
+    "not", "no", "yes", "all", "out", "up", "by", "as",
+}  # fmt: skip
 
 
 def tokenize(text):
-    words = re.findall(r"[a-z0-9@.]+", text.lower())
-    tokens = set()
-    for word in words:
+    """Lower-case word tokens with stopwords removed and plurals folded.
+
+    Returns a list, not a set: BM25 needs to know how often a term occurs in
+    a document, not only whether it occurs.
+    """
+    tokens = []
+    for word in re.findall(r"[a-z0-9@.]+", text.lower()):
         if word in STOPWORDS or len(word) < 2:
             continue
         if len(word) > 3 and word.endswith("s") and not word.endswith("ss"):
             word = word[:-1]
-        tokens.add(word)
+        tokens.append(word)
     return tokens
 
 
+K1, B = 1.2, 0.75
+
+
 def build_index():
+    """Term frequencies per document, document lengths, and BM25 idf per term."""
     documents = []
     for entry in KNOWLEDGE_BASE:
-        documents.append(
-            {
-                "entry": entry,
-                "tokens": tokenize(entry["topic"] + " " + entry["content"]),
-            }
-        )
+        tokens = tokenize(entry["topic"] + " " + entry["content"])
+        documents.append({"entry": entry, "tf": Counter(tokens), "length": len(tokens)})
     total = len(documents)
-    frequency = {}
-    for document in documents:
-        for token in document["tokens"]:
-            frequency[token] = frequency.get(token, 0) + 1
-    idf = {t: math.log((total + 1) / (c + 1)) + 1.0 for t, c in frequency.items()}
-    return documents, idf
+    document_frequency = Counter(term for document in documents for term in document["tf"])
+    idf = {
+        term: math.log(1 + (total - df + 0.5) / (df + 0.5))
+        for term, df in document_frequency.items()
+    }
+    # A term the corpus has never seen is maximally informative; it also
+    # cannot match, so it only lowers the normalised score of the query.
+    unknown_idf = math.log(1 + (total + 0.5) / 0.5)
+    return documents, idf, unknown_idf
 
 
-DOCUMENTS, IDF = build_index()
-AVG_DOC_LENGTH = sum(len(d["tokens"]) for d in DOCUMENTS) / len(DOCUMENTS)
-K1, B = 1.2, 0.75
+DOCUMENTS, IDF, UNKNOWN_IDF = build_index()
+AVG_DOC_LENGTH = sum(document["length"] for document in DOCUMENTS) / len(DOCUMENTS)
 
 
 def expand_query(query):
@@ -343,7 +390,6 @@ def expand_query(query):
         "meaningful words plus close synonyms and generic related terms.\n"
         "Do NOT invent place names, brand names, product names, numbers or any "
         "specific detail the customer did not mention.",
-        max_tokens=200,
     )
     if isinstance(result, list):
         return {str(t).lower() for t in result if isinstance(t, (str, int))}
@@ -351,30 +397,39 @@ def expand_query(query):
 
 
 def score_documents(query_tokens):
-    """IDF-weighted overlap with BM25 length normalisation."""
-    weight_total = sum(IDF.get(t, 1.0) for t in query_tokens) or 1.0
+    """BM25 (Robertson/Spärck Jones idf, tf saturation, length normalisation).
+
+    Scores are divided by the query's saturation ceiling — the score a document
+    would get if every query term appeared in it with unbounded frequency — so
+    they fall between 0 and 1 and the relevance floor means the same thing for
+    a two-word query as for a ten-word one.
+    """
+    query_tokens = set(query_tokens)
+    ceiling = sum(IDF.get(term, UNKNOWN_IDF) * (K1 + 1) for term in query_tokens) or 1.0
     results = []
     for document in DOCUMENTS:
-        matched = query_tokens & document["tokens"]
+        matched = query_tokens & document["tf"].keys()
         if not matched:
             continue
-        penalty = K1 * (1 - B + B * len(document["tokens"]) / AVG_DOC_LENGTH) + 1
-        weight = (K1 + 1) / penalty
-        score = sum(IDF.get(t, 1.0) * weight for t in matched) / weight_total
-        results.append((score, matched, document["entry"]))
+        length_norm = K1 * (1 - B + B * document["length"] / AVG_DOC_LENGTH)
+        score = 0.0
+        for term in matched:
+            tf = document["tf"][term]
+            score += IDF[term] * tf * (K1 + 1) / (tf + length_norm)
+        results.append((score / ceiling, matched, document["entry"]))
     results.sort(key=lambda row: row[0], reverse=True)
     return results
 
 
 # =========================================================
-# WEAKNESS 2 — RERANKING
+# RERANKING
 # =========================================================
 
 
 def rerank(query, candidates):
     """Have a model read each candidate and judge whether it answers the query.
 
-    Lexical scoring counts word overlap; it cannot see that "not branch opening
+    Lexical scoring counts word overlap; it cannot see that "not office opening
     hours" is a denial, or that an entry shares words while answering a
     different question. Reranking reads. Retrieve widely, then filter by
     comprehension — the standard two-stage pattern in production search.
@@ -396,11 +451,10 @@ def rerank(query, candidates):
         f'CUSTOMER QUESTION: "{query}"\n\nENTRIES:\n{listing}\n\n'
         'Return ONLY: {"relevant": [0, 2]} listing the indexes that genuinely '
         'answer the question, best first. Return {"relevant": []} if none do.',
-        max_tokens=300,
     )
 
     if not isinstance(result, dict) or "relevant" not in result:
-        print("  [rerank unavailable — using lexical order]")
+        log("rerank_unavailable", "rerank unavailable — using lexical order")
         return candidates[:TOP_K]
 
     kept = []
@@ -409,30 +463,39 @@ def rerank(query, candidates):
             kept.append(candidates[index])
     dropped = len(candidates) - len(kept)
     if dropped:
-        print(f"  [rerank dropped {dropped} of {len(candidates)} candidates]")
+        log(
+            "rerank",
+            f"rerank dropped {dropped} of {len(candidates)} candidates",
+            dropped=dropped,
+            total=len(candidates),
+        )
     return kept[:TOP_K]
 
 
 def search_knowledge_base(query):
-    raw_tokens = tokenize(query)
+    raw_tokens = set(tokenize(query))
     expanded = expand_query(query)
-    all_tokens = raw_tokens | tokenize(" ".join(expanded))
+    all_tokens = raw_tokens | set(tokenize(" ".join(expanded)))
 
     added = sorted(all_tokens - raw_tokens)
     if added:
-        print(f"  [expanded +{len(added)}: {', '.join(added[:8])}]")
+        log("expanded", f"expanded +{len(added)}: {', '.join(added[:8])}", terms=added)
 
     scored = score_documents(all_tokens)
     candidates = [row for row in scored if row[0] >= RELEVANCE_FLOOR][:CANDIDATES]
 
     if not candidates:
-        best = f"{scored[0][0]:.2f}" if scored else "0.00"
-        print(f"  [no candidates above floor {RELEVANCE_FLOOR} — best was {best}]")
+        best = scored[0][0] if scored else 0.0
+        log(
+            "no_candidates",
+            f"no candidates above floor {RELEVANCE_FLOOR} — best was {best:.2f}",
+            best=best,
+        )
 
     kept = rerank(query, candidates) if USE_RERANK else candidates[:TOP_K]
 
     if candidates and not kept:
-        print(f"  [rerank rejected all {len(candidates)} candidates as irrelevant]")
+        log("rerank_rejected_all", f"rerank rejected all {len(candidates)} candidates")
 
     if not kept:
         return (
@@ -442,7 +505,7 @@ def search_knowledge_base(query):
 
     blocks = []
     for score, _, entry in kept:
-        print(f"  [kept {score:.2f}] {entry['topic']}")
+        log("kept", f"kept {score:.2f} {entry['topic']}", score=score, topic=entry["topic"])
         blocks.append(
             f"[{entry['topic']}] (relevance {score:.2f})\n"
             f"{entry['content']}\nSource: {entry['source']}"
@@ -479,11 +542,10 @@ def look_up_client_query(reference):
 
 
 def escalate_to_adviser(reason, summary):
-    print(f"\n  [!] ESCALATION LOGGED — {reason}")
-    print(f"      {summary}")
+    log("escalation", f"ESCALATION LOGGED — {reason}: {summary}", reason=reason, summary=summary)
     return (
         "Escalation logged. Tell the customer a qualified adviser will contact "
-        "them, and give the switchboard number 0117 496 0100."
+        f"them, and give the switchboard number {SWITCHBOARD}."
     )
 
 
@@ -546,7 +608,9 @@ SYSTEM_PROMPT = """You are a customer support assistant for Fernhill Wealth, a U
 management firm.
 
 FAITHFULNESS RULES — these override helpfulness:
-1. Every fact you state must appear in a tool result from THIS turn.
+1. Every fact you state must appear in a tool result from THIS turn. Always
+   look a question up with a tool before answering it; never answer from
+   memory, even when you think you know the answer.
 2. Reproduce STATUS_VERBATIM word for word, inside quotation marks.
 3. Add nothing. No "on file", no "covering the outcome", no reassurance the
    evidence does not contain. Terse and accurate beats warm and embellished.
@@ -614,10 +678,9 @@ def verify_answer(answer, evidence):
         "politeness is fine and must not be flagged.\n\n"
         f"EVIDENCE:\n{evidence}\n\nANSWER:\n{answer}\n\n"
         'Return ONLY: {"grounded": true, "unsupported": []}',
-        max_tokens=500,
     )
     if not isinstance(result, dict):
-        print("  [!] VERIFICATION UNAVAILABLE — answer NOT fact-checked")
+        log("verification_unavailable", "VERIFICATION UNAVAILABLE — answer NOT fact-checked")
         return {"status": "unavailable", "unsupported": []}
 
     unsupported = [str(c) for c in result.get("unsupported", [])]
@@ -635,26 +698,14 @@ def verify_answer(answer, evidence):
 UNRESOLVED_MARKERS = ("NO_MATCH", "NO_RECORD")
 
 PLEASANTRIES = {
-    "hi",
-    "hello",
-    "hey",
-    "good morning",
-    "good afternoon",
-    "good evening",
-    "thanks",
-    "thank you",
-    "thanks a lot",
-    "cheers",
-    "ok",
-    "okay",
-    "bye",
-    "goodbye",
-    "great",
-    "perfect",
-    "no thanks",
-    "that's all",
-    "thats all",
-}
+    "hi", "hello", "hey", "good morning", "good afternoon", "good evening",
+    "thanks", "thank you", "thanks a lot", "cheers", "ok", "okay", "bye",
+    "goodbye", "great", "perfect", "no thanks", "that's all", "thats all",
+}  # fmt: skip
+
+
+def is_pleasantry(text):
+    return text.lower().strip(" .!?,") in PLEASANTRIES
 
 
 def enforce_escalation(answer, evidence_parts, model_escalated, state):
@@ -681,11 +732,11 @@ def enforce_escalation(answer, evidence_parts, model_escalated, state):
     asked_for_clarification = "?" in answer
     if asked_for_clarification and state["unclear_turns"] == 0:
         state["unclear_turns"] = 1
-        print("  [policy: clarification allowed once]")
+        log("policy_clarify", "policy: clarification allowed once")
         return answer, False
 
     state["unclear_turns"] = 0
-    print("  [!] POLICY: unresolved and not escalated — escalating in code")
+    log("policy_escalate", "POLICY: unresolved and not escalated — escalating in code")
     escalate_to_adviser(
         "unresolved query (policy-enforced)",
         "The knowledge base had no answer and the assistant did not escalate.",
@@ -703,6 +754,19 @@ def enforce_escalation(answer, evidence_parts, model_escalated, state):
 # =========================================================
 
 
+def _main_call(messages, use_tools):
+    request = {
+        "model": MAIN_MODEL,
+        "max_tokens": SETTINGS.main_max_tokens,
+        "output_config": {"effort": SETTINGS.main_effort},
+        "system": SYSTEM_PROMPT,
+        "messages": messages,
+    }
+    if use_tools:
+        request["tools"] = tools
+    return client.messages.create(**request)
+
+
 def rewrite(messages, problems):
     """Send the answer back to be rewritten strictly from evidence."""
     messages.append(
@@ -717,14 +781,9 @@ def rewrite(messages, problems):
             ),
         }
     )
-    response = client.messages.create(
-        model=MAIN_MODEL,
-        max_tokens=1000,
-        system=SYSTEM_PROMPT,
-        messages=messages,
-    )
+    response = _main_call(messages, use_tools=False)
     messages.append({"role": "assistant", "content": response.content})
-    return "".join(b.text for b in response.content if b.type == "text")
+    return text_of(response)
 
 
 def rewrite_after_escalation(messages):
@@ -743,33 +802,52 @@ def rewrite_after_escalation(messages):
                 "message as one short, coherent reply that: says plainly you do not "
                 "have the information; states that it HAS BEEN passed to a qualified "
                 "adviser who will be in touch; gives the switchboard number "
-                "0117 496 0100. Do not offer to escalate, since it has already "
+                f"{SWITCHBOARD}. Do not offer to escalate, since it has already "
                 "happened, and do not ask the customer any question. Do not call "
                 "any tools."
             ),
         }
     )
-    response = client.messages.create(
-        model=MAIN_MODEL,
-        max_tokens=500,
-        system=SYSTEM_PROMPT,
-        messages=messages,
-    )
+    response = _main_call(messages, use_tools=False)
     messages.append({"role": "assistant", "content": response.content})
-    return "".join(b.text for b in response.content if b.type == "text")
+    return text_of(response)
 
 
-def run_agent(messages, state):
+EVIDENCE_GUARD_RETRY = (
+    "You answered without consulting any tool. Every fact must come from a tool "
+    "result in this turn. Look the question up with the appropriate tool now, "
+    "then answer from what it returns."
+)
+EVIDENCE_GUARD_NO_MATCH = (
+    "evidence_guard -> NO_MATCH: the assistant answered twice without consulting "
+    "any tool, so the answer cannot be evidenced. Escalate."
+)
+
+
+def run_agent(messages, state) -> AgentResult:
+    """Run one customer turn.
+
+    `messages` is the conversation so far (the newest user message last);
+    `state` persists across turns because the escalation policy needs memory.
+    """
+    trace = Trace()
+    token = _CURRENT_TRACE.set(trace)
+    try:
+        return _run_turn(messages, state, trace)
+    finally:
+        _CURRENT_TRACE.reset(token)
+
+
+def _run_turn(messages, state, trace) -> AgentResult:
     wiped = expire_stale_results(messages)
     if wiped:
-        print(f"  [expired {wiped} old result(s)]")
+        log("expired", f"expired {wiped} old result(s)", count=wiped)
 
-    evidence_parts = []
+    evidence_parts: list[str] = []
+    tools_used: list[str] = []
     model_escalated = False
+    guard_retries = 0
 
-    # A greeting needs no evidence, so forcing a tool call just burns an API
-    # call searching the knowledge base for "hello". Deterministic list only:
-    # anything not on it is treated as a real question and still forced.
     last_message = next(
         (
             m["content"]
@@ -778,101 +856,121 @@ def run_agent(messages, state):
         ),
         "",
     )
-    is_greeting = last_message.lower().strip(" .!?,") in PLEASANTRIES
+    # A greeting needs no evidence. Deterministic list only: anything not on
+    # it is treated as a real question and must be answered from a tool.
+    is_greeting = is_pleasantry(last_message)
 
-    for step in range(MAX_STEPS):
-        force = FORCE_TOOL_FIRST and step == 0 and not is_greeting
-        tool_choice = {"type": "any"} if force else {"type": "auto"}
+    models = {"main": MAIN_MODEL, "helper": HELPER_MODEL}
 
-        response = client.messages.create(
-            model=MAIN_MODEL,
-            max_tokens=1000,
-            system=SYSTEM_PROMPT,
-            tools=tools,
-            tool_choice=tool_choice,
-            messages=messages,
-        )
+    for _step in range(MAX_STEPS):
+        response = _main_call(messages, use_tools=True)
         messages.append({"role": "assistant", "content": response.content})
 
-        if response.stop_reason != "tool_use":
-            answer = "".join(b.text for b in response.content if b.type == "text")
-            evidence = "\n\n".join(evidence_parts)
-            notes = []
+        if response.stop_reason == "tool_use":
+            tool_results = []
+            for block in response.content:
+                if block.type != "tool_use":
+                    continue
+                log("tool", f"{block.name}({block.input})", name=block.name, input=block.input)
+                tools_used.append(block.name)
+                if block.name == "escalate_to_adviser":
+                    model_escalated = True
+                try:
+                    result = TOOL_FUNCTIONS[block.name](**block.input)
+                except Exception as error:
+                    result = f"Tool failed: {error}"
+                    log("tool_failed", f"{block.name} failed: {error}", name=block.name)
+                evidence_parts.append(f"{block.name} -> {result}")
+                tool_results.append(
+                    {"type": "tool_result", "tool_use_id": block.id, "content": result}
+                )
+            messages.append({"role": "user", "content": tool_results})
+            continue
 
-            # Deterministic check first: it is certain, and it is cheap.
-            if CHECK_CITATIONS and evidence:
-                violations = check_citations(answer, evidence)
-                if violations:
-                    print("\n  [!] CITATION VIOLATIONS (deterministic):")
-                    for problem in violations:
-                        print(f"      - {problem}")
-                    answer = rewrite(messages, violations)
-                    notes.append("rewritten after citation check")
+        answer = text_of(response)
 
-                    remaining = check_citations(answer, evidence)
-                    if remaining:
-                        print("  [!] STILL UNSUPPORTED after rewrite — flagging")
-                        notes.append(f"WARNING: unverified detail remains ({len(remaining)})")
-                    else:
-                        print("  [citations: clean after rewrite]")
-                else:
-                    print("  [citations: clean]")
-
-            # Then the judgement-based check.
-            if VERIFY_ANSWERS and evidence:
-                verdict = verify_answer(answer, evidence)
-                if verdict["status"] == "unsupported":
-                    print("\n  [!] UNSUPPORTED CLAIMS:")
-                    for claim in verdict["unsupported"]:
-                        print(f"      - {claim}")
-                    answer = rewrite(messages, verdict["unsupported"])
-                    notes.append("rewritten after fact-check")
-                elif verdict["status"] == "grounded":
-                    print("  [verified: grounded]")
-                else:
-                    notes.append("WARNING: fact-check unavailable")
-
-            # Policy runs last, on the final wording, and cannot be overridden.
-            answer, forced = enforce_escalation(answer, evidence_parts, model_escalated, state)
-            if forced:
-                answer = rewrite_after_escalation(messages)
-                notes.append("escalated by policy")
-
-            if notes:
-                answer += "\n\n  [" + "; ".join(notes) + "]"
-            if SHOW_AUDIT and evidence:
-                answer += "\n\n  --- audit trail (raw evidence) ---\n  "
-                answer += evidence.replace("\n", "\n  ")
-            return answer
-
-        tool_results = []
-        for block in response.content:
-            if block.type != "tool_use":
+        # EVIDENCE GUARD: a real question answered without any tool call is an
+        # answer from memory. Tell the model once; if it still will not look
+        # the question up, the turn is unanswerable and the policy escalates.
+        if REQUIRE_EVIDENCE and not is_greeting and not evidence_parts:
+            if guard_retries == 0:
+                guard_retries = 1
+                log("evidence_guard", "answered without a tool — asking for a lookup")
+                messages.append({"role": "user", "content": EVIDENCE_GUARD_RETRY})
                 continue
-            print(f"  [tool] {block.name}({block.input})")
-            if block.name == "escalate_to_adviser":
-                model_escalated = True
-            try:
-                result = TOOL_FUNCTIONS[block.name](**block.input)
-            except Exception as error:
-                result = f"Tool failed: {error}"
-            evidence_parts.append(f"{block.name} -> {result}")
-            tool_results.append(
-                {
-                    "type": "tool_result",
-                    "tool_use_id": block.id,
-                    "content": result,
-                }
-            )
-        messages.append({"role": "user", "content": tool_results})
+            log("evidence_guard_failed", "still no tool call — treating as unanswerable")
+            evidence_parts.append(EVIDENCE_GUARD_NO_MATCH)
 
-    return "Sorry, I could not complete that. Please call 0117 496 0100."
+        return _finish(
+            answer, messages, evidence_parts, tools_used, model_escalated, state, trace, models
+        )
+
+    log("max_steps", f"gave up after {MAX_STEPS} steps")
+    return AgentResult(
+        answer=f"Sorry, I could not complete that. Please call {SWITCHBOARD}.",
+        notes=["WARNING: step limit reached"],
+        evidence=evidence_parts,
+        trace=trace,
+        escalated=False,
+        tools_used=tools_used,
+        models=models,
+    )
+
+
+def _finish(answer, messages, evidence_parts, tools_used, model_escalated, state, trace, models):
+    evidence = "\n\n".join(evidence_parts)
+    notes = []
+
+    # Deterministic check first: it is certain, and it is cheap.
+    if CHECK_CITATIONS and evidence:
+        violations = check_citations(answer, evidence)
+        if violations:
+            log("citation_violation", "CITATION VIOLATIONS (deterministic)", violations=violations)
+            answer = rewrite(messages, violations)
+            notes.append("rewritten after citation check")
+
+            remaining = check_citations(answer, evidence)
+            if remaining:
+                log("citations_remaining", "STILL UNSUPPORTED after rewrite", violations=remaining)
+                notes.append(f"WARNING: unverified detail remains ({len(remaining)})")
+            else:
+                log("citations_clean", "citations: clean after rewrite", after_rewrite=True)
+        else:
+            log("citations_clean", "citations: clean", after_rewrite=False)
+
+    # Then the judgement-based check.
+    if VERIFY_ANSWERS and evidence:
+        verdict = verify_answer(answer, evidence)
+        if verdict["status"] == "unsupported":
+            log("unsupported", "UNSUPPORTED CLAIMS", claims=verdict["unsupported"])
+            answer = rewrite(messages, verdict["unsupported"])
+            notes.append("rewritten after fact-check")
+        elif verdict["status"] == "grounded":
+            log("verified", "verified: grounded")
+        else:
+            notes.append("WARNING: fact-check unavailable")
+
+    # Policy runs last, on the final wording, and cannot be overridden.
+    answer, forced = enforce_escalation(answer, evidence_parts, model_escalated, state)
+    if forced:
+        answer = rewrite_after_escalation(messages)
+        notes.append("escalated by policy")
+
+    return AgentResult(
+        answer=answer,
+        notes=notes,
+        evidence=list(evidence_parts),
+        trace=trace,
+        escalated=model_escalated or forced,
+        tools_used=tools_used,
+        models=models,
+    )
 
 
 if __name__ == "__main__":
     print("Support bot ready. Type 'quit' to exit.\n")
     conversation = []
-    state = {"unclear_turns": 0}  # survives across turns; policy needs memory
+    policy_state = {"unclear_turns": 0}  # survives across turns; policy needs memory
     while True:
         user_input = input("You: ")
         if user_input.lower().strip() in {"quit", "exit"}:
@@ -880,4 +978,6 @@ if __name__ == "__main__":
         if not user_input.strip():
             continue
         conversation.append({"role": "user", "content": user_input})
-        print(f"\nBot: {run_agent(conversation, state)}\n")
+        result = run_agent(conversation, policy_state)
+        print("\n" + result.trace.render())
+        print(f"\nBot: {result.render()}\n")
