@@ -1,6 +1,6 @@
 # Grounded Support Agent
 
-[![CI](https://github.com/jitendraSuwalka/support-bot/actions/workflows/ci.yml/badge.svg?branch=v2-upgrade)](https://github.com/jitendraSuwalka/support-bot/actions/workflows/ci.yml)
+[![CI](https://github.com/jitendraSuwalka/support-bot/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jitendraSuwalka/support-bot/actions/workflows/ci.yml)
 
 ![The agent showing which checks each answer passed](screenshot.png)
 
