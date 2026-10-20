@@ -455,13 +455,21 @@ def rerank(query, candidates):
         for index, (_, _, entry) in enumerate(candidates)
     )
     result = call_json(
-        "Decide which knowledge base entries genuinely answer the customer's "
-        "question. Judge meaning, not shared words. An entry that merely "
-        "mentions the subject, or explicitly says it does NOT cover it, is not "
-        "relevant.\n\n"
+        "Decide which knowledge base entries help answer the customer's question. "
+        "Judge meaning, not shared words.\n\n"
+        "An entry is RELEVANT if it contains information that answers the question "
+        "in whole or in part, even when the entry is mostly about something else. "
+        "For example, an entry listing the firm's offices answers \"do you have an "
+        'office in X" whenever X is on the list, even if the rest of the entry '
+        "describes a different office.\n\n"
+        "An entry is NOT relevant if it only shares vocabulary with the question, "
+        'or explicitly says it does NOT cover what was asked (for example, "these '
+        'are callback slots, not office opening hours" does not answer a question '
+        "about opening hours).\n\n"
         f'CUSTOMER QUESTION: "{query}"\n\nENTRIES:\n{listing}\n\n'
-        'Return ONLY: {"relevant": [0, 2]} listing the indexes that genuinely '
-        'answer the question, best first. Return {"relevant": []} if none do.',
+        'Return ONLY: {"relevant": [0, 2], "reason": "<one sentence>"} listing the '
+        "indexes of relevant entries, best first, and a one-sentence reason. "
+        'Return {"relevant": [], "reason": "..."} if none are relevant.',
     )
 
     if not isinstance(result, dict) or "relevant" not in result:
@@ -473,12 +481,14 @@ def rerank(query, candidates):
         if isinstance(index, int) and 0 <= index < len(candidates):
             kept.append(candidates[index])
     dropped = len(candidates) - len(kept)
+    reason = str(result.get("reason", "")).strip()
     if dropped:
         log(
             "rerank",
             f"rerank dropped {dropped} of {len(candidates)} candidates",
             dropped=dropped,
             total=len(candidates),
+            reason=reason,
         )
     return kept[:TOP_K]
 
