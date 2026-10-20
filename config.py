@@ -1,0 +1,100 @@
+"""
+Runtime settings, read once from the environment.
+
+Every tunable the agent has lives here, with a documented default, so a
+deployment can change behaviour without editing code and a reviewer can see
+every knob in one place. Values come from environment variables prefixed
+SUPPORT_BOT_ (see .env.example); anything unset keeps its default.
+
+Model IDs are pinned snapshots on the Claude API, so a deployment that records
+them (the agent attaches them to every result) can be reproduced later.
+"""
+
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass, fields
+
+ENV_PREFIX = "SUPPORT_BOT_"
+EFFORT_LEVELS = ("low", "medium", "high", "xhigh", "max")
+
+
+@dataclass(frozen=True)
+class Settings:
+    # Models. The main model writes answers and calls tools; the helper model
+    # does the cheap, bounded jobs (query expansion, reranking, fact-checking).
+    main_model: str = "claude-sonnet-5-5"
+    helper_model: str = "claude-haiku-5-5"
+
+    # Effort trades thoroughness for latency and cost. A support chat is
+    # latency-sensitive and the questions are narrow, so both start at "low";
+    # raise it if an evaluation shows quality improving.
+    main_effort: str = "low"
+    helper_effort: str = "low"
+
+    # max_tokens is a hard ceiling on thinking plus reply, so leave headroom.
+    main_max_tokens: int = 4096
+    helper_max_tokens: int = 2048
+
+    # Agent loop.
+    max_steps: int = 8
+
+    # Retrieval. The floor is deliberately loose: reranking does the real
+    # filtering. Retrieve `candidates` widely, keep `top_k` after reranking.
+    relevance_floor: float = 0.15
+    candidates: int = 5
+    top_k: int = 2
+
+    # Guards. Each can be switched off independently; a fully guarded answer
+    # costs several model calls, which is right for a regulated firm and wrong
+    # for most products, so the trade-off is explicit rather than baked in.
+    use_rerank: bool = True
+    verify_answers: bool = True
+    check_citations: bool = True
+    require_evidence: bool = True
+
+    @classmethod
+    def from_env(cls, env: dict[str, str] | None = None) -> Settings:
+        """Build settings from SUPPORT_BOT_* variables, validating each one."""
+        source = os.environ if env is None else env
+        values = {}
+        for field in fields(cls):
+            raw = source.get(ENV_PREFIX + field.name.upper())
+            if raw is None or raw.strip() == "":
+                continue
+            values[field.name] = _parse(field.name, raw.strip(), field.type)
+        settings = cls(**values)
+        settings.validate()
+        return settings
+
+    def validate(self) -> None:
+        for name in ("main_effort", "helper_effort"):
+            if getattr(self, name) not in EFFORT_LEVELS:
+                raise ValueError(f"{name} must be one of {EFFORT_LEVELS}")
+        for name in ("main_max_tokens", "helper_max_tokens", "max_steps", "candidates", "top_k"):
+            if getattr(self, name) < 1:
+                raise ValueError(f"{name} must be at least 1")
+        if not 0.0 <= self.relevance_floor <= 1.0:
+            raise ValueError("relevance_floor must be between 0 and 1")
+        if self.top_k > self.candidates:
+            raise ValueError("top_k cannot exceed candidates")
+
+    def describe(self) -> dict[str, object]:
+        """A plain dictionary, attached to every result for auditability."""
+        return {field.name: getattr(self, field.name) for field in fields(self)}
+
+
+def _parse(name: str, raw: str, kind: str | type) -> object:
+    kind = str(kind)
+    if kind in ("bool", "<class 'bool'>"):
+        lowered = raw.lower()
+        if lowered in ("1", "true", "yes", "on"):
+            return True
+        if lowered in ("0", "false", "no", "off"):
+            return False
+        raise ValueError(f"{name}: expected true/false, got {raw!r}")
+    if kind in ("int", "<class 'int'>"):
+        return int(raw)
+    if kind in ("float", "<class 'float'>"):
+        return float(raw)
+    return raw
