@@ -2,7 +2,7 @@
 title: Closing or transferring an account
 url: https://www.fernhillwealth.example/client-support/closing-or-transferring/
 version: 2026-10
-last_reviewed: 2026-09-15
+last_reviewed: 2026-10-20
 owner: Client Services
 ---
 
@@ -10,25 +10,25 @@ owner: Client Services
 
 ## Before you decide
 
-If you are thinking about closing your account or transferring investments elsewhere, we ask that you speak to your adviser first. They can review your fee structure, discuss investment performance, compare the offer you have received, or reconsider your financial plan. You are under no obligation to stay.
+You are free to close your account or transfer to another provider at any time, and there is no charge for doing so. If you would find it useful, your adviser can talk through your fee structure, performance or the offer you have received, but you are under no obligation to do this.
 
 ## Charges
 
-There is no charge for closing an account or for transferring out. The only costs are any dealing costs if holdings have to be sold, and fund charges, which continue until the holdings are transferred or sold.
+There is no charge for closing an account or for transferring out. On our model portfolios there are no dealing charges if holdings have to be sold. Fund charges continue to be deducted within the funds until the holdings are transferred or sold.
 
 ## Transferring investments to another provider
 
 Transfers are started by the receiving provider. Once we receive their request:
 
-- ISA and general investment account transfers in specie (moving the holdings as they are) typically complete within 15 working days.
-- Transfers that require holdings to be sold first take longer because sale proceeds must settle before they can move.
-- Pension transfers typically take four to eight weeks, depending on the receiving scheme's checks.
+- Re-registration in specie (moving the holdings as they are) of an ISA or general investment account: under HM Revenue & Customs' guidelines ISA transfers should complete within 30 calendar days (15 working days between cash ISAs); re-registration can take longer where fund managers are slow to respond.
+- Cash transfers (holdings sold first): proceeds move once the sales have settled, normally within four working days of dealing.
+- Pension transfers: typically four to eight weeks. The receiving scheme carries out the checks required by the pension transfer regulations, and may require you to take guidance from MoneyHelper if the checks raise an amber flag.
 
-We will keep you informed through the portal at each stage.
+We keep you informed through the portal at each stage.
 
 ## Closing an account
 
-To close an account and withdraw the proceeds, send a signed instruction by post or a secure message through the portal. Proceeds are paid to the verified bank account in your name within five working days of the holdings being sold and settled. Closing a pension is subject to the pension rules on withdrawals and may have tax consequences, so please speak to your adviser first.
+To close an account and withdraw the proceeds, send a signed instruction by post or a secure message through the portal. If cash is already available we pay within five working days of your instruction; if holdings have to be sold, we pay within five working days of settlement. Closing a pension is subject to the pension rules on withdrawals and may have tax consequences; the Pensions page explains the options.
 
 ## Documents after closing
 

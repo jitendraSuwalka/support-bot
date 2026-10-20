@@ -2,7 +2,7 @@
 title: Booking an appointment or a call back
 url: https://www.fernhillwealth.example/book-an-appointment/
 version: 2026-10
-last_reviewed: 2026-10-01
+last_reviewed: 2026-10-20
 owner: Client Services
 ---
 
@@ -12,7 +12,7 @@ owner: Client Services
 
 People considering becoming a client can book a free introductory appointment through the Book an Appointment page or by calling the new client enquiry line on 0808 157 0450. The introductory meeting lasts about 45 minutes, carries no charge and no obligation, and can take place at any of our six offices, by telephone or by video call.
 
-At the introductory meeting we explain how we work, what our services cost, and whether we think we can help. If we both decide to go ahead, we send a written engagement letter setting out the agreed work and fees before anything is charged.
+At the introductory meeting we explain how we work, what our services cost, and whether we think we can help. If we both decide to go ahead, we send a client agreement setting out the agreed work and fees before anything is charged. The Becoming a Client page explains the identity checks and documents we need to open an account.
 
 ## Existing clients
 

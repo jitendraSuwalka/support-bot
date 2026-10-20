@@ -2,7 +2,7 @@
 title: About Fernhill Wealth
 url: https://www.fernhillwealth.example/about-us/
 version: 2026-10
-last_reviewed: 2026-10-01
+last_reviewed: 2026-10-20
 owner: Marketing
 ---
 
@@ -19,17 +19,21 @@ Fernhill Wealth is a UK wealth management firm providing financial planning and 
 
 ## How we work
 
-Every client has a named financial planner and, where we manage investments, a named investment manager. Planners either hold or are working towards Chartered status with the Chartered Insurance Institute or the Chartered Institute for Securities & Investment.
+Every client has a named financial planner and, where we manage investments, a named investment manager. Our planners either hold or are working towards Chartered Financial Planner status with the Personal Finance Society, and our investment managers either hold or are working towards Chartered Wealth Manager status with the Chartered Institute for Securities & Investment.
 
-We are paid by fees agreed in advance, not by commission. Our fee schedule is published on the Fees and Charges page and confirmed in writing before any work begins.
+We are paid by fees agreed in advance, not by commission. Our fee schedule is published on the Fees and Charges page and confirmed in writing in your client agreement before any work begins.
 
 ## Our commitments
 
 - Advice that is suitable for your circumstances, documented in a written suitability report.
-- Plain-language reporting at least quarterly, and an annual review meeting.
+- Plain-language reporting at least quarterly, an annual costs and charges statement, and an annual review meeting.
 - A complaints procedure that meets the Financial Conduct Authority's rules, with free access to the Financial Ombudsman Service if we cannot resolve a complaint.
 - Treating clients in vulnerable circumstances with additional care, in line with the Consumer Duty.
 
 ## Protection
 
-Fernhill Wealth is covered by the Financial Services Compensation Scheme (FSCS). If we were unable to meet our obligations, eligible clients could claim compensation of up to £85,000 per person for investment business. Cash held with our deposit-taking partner banks is protected up to £120,000 per person, per bank. Details are on the FSCS website.
+Fernhill Wealth is covered by the Financial Services Compensation Scheme (FSCS). If we were unable to meet our obligations, eligible clients could claim compensation of up to £85,000 per person for investment business. Cash held with our deposit-taking partner banks is protected up to £120,000 per person, per banking licence; brands within the same banking group may share one licence. Details are on the FSCS website.
+
+## Legal information
+
+Fernhill Wealth is a trading name of Fernhill Wealth Limited, which is authorised and regulated by the Financial Conduct Authority. You can check our authorisation on the Financial Services Register at register.fca.org.uk. Fernhill Wealth Limited is registered in England and Wales; its registered office is Fernhill House, 22 Harbourside Walk, Bristol, BS1 5XY.

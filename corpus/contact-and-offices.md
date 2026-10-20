@@ -2,7 +2,7 @@
 title: Contact us and our offices
 url: https://www.fernhillwealth.example/contact-us/
 version: 2026-10
-last_reviewed: 2026-10-01
+last_reviewed: 2026-10-20
 owner: Client Services
 ---
 
@@ -14,10 +14,13 @@ The main switchboard number is 0117 496 0100. Use this for general enquiries, fo
 
 ## Specialist lines
 
-- New client enquiries: 0808 157 0450 (free from UK landlines and mobiles), 09:00 to 17:30 on working days.
-- Client portal access helpline: 0117 496 0233, 09:00 to 17:30 on working days.
+All specialist lines are open 09:00 to 17:30 on working days unless stated.
+
+- New client enquiries: 0808 157 0450 (free from UK landlines and mobiles).
+- Client portal access helpline: 0117 496 0233.
 - Client Resolution (complaints): 0117 496 0355, or complaints@fernhillwealth.example.
-- Bereavement and life events team: 0117 496 0412.
+- Bereavement and life events team: 0117 496 0412, or lifeevents@fernhillwealth.example.
+- Fraud and Security team: call the switchboard on 0117 496 0100 and ask for Fraud and Security; outside switchboard hours, leave a message and the team will call you back the next working day.
 
 ## Email
 

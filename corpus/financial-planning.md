@@ -2,18 +2,18 @@
 title: Financial planning service
 url: https://www.fernhillwealth.example/services/financial-planning/
 version: 2026-10
-last_reviewed: 2026-10-01
+last_reviewed: 2026-10-20
 owner: Advice
 ---
 
 # Financial planning service
 
-Financial planning covers either a comprehensive plan across your whole financial position, or one-off advice on a single topic. All financial planners either hold or are working towards Chartered status.
+Financial planning covers either a comprehensive plan across your whole financial position, or one-off advice on a single topic. All our financial planners either hold or are working towards Chartered Financial Planner status.
 
 ## What a comprehensive plan covers
 
 - Pensions and retirement planning, including when you could afford to stop work.
-- Tax planning, using allowances such as the ISA allowance and pension annual allowance.
+- Tax planning, using allowances such as the ISA allowance, the pension annual allowance, the capital gains tax annual exempt amount and the dividend allowance.
 - Financial protection: life cover, income protection and critical illness cover.
 - Inheritance tax and estate planning, including gifts and trusts.
 - Cashflow modelling, which projects your income, spending and assets year by year to show whether your plans are affordable.
@@ -39,3 +39,7 @@ One-off advice is available on a single topic, such as whether to consolidate pe
 ## Independence
 
 Fernhill Wealth gives independent advice. We consider products from across the whole market and are not restricted to any provider's range.
+
+## Important information
+
+This page is general information, not personal advice. Tax treatment depends on your individual circumstances and may change in the future. The value of investments and the income from them can fall as well as rise, and you may get back less than you invested.

@@ -2,7 +2,7 @@
 title: Using the client portal
 url: https://www.fernhillwealth.example/client-support/portal/
 version: 2026-10
-last_reviewed: 2026-09-15
+last_reviewed: 2026-10-20
 owner: Client Services
 ---
 
@@ -25,7 +25,7 @@ You log in with your email address, your password and a six-digit code from your
 
 - Current valuation of each account, updated each working day.
 - Transactions for the last seven years.
-- Quarterly valuation reports, annual tax statements and your suitability reports.
+- Quarterly valuation reports, the annual costs and charges statement, annual tax statements and your suitability reports.
 - Secure messages to and from your adviser, with a reply within two working days.
 
 ## Documents

@@ -2,7 +2,7 @@
 title: Accessibility and additional support
 url: https://www.fernhillwealth.example/accessibility/
 version: 2026-10
-last_reviewed: 2026-10-01
+last_reviewed: 2026-10-20
 owner: Client Services
 ---
 

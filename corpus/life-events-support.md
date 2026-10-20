@@ -2,7 +2,7 @@
 title: Support through life events
 url: https://www.fernhillwealth.example/client-support/life-events/
 version: 2026-10
-last_reviewed: 2026-09-15
+last_reviewed: 2026-10-20
 owner: Client Services
 ---
 
@@ -12,13 +12,15 @@ There is a dedicated help and support route for clients dealing with bereavement
 
 ## Bereavement
 
-If a client has died, please let us know as soon as you are able. We will place a hold on the account so that no further fees or trades are taken, and send you a short guide to what happens next. We will need:
+If a client has died, please let us know as soon as you are able; you can also use the Death Notification Service, which tells several financial firms at once. When we are notified, any discretionary mandate ends and the portfolio is held as it is until the personal representatives instruct us. Our management and custody fees stop from the date of death; fund charges continue within the funds until holdings are sold or transferred. We provide a date-of-death valuation for the estate free of charge.
+
+We will need:
 
 - the original or a certified copy of the death certificate;
-- details of the executor or administrator of the estate;
-- the grant of probate or letters of administration before assets can be released.
+- details of the executors or administrators of the estate;
+- the grant of probate or letters of administration (in Scotland, Confirmation) before assets can be released. Where the total value held with us is below £30,000 we can usually release assets to the personal representatives without a grant, against a signed indemnity.
 
-A named member of the team will stay with you throughout. Valuations for probate are provided free of charge.
+An ISA continues to be tax-free as a continuing account of a deceased investor for up to three years while the estate is administered. A named member of the team stays with you throughout.
 
 ## Divorce or dissolution
 
@@ -26,7 +28,7 @@ We can provide valuations and statements for financial disclosure, and we work w
 
 ## Power of attorney
 
-If you have appointed an attorney under a Lasting Power of Attorney for property and financial affairs, send us a certified copy of the registered document and proof of the attorney's identity. Once registered, the attorney can instruct us within the powers granted. If you would like to put a power of attorney in place, your adviser can explain the options; we recommend that the document itself is drawn up by a solicitor.
+If you have appointed an attorney, send us a certified copy of the registered document and proof of the attorney's identity. We accept a registered Lasting Power of Attorney for property and financial affairs, an Enduring Power of Attorney made before October 2007, and, for clients in Scotland, a continuing power of attorney registered with the Office of the Public Guardian (Scotland). Once registered with us, the attorney can instruct us within the powers granted. If you are thinking about putting a power of attorney in place, you may wish to take legal advice; the Office of the Public Guardian's website explains how to make one.
 
 ## Serious illness
 
