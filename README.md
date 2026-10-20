@@ -1,5 +1,7 @@
 # Grounded Support Agent
 
+[![CI](https://github.com/jitendraSuwalka/support-bot/actions/workflows/ci.yml/badge.svg?branch=v2-upgrade)](https://github.com/jitendraSuwalka/support-bot/actions/workflows/ci.yml)
+
 ![The agent showing which checks each answer passed](screenshot.png)
 
 A customer support agent for a UK wealth management firm, built to answer only
@@ -295,6 +297,18 @@ python -m venv .venv
 .venv\Scripts\activate          # Windows;  source .venv/bin/activate on macOS/Linux
 pip install -r requirements.txt
 ```
+
+To reproduce the exact environment the tests and CI use (every transitive
+dependency pinned, cross-platform), install from the lockfile instead:
+
+```bash
+pip install -r requirements.lock
+```
+
+**Updating dependencies.** Edit the pin in `requirements.txt` or
+`requirements-dev.txt`, regenerate the lock with
+`uv pip compile requirements-dev.txt --universal --python-version 3.11 -o requirements.lock`,
+and let CI prove the change before merging.
 
 Copy `.env.example` to `.env` and add your key:
 
