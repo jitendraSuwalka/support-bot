@@ -1,4 +1,6 @@
-# Python 3.10 or newer
-anthropic>=0.120
-python-dotenv>=1.0
-gradio>=6.0
+# Runtime dependencies, pinned to exact versions so every install is identical.
+# These are the versions verified against the test suite on 20 October 2026.
+# Transitive dependencies are frozen in requirements.lock (see Step 0.3).
+anthropic==1.15.0
+python-dotenv==1.2.4
+gradio==6.30.0

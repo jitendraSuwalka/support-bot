@@ -1,4 +1,26 @@
+# Secrets
 .env
+
+# Virtual environments
 .venv/
+venv/
+
+# Python build and cache artefacts
 __pycache__/
 *.pyc
+*.egg-info/
+build/
+dist/
+
+# Tooling caches and reports
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Editors and operating systems
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

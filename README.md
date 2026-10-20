@@ -1,8 +1,11 @@
 # Grounded Support Agent
 
+[![CI](https://github.com/jitendraSuwalka/support-bot/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jitendraSuwalka/support-bot/actions/workflows/ci.yml)
+
 ![The agent showing which checks each answer passed](screenshot.png)
 
-A customer support agent for a UK wealth management firm, built to answer only
+A customer support agent for Fernhill Wealth — a fictional UK wealth-management
+firm — built to answer only
 what it can evidence — and to prove, in code, that it does.
 
 The interesting part is not that an LLM can call tools. It is that a support
@@ -15,12 +18,16 @@ a hope.
 ```
 python app.py          # web interface
 python agent.py        # same agent, in the terminal
-python evaluate.py     # 52 tests, ~1 second, no API calls
+pytest                 # 81 tests, under five seconds, no API calls
 ```
 
-> **Disclaimer.** A personal learning project, not affiliated with or endorsed
-> by Evelyn Partners. The knowledge base is paraphrased from publicly available
-> web pages; client records are invented. No real client data is used anywhere.
+> **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
+> firms present their services, complaints procedures and client support —
+> informed by my own experience working in the sector — but every policy,
+> address, client record and phone number is invented. The website lives on the
+> reserved `.example` domain and the phone numbers come from Ofcom's film-and-
+> drama ranges, so the agent can never direct a real customer to a real place.
+> A personal learning project; no real client data is used anywhere.
 
 ---
 
@@ -73,16 +80,17 @@ user question
      │
      ├─ expire volatile results from previous turns      (staleness)
      │
-     ├─ tool_choice="any" on step 0                      (no answering from memory)
+     ├─ generation with tools available                   (the model decides what to look up)
      │
      ├─ RETRIEVAL
      │    ├─ LLM query expansion                          (meaning survives rewording)
-     │    ├─ BM25 scoring: IDF + length normalisation     (rare words decide)
+     │    ├─ BM25 scoring, normalised to the query ceiling (rare words decide)
      │    ├─ relevance floor                              (silence beats noise)
      │    └─ LLM rerank of top-5 candidates               (reading beats counting)
      │
-     ├─ generation, constrained by STATUS_VERBATIM fields
+     ├─ answer, constrained by STATUS_VERBATIM fields
      │
+     ├─ CHECK 0: evidence guard — deterministic           (no answering from memory)
      ├─ CHECK 1: citation guard — deterministic           (URLs and numbers)
      ├─ CHECK 2: groundedness — independent LLM           (semantic drift)
      ├─ CHECK 3: escalation policy — deterministic        (clarify once, then escalate)
@@ -141,8 +149,8 @@ score for that query fell from 0.76 to 0.43 — lower, and honest.
 
 ### 3. Extrapolated URLs
 
-**Symptom.** Given `https://www.evelyn.com/offices/bristol/`, the bot told the
-customer to visit `evelyn.com/offices` — a parent path it inferred.
+**Symptom.** Given `https://www.fernhillwealth.example/offices/bristol/`, the bot told the
+customer to visit `fernhillwealth.example/offices` — a parent path it inferred.
 
 **Why the LLM fact-checker passed it.** It looked right, and it is a substring
 of a URL that was supplied.
@@ -214,7 +222,7 @@ diagnostic that names the cause: `best 0.91 vs floor 0.9`.
 
 ## Testing strategy
 
-`evaluate.py` — **52 tests, about one second, no API calls.**
+`tests/` — **81 tests, under five seconds, no API calls.** Run with `pytest`.
 
 The core technique is a **scripted fake model**. Behaviour is non-deterministic:
 asking `quiz` twice produced two different execution paths, so the
@@ -251,14 +259,21 @@ content does not. Wiping static content would cost calls and latency for no
 accuracy gain. Volatility is a property of the tool, declared once in
 `VOLATILE_TOOLS`.
 
-**Forced tool use, with an exception.** `tool_choice="any"` on the first step
-prevents answering from parametric memory. A hardcoded pleasantries list exempts
-greetings, because searching the knowledge base for "hello" is pure waste.
+**No answering from memory — enforced after the fact.** Earlier versions forced a
+tool call on the first step with `tool_choice="any"`. Current models reject forced
+tool use, so the guarantee moved into code: a real question answered without any
+tool result is sent back once with an instruction to look it up, and if the model
+still answers from memory the turn is treated as unanswerable and escalated. A
+hardcoded pleasantries list exempts greetings, because searching the knowledge
+base for "hello" is pure waste.
 
-**Everything is a flag.** `USE_RERANK`, `VERIFY_ANSWERS`, `CHECK_CITATIONS`,
-`FORCE_TOOL_FIRST` toggle independently. A fully guarded answer can cost five
-API calls. That is right for a regulated firm and wrong for most products, so
-the trade-off is explicit rather than baked in.
+**Everything is a setting.** `use_rerank`, `verify_answers`, `check_citations` and
+`require_evidence` toggle independently, and the models, effort levels, token
+limits and retrieval thresholds all come from `SUPPORT_BOT_*` environment
+variables (see `config.py` and `.env.example`). A fully guarded answer can cost
+five API calls. That is right for a regulated firm and wrong for most products,
+so the trade-off is explicit rather than baked in. Every result records which
+models produced it.
 
 **Auditability over polish.** Every answer carries its raw evidence. Terse and
 traceable beats fluent and unverifiable.
@@ -296,6 +311,18 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
+To reproduce the exact environment the tests and CI use (every transitive
+dependency pinned, cross-platform), install from the lockfile instead:
+
+```bash
+pip install -r requirements.lock
+```
+
+**Updating dependencies.** Edit the pin in `requirements.txt` or
+`requirements-dev.txt`, regenerate the lock with
+`uv pip compile requirements-dev.txt --universal --python-version 3.11 -o requirements.lock`,
+and let CI prove the change before merging.
+
 Copy `.env.example` to `.env` and add your key:
 
 ```
@@ -307,28 +334,33 @@ Then:
 ```bash
 python app.py                   # web interface at http://127.0.0.1:7860
 python agent.py                 # same agent, in the terminal
-python evaluate.py              # test suite, free
-python evaluate.py --live       # includes real API calls
+pip install -r requirements-dev.txt
+pytest                          # test suite, free
+pytest -m live                  # the opt-in tests that call the real API
 ```
 
-`evaluate.py` exits non-zero on failure, so it drops straight into CI.
+`pytest` exits non-zero on failure, so it drops straight into CI.
 
 ### Files
 
 | File | Purpose |
 |---|---|
-| `agent.py` | The agent — tools, retrieval, guards, policy, loop |
-| `knowledge_base.py` | 12 sourced entries, each with a traceable URL |
-| `evaluate.py` | 52 tests, fake model, optional live suite |
+| `agent.py` | The agent — tools, retrieval, guards, policy, loop; returns a structured `AgentResult` |
+| `config.py` | Every runtime setting, read from the environment with validation |
+| `knowledge_base.py` | 12 entries for the fictional firm, each with a traceable URL |
+| `tests/` | 81 pytest tests, scripted fake model, opt-in live suite |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
-| `requirements.txt` | Dependencies |
-| `archive/` | Earlier build stages, kept to show how each guard arose |
+| `requirements.txt` / `requirements.lock` | Direct dependencies / every resolved dependency |
+
+The intermediate build stages that show how each guard arose are preserved in the
+git history (commit `f662959`, folder `archive/`); they were removed from the
+working tree because nothing runs or tests them.
 
 ### Try these
 
 | Input | Demonstrates |
 |---|---|
-| `What's the status of EP-1001?` | Verbatim quoting, no embellishment |
+| `What's the status of FW-1001?` | Verbatim quoting, no embellishment |
 | `Should I move my pension into equities?` | Immediate escalation, zero advice |
 | `Can I visit a branch on Sunday?` | Reranker rejecting a negation match |
 | `Do you have a Manchester office?` | Honest uncertainty, no invented URL |

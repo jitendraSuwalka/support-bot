@@ -1,0 +1,9 @@
+# Keeps the GitHub Actions used by ci.yml current. Python dependencies are
+# updated deliberately instead: edit the pin, regenerate requirements.lock,
+# and let CI prove the change (see "Updating dependencies" in the README).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
