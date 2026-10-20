@@ -11,107 +11,73 @@ DESIGN NOTE
     it means something.
 
 ARCHITECTURE NOTE
-    This module does not modify agent.py. The agent prints its pipeline
-    events to stdout; here that stream is captured and parsed. That keeps a
-    single source of truth for agent behaviour, so all 52 tests in
-    evaluate.py remain valid without change -- a wrapper cannot silently
-    diverge from the thing it wraps.
+    This module does not modify agent.py. The agent returns an AgentResult —
+    the customer-facing answer, the notes about what the guards did, the raw
+    evidence and a structured trace of pipeline events — and this module only
+    presents it. Nothing is parsed out of printed text, so the interface
+    cannot drift from the agent and needs no locking: each request's trace
+    belongs to that request alone.
 
 Run:  python app.py      then open the local URL it prints
 """
-
-import io
-import re
-import threading
-from contextlib import redirect_stdout
 
 import gradio as gr
 
 import agent
 
-# stdout is process-wide, so capture must be serialised. Gradio serves
-# requests concurrently; without this lock two sessions would interleave
-# their pipeline traces into each other's panels.
-CAPTURE_LOCK = threading.Lock()
-
-AUDIT_MARKER = "--- audit trail (raw evidence) ---"
-
-
-# =========================================================
-# RUNNING THE AGENT
-# =========================================================
-
-
-def run_with_trace(question, conversation, state):
-    """Call the real agent, capturing its pipeline output."""
-    buffer = io.StringIO()
-    conversation.append({"role": "user", "content": question})
-    with CAPTURE_LOCK, redirect_stdout(buffer):
-        answer = agent.run_agent(conversation, state)
-    return answer, buffer.getvalue()
-
-
-def split_answer(answer):
-    """Separate the customer-facing reply from its notes and evidence."""
-    reply, evidence = answer, ""
-    if AUDIT_MARKER in answer:
-        reply, evidence = answer.split(AUDIT_MARKER, 1)
-
-    notes = re.findall(r"\n\s*\[([^\]]+)\]\s*$", reply)
-    reply = re.sub(r"\n\s*\[[^\]]+\]\s*$", "", reply).strip()
-    return reply, notes, evidence.strip()
+TOOL_LABELS = {
+    "search_knowledge_base": "Searched knowledge base",
+    "look_up_client_query": "Looked up case status",
+    "escalate_to_adviser": "Escalated to adviser",
+}
 
 
 # =========================================================
-# READING THE TRACE
+# READING THE RESULT
 # =========================================================
 
 
-def build_status(trace, notes):
-    """Turn pipeline output into a row of plain-language checks.
+def build_status(result):
+    """Turn the trace into a row of plain-language checks.
 
     Each entry answers a question a reviewer would actually ask: what did it
     look up, was every figure evidenced, did anything unsupported slip
     through, and did a human get involved.
     """
+    kinds = result.trace.kinds()
     chips = []
 
-    tools = re.findall(r"\[tool\] (\w+)", trace)
-    for name in dict.fromkeys(tools):
-        label = {
-            "search_knowledge_base": "Searched knowledge base",
-            "look_up_client_query": "Looked up case status",
-            "escalate_to_adviser": "Escalated to adviser",
-        }.get(name, name)
-        chips.append(("tool", label))
+    for name in dict.fromkeys(result.tools_used):
+        chips.append(("tool", TOOL_LABELS.get(name, name)))
 
-    if "[no candidates above floor" in trace:
+    if "evidence_guard" in kinds:
+        chips.append(("warn", "Sent back for a lookup"))
+    if "no_candidates" in kinds or "rerank_rejected_all" in kinds:
         chips.append(("none", "No matching entry"))
-    dropped = re.search(r"\[rerank dropped (\d+) of (\d+)", trace)
-    if dropped:
-        chips.append(("tool", f"Reranked, {dropped.group(1)} of {dropped.group(2)} discarded"))
+    for event in result.trace.find("rerank"):
+        chips.append(
+            ("tool", f"Reranked, {event.data['dropped']} of {event.data['total']} discarded")
+        )
 
-    if "[citations: clean]" in trace:
-        chips.append(("ok", "Figures verified"))
-    elif "CITATION VIOLATIONS" in trace:
-        state = "ok" if "clean after rewrite" in trace else "bad"
+    if "citation_violation" in kinds:
+        state = "bad" if "citations_remaining" in kinds else "ok"
         chips.append((state, "Unsupported figure removed"))
+    elif "citations_clean" in kinds:
+        chips.append(("ok", "Figures verified"))
 
-    if "[verified: grounded]" in trace:
+    if "verified" in kinds:
         chips.append(("ok", "Grounded in evidence"))
-    elif "UNSUPPORTED CLAIMS" in trace:
+    elif "unsupported" in kinds:
         chips.append(("warn", "Rewritten after fact-check"))
-    elif "VERIFICATION UNAVAILABLE" in trace:
+    elif "verification_unavailable" in kinds:
         chips.append(("bad", "Fact-check unavailable"))
 
-    if "POLICY: unresolved" in trace:
+    if "policy_escalate" in kinds:
         chips.append(("warn", "Escalated by policy"))
-    elif "ESCALATION LOGGED" in trace and "escalate_to_adviser" not in tools:
-        chips.append(("warn", "Escalated to a human"))
-    if "clarification allowed once" in trace:
+    if "policy_clarify" in kinds:
         chips.append(("tool", "Clarification requested"))
 
-    for note in notes:
+    for note in result.notes:
         if note.startswith("WARNING"):
             chips.append(("bad", note.replace("WARNING: ", "")))
 
@@ -134,9 +100,10 @@ def respond(question, history, conversation, state):
         return history, "", conversation, state, "", EMPTY_EVIDENCE, ""
 
     history = history + [{"role": "user", "content": question}]
+    conversation.append({"role": "user", "content": question})
 
     try:
-        answer, trace = run_with_trace(question, conversation, state)
+        result = agent.run_agent(conversation, state)
     except Exception as error:
         history.append(
             {
@@ -154,13 +121,14 @@ def respond(question, history, conversation, state):
             str(error),
         )
 
-    reply, notes, evidence = split_answer(answer)
-    history.append({"role": "assistant", "content": reply})
+    history.append({"role": "assistant", "content": result.answer})
 
-    evidence_md = f"```\n{evidence}\n```" if evidence else EMPTY_EVIDENCE
-    trace_md = f"```\n{trace.strip()}\n```" if trace.strip() else "_No pipeline output._"
+    evidence_text = "\n\n".join(result.evidence)
+    evidence_md = f"```\n{evidence_text}\n```" if evidence_text else EMPTY_EVIDENCE
+    trace_text = result.trace.render()
+    trace_md = f"```\n{trace_text}\n```" if trace_text else "_No pipeline events._"
 
-    return (history, "", conversation, state, build_status(trace, notes), evidence_md, trace_md)
+    return (history, "", conversation, state, build_status(result), evidence_md, trace_md)
 
 
 def reset():
