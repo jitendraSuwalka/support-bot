@@ -15,7 +15,7 @@ a hope.
 ```
 python app.py          # web interface
 python agent.py        # same agent, in the terminal
-python evaluate.py     # 52 tests, ~1 second, no API calls
+pytest                 # 52 tests, under a second, no API calls
 ```
 
 > **Disclaimer.** A personal learning project, not affiliated with or endorsed
@@ -214,7 +214,7 @@ diagnostic that names the cause: `best 0.91 vs floor 0.9`.
 
 ## Testing strategy
 
-`evaluate.py` — **52 tests, about one second, no API calls.**
+`tests/` — **52 tests, under a second, no API calls.** Run with `pytest`.
 
 The core technique is a **scripted fake model**. Behaviour is non-deterministic:
 asking `quiz` twice produced two different execution paths, so the
@@ -307,11 +307,12 @@ Then:
 ```bash
 python app.py                   # web interface at http://127.0.0.1:7860
 python agent.py                 # same agent, in the terminal
-python evaluate.py              # test suite, free
-python evaluate.py --live       # includes real API calls
+pip install -r requirements-dev.txt
+pytest                          # test suite, free
+pytest -m live                  # the opt-in tests that call the real API
 ```
 
-`evaluate.py` exits non-zero on failure, so it drops straight into CI.
+`pytest` exits non-zero on failure, so it drops straight into CI.
 
 ### Files
 
@@ -319,7 +320,7 @@ python evaluate.py --live       # includes real API calls
 |---|---|
 | `agent.py` | The agent — tools, retrieval, guards, policy, loop |
 | `knowledge_base.py` | 12 sourced entries, each with a traceable URL |
-| `evaluate.py` | 52 tests, fake model, optional live suite |
+| `tests/` | 52 pytest tests, scripted fake model, opt-in live suite |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `requirements.txt` | Dependencies |
 | `archive/` | Earlier build stages, kept to show how each guard arose |

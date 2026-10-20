@@ -1,0 +1,31 @@
+[project]
+name = "support-bot"
+version = "2.0.0.dev0"
+description = "Grounded customer-support agent for a fictional UK wealth-management firm: retrieval, deterministic guards, independent fact-checking and policy-enforced escalation."
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+license = { file = "LICENSE" }
+authors = [{ name = "Jitendra Suwalka" }]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["archive"]
+
+[tool.ruff.lint]
+# E/W pycodestyle, F pyflakes, I import order, B bugbear, UP modernise, SIM simplify
+select = ["E", "W", "F", "I", "B", "UP", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers -m \"not live\""
+markers = [
+    "live: calls the real Anthropic API and costs money; run with -m live and an API key",
+]
+
+[tool.coverage.run]
+source = ["agent", "knowledge_base", "app"]
+omit = ["archive/*"]
+
+[tool.coverage.report]
+show_missing = true
