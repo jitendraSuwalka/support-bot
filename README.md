@@ -18,7 +18,7 @@ a hope.
 ```
 python app.py          # web interface
 python agent.py        # same agent, in the terminal
-pytest                 # 81 tests, under five seconds, no API calls
+pytest                 # 83 tests, under five seconds, no API calls
 ```
 
 > **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
@@ -222,7 +222,8 @@ diagnostic that names the cause: `best 0.91 vs floor 0.9`.
 
 ## Testing strategy
 
-`tests/` — **81 tests, under five seconds, no API calls.** Run with `pytest`.
+`tests/` — **83 tests, under five seconds, no API calls.** Run with `pytest`.
+Six further tests call the real API and run only on request: `pytest -m live`.
 
 The core technique is a **scripted fake model**. Behaviour is non-deterministic:
 asking `quiz` twice produced two different execution paths, so the
@@ -348,7 +349,7 @@ pytest -m live                  # the opt-in tests that call the real API
 | `agent.py` | The agent — tools, retrieval, guards, policy, loop; returns a structured `AgentResult` |
 | `config.py` | Every runtime setting, read from the environment with validation |
 | `knowledge_base.py` | 12 entries for the fictional firm, each with a traceable URL |
-| `tests/` | 81 pytest tests, scripted fake model, opt-in live suite |
+| `tests/` | 83 pytest tests, scripted fake model, plus 6 opt-in live tests |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `requirements.txt` / `requirements.lock` | Direct dependencies / every resolved dependency |
 
