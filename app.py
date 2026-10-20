@@ -29,7 +29,6 @@ import gradio as gr
 
 import agent
 
-
 # stdout is process-wide, so capture must be serialised. Gradio serves
 # requests concurrently; without this lock two sessions would interleave
 # their pipeline traces into each other's panels.
@@ -42,13 +41,13 @@ AUDIT_MARKER = "--- audit trail (raw evidence) ---"
 # RUNNING THE AGENT
 # =========================================================
 
+
 def run_with_trace(question, conversation, state):
     """Call the real agent, capturing its pipeline output."""
     buffer = io.StringIO()
     conversation.append({"role": "user", "content": question})
-    with CAPTURE_LOCK:
-        with redirect_stdout(buffer):
-            answer = agent.run_agent(conversation, state)
+    with CAPTURE_LOCK, redirect_stdout(buffer):
+        answer = agent.run_agent(conversation, state)
     return answer, buffer.getvalue()
 
 
@@ -66,6 +65,7 @@ def split_answer(answer):
 # =========================================================
 # READING THE TRACE
 # =========================================================
+
 
 def build_status(trace, notes):
     """Turn pipeline output into a row of plain-language checks.
@@ -118,18 +118,14 @@ def build_status(trace, notes):
     if not chips:
         chips.append(("tool", "Answered without tools"))
 
-    return "".join(
-        f'<span class="chip chip-{kind}">{label}</span>' for kind, label in chips
-    )
+    return "".join(f'<span class="chip chip-{kind}">{label}</span>' for kind, label in chips)
 
 
 # =========================================================
 # HANDLERS
 # =========================================================
 
-EMPTY_EVIDENCE = (
-    "_Evidence appears here once the agent has looked something up._"
-)
+EMPTY_EVIDENCE = "_Evidence appears here once the agent has looked something up._"
 
 
 def respond(question, history, conversation, state):
@@ -142,14 +138,21 @@ def respond(question, history, conversation, state):
     try:
         answer, trace = run_with_trace(question, conversation, state)
     except Exception as error:
-        history.append({
-            "role": "assistant",
-            "content": "The agent could not complete that request. "
-                       f"Details: `{error}`",
-        })
-        return (history, "", conversation, state,
-                '<span class="chip chip-bad">Request failed</span>',
-                EMPTY_EVIDENCE, str(error))
+        history.append(
+            {
+                "role": "assistant",
+                "content": f"The agent could not complete that request. Details: `{error}`",
+            }
+        )
+        return (
+            history,
+            "",
+            conversation,
+            state,
+            '<span class="chip chip-bad">Request failed</span>',
+            EMPTY_EVIDENCE,
+            str(error),
+        )
 
     reply, notes, evidence = split_answer(answer)
     history.append({"role": "assistant", "content": reply})
@@ -157,8 +160,7 @@ def respond(question, history, conversation, state):
     evidence_md = f"```\n{evidence}\n```" if evidence else EMPTY_EVIDENCE
     trace_md = f"```\n{trace.strip()}\n```" if trace.strip() else "_No pipeline output._"
 
-    return (history, "", conversation, state,
-            build_status(trace, notes), evidence_md, trace_md)
+    return (history, "", conversation, state, build_status(trace, notes), evidence_md, trace_md)
 
 
 def reset():
@@ -266,7 +268,7 @@ with gr.Blocks(title="Grounded Support Agent") as demo:
                 height=380,
                 show_label=False,
                 placeholder="Ask about offices, complaints, appointments, "
-                            "or a case reference such as EP-1001.",
+                "or a case reference such as EP-1001.",
             )
 
             status = gr.HTML(elem_id="statusbar")
@@ -310,7 +312,8 @@ with gr.Blocks(title="Grounded Support Agent") as demo:
     question.submit(respond, [question, chatbot, conversation, policy_state], outputs)
     send.click(respond, [question, chatbot, conversation, policy_state], outputs)
     clear.click(
-        reset, None,
+        reset,
+        None,
         [chatbot, conversation, policy_state, status, evidence, trace],
     )
 

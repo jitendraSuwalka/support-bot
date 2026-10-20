@@ -42,8 +42,9 @@ import json
 import math
 import re
 
-from dotenv import load_dotenv
 from anthropic import Anthropic
+from dotenv import load_dotenv
+
 from knowledge_base import KNOWLEDGE_BASE
 
 load_dotenv()
@@ -53,9 +54,9 @@ MAIN_MODEL = "claude-sonnet-5"
 HELPER_MODEL = "claude-haiku-4-5-20251001"
 
 MAX_STEPS = 8
-RELEVANCE_FLOOR = 0.15      # deliberately loose: rerank does the real filtering
-CANDIDATES = 5              # retrieve widely...
-TOP_K = 2                   # ...then keep only what survives reranking
+RELEVANCE_FLOOR = 0.15  # deliberately loose: rerank does the real filtering
+CANDIDATES = 5  # retrieve widely...
+TOP_K = 2  # ...then keep only what survives reranking
 
 VOLATILE_TOOLS = {"look_up_client_query"}
 EXPIRED_NOTICE = (
@@ -74,6 +75,7 @@ SHOW_AUDIT = True
 # PARSING HELPERS
 # =========================================================
 
+
 def extract_json(text):
     """Pull the first complete JSON value out of a model response.
 
@@ -86,7 +88,7 @@ def extract_json(text):
     text = text.strip()
     for fence in ("```json", "```"):
         if text.startswith(fence):
-            text = text[len(fence):]
+            text = text[len(fence) :]
     text = text.removesuffix("```").strip()
 
     start = next((i for i, ch in enumerate(text) if ch in "{["), None)
@@ -114,7 +116,7 @@ def extract_json(text):
         elif char == closer:
             depth -= 1
             if depth == 0:
-                return text[start:index + 1]
+                return text[start : index + 1]
     return None
 
 
@@ -210,14 +212,84 @@ def check_citations(answer, evidence):
 # =========================================================
 
 STOPWORDS = {
-    "the", "a", "an", "is", "are", "was", "were", "to", "of", "and", "or",
-    "i", "im", "my", "me", "we", "you", "your", "how", "do", "does", "did",
-    "what", "when", "where", "which", "who", "can", "could", "would", "should",
-    "for", "in", "on", "at", "it", "this", "that", "with", "about", "from",
-    "have", "has", "had", "be", "been", "get", "got", "any", "please", "thanks",
-    "long", "take", "takes", "make", "made", "need", "want", "know", "tell",
-    "help", "like", "just", "also", "there", "their", "am", "if", "so", "but",
-    "not", "no", "yes", "all", "out", "up", "by", "as",
+    "the",
+    "a",
+    "an",
+    "is",
+    "are",
+    "was",
+    "were",
+    "to",
+    "of",
+    "and",
+    "or",
+    "i",
+    "im",
+    "my",
+    "me",
+    "we",
+    "you",
+    "your",
+    "how",
+    "do",
+    "does",
+    "did",
+    "what",
+    "when",
+    "where",
+    "which",
+    "who",
+    "can",
+    "could",
+    "would",
+    "should",
+    "for",
+    "in",
+    "on",
+    "at",
+    "it",
+    "this",
+    "that",
+    "with",
+    "about",
+    "from",
+    "have",
+    "has",
+    "had",
+    "be",
+    "been",
+    "get",
+    "got",
+    "any",
+    "please",
+    "thanks",
+    "long",
+    "take",
+    "takes",
+    "make",
+    "made",
+    "need",
+    "want",
+    "know",
+    "tell",
+    "help",
+    "like",
+    "just",
+    "also",
+    "there",
+    "their",
+    "am",
+    "if",
+    "so",
+    "but",
+    "not",
+    "no",
+    "yes",
+    "all",
+    "out",
+    "up",
+    "by",
+    "as",
 }
 
 
@@ -236,10 +308,12 @@ def tokenize(text):
 def build_index():
     documents = []
     for entry in KNOWLEDGE_BASE:
-        documents.append({
-            "entry": entry,
-            "tokens": tokenize(entry["topic"] + " " + entry["content"]),
-        })
+        documents.append(
+            {
+                "entry": entry,
+                "tokens": tokenize(entry["topic"] + " " + entry["content"]),
+            }
+        )
     total = len(documents)
     frequency = {}
     for document in documents:
@@ -294,6 +368,7 @@ def score_documents(query_tokens):
 # =========================================================
 # WEAKNESS 2 — RERANKING
 # =========================================================
+
 
 def rerank(query, candidates):
     """Have a model read each candidate and judge whether it answers the query.
@@ -466,7 +541,8 @@ tools = [
     },
 ]
 
-SYSTEM_PROMPT = """You are a customer support assistant for Evelyn Partners, a UK wealth management firm.
+SYSTEM_PROMPT = """You are a customer support assistant for Evelyn Partners, a UK wealth
+management firm.
 
 FAITHFULNESS RULES — these override helpfulness:
 1. Every fact you state must appear in a tool result from THIS turn.
@@ -494,6 +570,7 @@ CONDUCT RULES:
 # HISTORY EXPIRY
 # =========================================================
 
+
 def expire_stale_results(messages):
     id_to_tool = {}
     for message in messages:
@@ -512,16 +589,17 @@ def expire_stale_results(messages):
         for block in content:
             if not isinstance(block, dict) or block.get("type") != "tool_result":
                 continue
-            if id_to_tool.get(block.get("tool_use_id")) in VOLATILE_TOOLS:
-                if block["content"] != EXPIRED_NOTICE:
-                    block["content"] = EXPIRED_NOTICE
-                    wiped += 1
+            volatile = id_to_tool.get(block.get("tool_use_id")) in VOLATILE_TOOLS
+            if volatile and block["content"] != EXPIRED_NOTICE:
+                block["content"] = EXPIRED_NOTICE
+                wiped += 1
     return wiped
 
 
 # =========================================================
 # GROUNDEDNESS CHECK
 # =========================================================
+
 
 def verify_answer(answer, evidence):
     """Read the answer back against the evidence. Three honest states."""
@@ -556,9 +634,25 @@ def verify_answer(answer, evidence):
 UNRESOLVED_MARKERS = ("NO_MATCH", "NO_RECORD")
 
 PLEASANTRIES = {
-    "hi", "hello", "hey", "good morning", "good afternoon", "good evening",
-    "thanks", "thank you", "thanks a lot", "cheers", "ok", "okay", "bye",
-    "goodbye", "great", "perfect", "no thanks", "that's all", "thats all",
+    "hi",
+    "hello",
+    "hey",
+    "good morning",
+    "good afternoon",
+    "good evening",
+    "thanks",
+    "thank you",
+    "thanks a lot",
+    "cheers",
+    "ok",
+    "okay",
+    "bye",
+    "goodbye",
+    "great",
+    "perfect",
+    "no thanks",
+    "that's all",
+    "thats all",
 }
 
 
@@ -577,9 +671,7 @@ def enforce_escalation(answer, evidence_parts, model_escalated, state):
     Turn 2 still unanswerable -> escalation happens in Python, whatever the
     model decided. A customer can never be left going round in circles.
     """
-    unresolved = any(
-        marker in part for part in evidence_parts for marker in UNRESOLVED_MARKERS
-    )
+    unresolved = any(marker in part for part in evidence_parts for marker in UNRESOLVED_MARKERS)
 
     if not unresolved or model_escalated:
         state["unclear_turns"] = 0
@@ -609,17 +701,21 @@ def enforce_escalation(answer, evidence_parts, model_escalated, state):
 # THE AGENT LOOP
 # =========================================================
 
+
 def rewrite(messages, problems):
     """Send the answer back to be rewritten strictly from evidence."""
-    messages.append({
-        "role": "user",
-        "content": (
-            "Your previous answer had these problems: " + "; ".join(problems) +
-            ". Rewrite it using only what the tool results actually say. Remove "
-            "every added detail. Copy URLs and numbers exactly or omit them "
-            "entirely. Do not call any tools."
-        ),
-    })
+    messages.append(
+        {
+            "role": "user",
+            "content": (
+                "Your previous answer had these problems: "
+                + "; ".join(problems)
+                + ". Rewrite it using only what the tool results actually say. Remove "
+                "every added detail. Copy URLs and numbers exactly or omit them "
+                "entirely. Do not call any tools."
+            ),
+        }
+    )
     response = client.messages.create(
         model=MAIN_MODEL,
         max_tokens=1000,
@@ -637,19 +733,21 @@ def rewrite_after_escalation(messages):
     to escalate, no dangling question inviting a reply the customer no longer
     needs to give.
     """
-    messages.append({
-        "role": "user",
-        "content": (
-            "This query has now been escalated to a human adviser automatically, "
-            "because the knowledge base could not answer it. Rewrite your last "
-            "message as one short, coherent reply that: says plainly you do not "
-            "have the information; states that it HAS BEEN passed to a qualified "
-            "adviser who will be in touch; gives the switchboard number "
-            "020 7131 4000. Do not offer to escalate, since it has already "
-            "happened, and do not ask the customer any question. Do not call "
-            "any tools."
-        ),
-    })
+    messages.append(
+        {
+            "role": "user",
+            "content": (
+                "This query has now been escalated to a human adviser automatically, "
+                "because the knowledge base could not answer it. Rewrite your last "
+                "message as one short, coherent reply that: says plainly you do not "
+                "have the information; states that it HAS BEEN passed to a qualified "
+                "adviser who will be in touch; gives the switchboard number "
+                "020 7131 4000. Do not offer to escalate, since it has already "
+                "happened, and do not ask the customer any question. Do not call "
+                "any tools."
+            ),
+        }
+    )
     response = client.messages.create(
         model=MAIN_MODEL,
         max_tokens=500,
@@ -672,8 +770,11 @@ def run_agent(messages, state):
     # call searching the knowledge base for "hello". Deterministic list only:
     # anything not on it is treated as a real question and still forced.
     last_message = next(
-        (m["content"] for m in reversed(messages)
-         if m["role"] == "user" and isinstance(m["content"], str)),
+        (
+            m["content"]
+            for m in reversed(messages)
+            if m["role"] == "user" and isinstance(m["content"], str)
+        ),
         "",
     )
     is_greeting = last_message.lower().strip(" .!?,") in PLEASANTRIES
@@ -731,9 +832,7 @@ def run_agent(messages, state):
                     notes.append("WARNING: fact-check unavailable")
 
             # Policy runs last, on the final wording, and cannot be overridden.
-            answer, forced = enforce_escalation(
-                answer, evidence_parts, model_escalated, state
-            )
+            answer, forced = enforce_escalation(answer, evidence_parts, model_escalated, state)
             if forced:
                 answer = rewrite_after_escalation(messages)
                 notes.append("escalated by policy")
@@ -757,11 +856,13 @@ def run_agent(messages, state):
             except Exception as error:
                 result = f"Tool failed: {error}"
             evidence_parts.append(f"{block.name} -> {result}")
-            tool_results.append({
-                "type": "tool_result",
-                "tool_use_id": block.id,
-                "content": result,
-            })
+            tool_results.append(
+                {
+                    "type": "tool_result",
+                    "tool_use_id": block.id,
+                    "content": result,
+                }
+            )
         messages.append({"role": "user", "content": tool_results})
 
     return "Sorry, I could not complete that. Please call 020 7131 4000."
@@ -770,7 +871,7 @@ def run_agent(messages, state):
 if __name__ == "__main__":
     print("Support bot ready. Type 'quit' to exit.\n")
     conversation = []
-    state = {"unclear_turns": 0}      # survives across turns; policy needs memory
+    state = {"unclear_turns": 0}  # survives across turns; policy needs memory
     while True:
         user_input = input("You: ")
         if user_input.lower().strip() in {"quit", "exit"}:
