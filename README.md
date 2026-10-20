@@ -18,7 +18,7 @@ a hope.
 ```
 python app.py          # web interface
 python agent.py        # same agent, in the terminal
-pytest                 # 52 tests, under a second, no API calls
+pytest                 # 81 tests, under five seconds, no API calls
 ```
 
 > **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
@@ -80,16 +80,17 @@ user question
      │
      ├─ expire volatile results from previous turns      (staleness)
      │
-     ├─ tool_choice="any" on step 0                      (no answering from memory)
+     ├─ generation with tools available                   (the model decides what to look up)
      │
      ├─ RETRIEVAL
      │    ├─ LLM query expansion                          (meaning survives rewording)
-     │    ├─ BM25 scoring: IDF + length normalisation     (rare words decide)
+     │    ├─ BM25 scoring, normalised to the query ceiling (rare words decide)
      │    ├─ relevance floor                              (silence beats noise)
      │    └─ LLM rerank of top-5 candidates               (reading beats counting)
      │
-     ├─ generation, constrained by STATUS_VERBATIM fields
+     ├─ answer, constrained by STATUS_VERBATIM fields
      │
+     ├─ CHECK 0: evidence guard — deterministic           (no answering from memory)
      ├─ CHECK 1: citation guard — deterministic           (URLs and numbers)
      ├─ CHECK 2: groundedness — independent LLM           (semantic drift)
      ├─ CHECK 3: escalation policy — deterministic        (clarify once, then escalate)
@@ -221,7 +222,7 @@ diagnostic that names the cause: `best 0.91 vs floor 0.9`.
 
 ## Testing strategy
 
-`tests/` — **52 tests, under a second, no API calls.** Run with `pytest`.
+`tests/` — **81 tests, under five seconds, no API calls.** Run with `pytest`.
 
 The core technique is a **scripted fake model**. Behaviour is non-deterministic:
 asking `quiz` twice produced two different execution paths, so the
@@ -258,14 +259,21 @@ content does not. Wiping static content would cost calls and latency for no
 accuracy gain. Volatility is a property of the tool, declared once in
 `VOLATILE_TOOLS`.
 
-**Forced tool use, with an exception.** `tool_choice="any"` on the first step
-prevents answering from parametric memory. A hardcoded pleasantries list exempts
-greetings, because searching the knowledge base for "hello" is pure waste.
+**No answering from memory — enforced after the fact.** Earlier versions forced a
+tool call on the first step with `tool_choice="any"`. Current models reject forced
+tool use, so the guarantee moved into code: a real question answered without any
+tool result is sent back once with an instruction to look it up, and if the model
+still answers from memory the turn is treated as unanswerable and escalated. A
+hardcoded pleasantries list exempts greetings, because searching the knowledge
+base for "hello" is pure waste.
 
-**Everything is a flag.** `USE_RERANK`, `VERIFY_ANSWERS`, `CHECK_CITATIONS`,
-`FORCE_TOOL_FIRST` toggle independently. A fully guarded answer can cost five
-API calls. That is right for a regulated firm and wrong for most products, so
-the trade-off is explicit rather than baked in.
+**Everything is a setting.** `use_rerank`, `verify_answers`, `check_citations` and
+`require_evidence` toggle independently, and the models, effort levels, token
+limits and retrieval thresholds all come from `SUPPORT_BOT_*` environment
+variables (see `config.py` and `.env.example`). A fully guarded answer can cost
+five API calls. That is right for a regulated firm and wrong for most products,
+so the trade-off is explicit rather than baked in. Every result records which
+models produced it.
 
 **Auditability over polish.** Every answer carries its raw evidence. Terse and
 traceable beats fluent and unverifiable.
@@ -337,12 +345,16 @@ pytest -m live                  # the opt-in tests that call the real API
 
 | File | Purpose |
 |---|---|
-| `agent.py` | The agent — tools, retrieval, guards, policy, loop |
-| `knowledge_base.py` | 12 sourced entries, each with a traceable URL |
-| `tests/` | 52 pytest tests, scripted fake model, opt-in live suite |
+| `agent.py` | The agent — tools, retrieval, guards, policy, loop; returns a structured `AgentResult` |
+| `config.py` | Every runtime setting, read from the environment with validation |
+| `knowledge_base.py` | 12 entries for the fictional firm, each with a traceable URL |
+| `tests/` | 81 pytest tests, scripted fake model, opt-in live suite |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
-| `requirements.txt` | Dependencies |
-| `archive/` | Earlier build stages, kept to show how each guard arose |
+| `requirements.txt` / `requirements.lock` | Direct dependencies / every resolved dependency |
+
+The intermediate build stages that show how each guard arose are preserved in the
+git history (commit `f662959`, folder `archive/`); they were removed from the
+working tree because nothing runs or tests them.
 
 ### Try these
 

@@ -10,7 +10,6 @@ authors = [{ name = "Jitendra Suwalka" }]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-extend-exclude = ["archive"]
 
 [tool.ruff.lint]
 # E/W pycodestyle, F pyflakes, I import order, B bugbear, UP modernise, SIM simplify
@@ -24,8 +23,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["agent", "knowledge_base", "app"]
-omit = ["archive/*"]
+source = ["agent", "config", "knowledge_base", "app"]
 
 [tool.coverage.report]
 show_missing = true
