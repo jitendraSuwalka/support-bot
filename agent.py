@@ -686,9 +686,14 @@ def verify_answer(answer, evidence):
 
     result = call_json(
         "You are a strict fact-checker. Compare the ANSWER against the EVIDENCE.\n\n"
-        "Flag any claim not directly supported: added details, softened or "
-        "strengthened wording, implied guarantees, invented reassurance. Ordinary "
-        "politeness is fine and must not be flagged.\n\n"
+        "Flag any factual claim not directly supported: added details, softened or "
+        "strengthened wording, implied guarantees, invented reassurance.\n\n"
+        "Do NOT flag, because they are not factual claims about the evidence:\n"
+        "- ordinary politeness and offers of further help;\n"
+        "- statements about the assistant's own role or limits, such as that it "
+        "cannot give financial, investment, tax or pension advice;\n"
+        "- statements that the matter has been escalated or that an adviser will be "
+        "in touch, when the evidence records an escalation.\n\n"
         f"EVIDENCE:\n{evidence}\n\nANSWER:\n{answer}\n\n"
         'Return ONLY: {"grounded": true, "unsupported": []}',
     )
