@@ -1,6 +1,8 @@
 """The LangGraph implementation: its shape, its equivalence to the loop, and
 the paths only the graph's own wiring could get wrong."""
 
+from pathlib import Path
+
 import pytest
 
 import agent
@@ -46,6 +48,14 @@ def test_the_mermaid_diagram_is_generated_from_the_graph():
     assert source.startswith("---") and "graph TD" in source
     for name in ("prepare", "evidence_guard", "escalation_policy", "give_up"):
         assert f"{name}({name})" in source
+
+
+def test_the_readme_carries_the_current_diagram():
+    """The README's Mermaid block must be the one the graph generates, so the
+    picture of the agent can never drift from the code."""
+    text = Path(agent_graph.__file__).with_name("README.md").read_text(encoding="utf-8")
+    block = text.split("```mermaid\n", 1)[1].split("\n```", 1)[0]
+    assert block == agent_graph.mermaid().rstrip("\n")
 
 
 def test_the_cli_prints_the_diagram_or_the_explanation(capsys):
