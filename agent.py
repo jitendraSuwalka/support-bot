@@ -275,7 +275,13 @@ def call_json(prompt, max_tokens=None, attempts=2):
 # =========================================================
 
 URL_PATTERN = re.compile(r"(?:https?://)?(?:[a-z0-9-]+\.)+[a-z]{2,}(?:/[^\s,;)\]\"']*)?", re.I)
-NUMBER_PATTERN = re.compile(r"\d[\d\s.,:/-]*\d|\d")
+# One number: digits, continued by a separator only when a digit follows it
+# (20,000; 09:00; 2026/27; 1.5) or by a space and a 3-4 digit group (a UK phone
+# number). An earlier pattern let any run of separators continue a number, so
+# the evidence "0117 496 0233, 09:00 to 17:30" became the single token
+# 011749602330900 and the helpline number, copied exactly, was "not in the
+# evidence". The baseline evaluation found it: two answers lost the number.
+NUMBER_PATTERN = re.compile(r"\d+(?:[.,:/-]\d+| \d{3,4}(?!\d))*")
 
 # Numbers so generic that requiring evidence produces only false alarms.
 NUMBER_ALLOWLIST = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
