@@ -70,6 +70,47 @@ def test_describe_hit_shows_both_methods_or_a_dash():
     assert agent.describe_hit(result_with(dense=0.7)) == "lexical — · dense #1 0.70"
 
 
+@pytest.mark.parametrize(
+    "question",
+    [
+        "how do I make a complaint",
+        "Do you have a Manchester office?",
+        "ISA allowance",
+        "how do I reset my password",
+        "pension annual allowance",
+    ],
+)
+def test_real_matches_clear_the_lexical_floor_with_margin_not_by_luck(corpus_retriever, question):
+    # Phase 1 found a suite passing by 0.01; the floor must sit well below real matches.
+    from rag.lexical import tokenize
+
+    best = corpus_retriever.lexical.search(tokenize(question), k=1)[0].score
+    assert best >= agent.RELEVANCE_FLOOR + 0.2, f"{best:.2f} vs floor {agent.RELEVANCE_FLOOR}"
+
+
+@pytest.mark.model
+def test_the_dense_floor_separates_on_topic_from_off_topic_with_margin():
+    """The real model against the real corpus: the calibration behind DENSE_FLOOR,
+    kept as a test so a model or corpus change that erodes the margin is caught."""
+    from rag.corpus import chunk_corpus
+    from rag.embeddings import LocalEmbedder
+    from rag.store import VectorStore
+
+    store = VectorStore(LocalEmbedder())
+    store.sync(chunk_corpus())
+    on_topic = [
+        "How much can I pay into an ISA this tax year?",
+        "How do I reset my password?",
+        "Do you have a Manchester office?",
+    ]
+    off_topic = ["What is the weather like in Bristol today?", "Can you recommend a pizza place?"]
+    best = {q: store.search(q, k=1)[0].score for q in on_topic + off_topic}
+    for question in on_topic:
+        assert best[question] >= agent.DENSE_FLOOR + 0.05, best
+    for question in off_topic:
+        assert best[question] <= agent.DENSE_FLOOR - 0.05, best
+
+
 # --- search_knowledge_base ------------------------------------------------------------------
 
 
