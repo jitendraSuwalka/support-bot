@@ -27,7 +27,7 @@ import time
 from config import Settings
 from rag.corpus import chunk_corpus, load_corpus
 from rag.embeddings import build_embedder
-from rag.retrieval import HybridRetriever, RetrievedChunk, build_retriever
+from rag.retrieval import HybridRetriever, RetrievedChunk, build_retriever, weights_for
 from rag.store import VectorStore, open_store
 
 MODES = ("hybrid", "lexical", "dense")
@@ -74,10 +74,7 @@ def search_index(
         if store.count() == 0:
             return []
         retriever: HybridRetriever = build_retriever(
-            chunk_corpus(load_corpus()),
-            store,
-            lexical_weight=0.0 if mode == "dense" else 1.0,
-            dense_weight=0.0 if mode == "lexical" else 1.0,
+            chunk_corpus(load_corpus()), store, **weights_for(mode)
         )
         return retriever.search(query, k=k)
     finally:

@@ -25,9 +25,10 @@ from __future__ import annotations
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
-from rag.corpus import Chunk
+from rag.corpus import Chunk, chunk_corpus, load_corpus
+from rag.embeddings import build_embedder
 from rag.lexical import BM25Index, tokenize
-from rag.store import VectorStore
+from rag.store import SyncReport, VectorStore, open_store
 
 RRF_K = 60
 MIN_POOL = 20  # how many candidates each method contributes, at least
@@ -140,3 +141,24 @@ class HybridRetriever:
 def build_retriever(chunks: Iterable[Chunk], store: VectorStore, **kwargs) -> HybridRetriever:
     """A retriever over an index that is already synced with ``chunks``."""
     return HybridRetriever(BM25Index(chunks), store, **kwargs)
+
+
+def weights_for(mode: str) -> dict[str, float]:
+    """Constructor weights for a retrieval mode: hybrid, lexical or dense."""
+    if mode == "lexical":
+        return {"lexical_weight": 1.0, "dense_weight": 0.0}
+    if mode == "dense":
+        return {"lexical_weight": 0.0, "dense_weight": 1.0}
+    if mode == "hybrid":
+        return {"lexical_weight": 1.0, "dense_weight": 1.0}
+    raise ValueError(f"unknown retrieval mode {mode!r}")
+
+
+def open_retriever(settings) -> tuple[HybridRetriever, SyncReport]:
+    """The retriever the settings describe, over an index brought up to date
+    with the corpus. Returns the sync report too, so the caller can log it."""
+    chunks = chunk_corpus(load_corpus())
+    store = open_store(settings, build_embedder(settings))
+    report = store.sync(chunks)
+    retriever = HybridRetriever(BM25Index(chunks), store, **weights_for(settings.retrieval_mode))
+    return retriever, report
