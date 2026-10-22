@@ -30,6 +30,17 @@ def test_every_setting_can_be_overridden_from_the_environment():
     assert settings.helper_model == "claude-haiku-5-5"  # untouched default
 
 
+def test_retrieval_settings_default_to_the_local_model_and_an_on_disk_index():
+    settings = Settings()
+    assert settings.embedder == "local" and settings.embedding_model == "BAAI/bge-small-en-v1.5"
+    assert settings.index_path == ".index" and settings.model_cache == ".models"
+    assert settings.qdrant_url == ""  # local mode unless a server is named
+    overridden = Settings.from_env(
+        {"SUPPORT_BOT_EMBEDDER": "hash", "SUPPORT_BOT_QDRANT_URL": "http://localhost:6333"}
+    )
+    assert overridden.embedder == "hash" and overridden.qdrant_url == "http://localhost:6333"
+
+
 def test_blank_values_fall_back_to_defaults():
     settings = Settings.from_env({"SUPPORT_BOT_MAIN_MODEL": "   "})
     assert settings.main_model == "claude-sonnet-5-5"
@@ -43,11 +54,17 @@ def test_blank_values_fall_back_to_defaults():
         ("SUPPORT_BOT_RELEVANCE_FLOOR", "1.5"),
         ("SUPPORT_BOT_USE_RERANK", "maybe"),
         ("SUPPORT_BOT_TOP_K", "9"),  # exceeds the default of 5 candidates
+        ("SUPPORT_BOT_EMBEDDER", "openai"),
     ],
 )
 def test_invalid_values_are_rejected_loudly(name, value):
     with pytest.raises(ValueError):
         Settings.from_env({name: value})
+
+
+def test_a_blank_path_set_in_code_is_rejected():
+    with pytest.raises(ValueError, match="index_path"):
+        Settings(index_path="   ").validate()
 
 
 def test_describe_lists_every_setting_for_the_audit_record():

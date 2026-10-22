@@ -17,6 +17,7 @@ from dataclasses import dataclass, fields
 
 ENV_PREFIX = "SUPPORT_BOT_"
 EFFORT_LEVELS = ("low", "medium", "high", "xhigh", "max")
+EMBEDDERS = ("local", "hash")
 
 
 @dataclass(frozen=True)
@@ -53,6 +54,17 @@ class Settings:
     check_citations: bool = True
     require_evidence: bool = True
 
+    # Embeddings and the vector index. "local" runs a small ONNX model on the
+    # CPU, downloaded to model_cache on first use; "hash" is a deterministic
+    # stand-in with no model, for tests and offline CI. The index lives in
+    # index_path unless qdrant_url points at a Qdrant server, in which case
+    # the same code talks to the server instead.
+    embedder: str = "local"
+    embedding_model: str = "BAAI/bge-small-en-v1.5"
+    model_cache: str = ".models"
+    index_path: str = ".index"
+    qdrant_url: str = ""
+
     @classmethod
     def from_env(cls, env: dict[str, str] | None = None) -> Settings:
         """Build settings from SUPPORT_BOT_* variables, validating each one."""
@@ -78,6 +90,11 @@ class Settings:
             raise ValueError("relevance_floor must be between 0 and 1")
         if self.top_k > self.candidates:
             raise ValueError("top_k cannot exceed candidates")
+        if self.embedder not in EMBEDDERS:
+            raise ValueError(f"embedder must be one of {EMBEDDERS}")
+        for name in ("embedding_model", "model_cache", "index_path"):
+            if not getattr(self, name).strip():
+                raise ValueError(f"{name} must not be blank")
 
     def describe(self) -> dict[str, object]:
         """A plain dictionary, attached to every result for auditability."""
