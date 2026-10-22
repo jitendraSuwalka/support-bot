@@ -574,6 +574,36 @@ CLIENT_QUERIES = {
 }
 
 
+def _alnum(text):
+    return re.sub(r"[^A-Z0-9]", "", text.upper())
+
+
+def reference_was_given(reference, messages):
+    """Did the customer type this reference, in full, at any point?
+
+    The baseline evaluation (reports/live.json, status-06) had the model
+    complete 'any news on 1002?' to FW-1002 and read that case's status out.
+    A guessed reference is another client's status waiting to happen, so a
+    reference the customer did not give is not looked up, whatever the model
+    decides. Compared without punctuation or case: 'fw 1002' is FW-1002.
+    """
+    wanted = _alnum(reference)
+    if not wanted:
+        return False
+    return any(
+        wanted in _alnum(m["content"])
+        for m in messages
+        if m.get("role") == "user" and isinstance(m.get("content"), str)
+    )
+
+
+REFERENCE_NOT_GIVEN = (
+    "REFERENCE_NOT_GIVEN: the customer has not given the reference {reference} in "
+    "full in this conversation. Ask them for the full reference, in the form "
+    "FW-XXXX. Do not guess, complete or suggest one."
+)
+
+
 def look_up_client_query(reference):
     reference = reference.upper().strip()
     status = CLIENT_QUERIES.get(reference)
@@ -654,10 +684,12 @@ tools = [
     {
         "name": "look_up_client_query",
         "description": (
-            "Look up the live status of a client query by reference, format FW-XXXX. "
-            "This data changes: always call it fresh, even for a reference looked up "
-            "earlier. The result contains STATUS_VERBATIM, which must be reproduced "
-            "exactly."
+            "Look up the live status of a client query by the reference the customer "
+            "typed, in full, format FW-XXXX. If they gave part of one or none, use "
+            "ask_for_clarification to ask for the full reference; never guess, "
+            "complete or suggest one. This data changes: always call it fresh, even "
+            "for a reference looked up earlier. The result contains STATUS_VERBATIM, "
+            "which must be reproduced exactly."
         ),
         "input_schema": {
             "type": "object",
@@ -779,6 +811,8 @@ CONDUCT RULES:
    the documents cover and say plainly what they do not. Do not escalate
    because one detail is unconfirmed; tell the customer to raise it with
    their adviser.
+14. A client query reference must come from the customer, in full (FW-XXXX).
+   Never guess, complete or suggest one; ask for it.
 """
 
 
@@ -851,7 +885,7 @@ def verify_answer(answer, evidence):
 # CODE-ENFORCED ESCALATION POLICY
 # =========================================================
 
-UNRESOLVED_MARKERS = ("NO_MATCH", "NO_RECORD")
+UNRESOLVED_MARKERS = ("NO_MATCH", "NO_RECORD", "REFERENCE_NOT_GIVEN")
 
 PLEASANTRIES = {
     "hi", "hello", "hey", "good morning", "good afternoon", "good evening",
@@ -1113,7 +1147,16 @@ def run_tool_calls(response, messages, evidence_parts, tools_used) -> ToolRun:
         else:
             failed = False
             try:
-                result = TOOL_FUNCTIONS[block.name](**block.input)
+                reference = str(block.input.get("reference", "")) if block.input else ""
+                if (
+                    block.name == "look_up_client_query"
+                    and reference
+                    and (not reference_was_given(reference, messages))
+                ):
+                    result = REFERENCE_NOT_GIVEN.format(reference=reference)
+                    log("reference_not_given", "lookup refused: the customer did not give it")
+                else:
+                    result = TOOL_FUNCTIONS[block.name](**block.input)
             except Exception as error:
                 result = f"Tool failed: {error}"
                 failed = True  # a failed call ends nothing; the model sees the error and goes on

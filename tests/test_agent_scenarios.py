@@ -356,3 +356,76 @@ def test_a_terminal_tool_called_wrongly_does_not_end_the_turn(run_scenario):
     assert "tool_failed" in results[0].trace.kinds()
     assert results[0].declined is True and results[0].answer == agent.DECLINE_REPLY
     assert len(fake.calls) == 2
+
+
+# --- a case reference the customer did not give is not looked up -------------
+# Baseline, status-06: "any news on 1002?" was completed to FW-1002 and that
+# case's status read out. The lookup now runs only for a reference the
+# customer typed in full.
+
+
+def test_a_reference_is_recognised_however_the_customer_punctuates_it():
+    said = [{"role": "user", "content": "any update on fw 1002 please"}]
+    assert agent.reference_was_given("FW-1002", said) is True
+    assert agent.reference_was_given("fw-1002", said) is True
+    assert agent.reference_was_given("FW-1003", said) is False
+    assert agent.reference_was_given("", said) is False
+
+
+def test_a_reference_the_customer_only_hinted_at_is_not_given():
+    said = [{"role": "user", "content": "any news on 1002?"}]
+    assert agent.reference_was_given("FW-1002", said) is False
+    # The assistant mentioning it does not count, nor does a tool result.
+    said += [
+        {"role": "assistant", "content": [{"type": "text", "text": "Do you mean FW-1002?"}]},
+        {
+            "role": "user",
+            "content": [{"type": "tool_result", "tool_use_id": "t1", "content": "FW-1002"}],
+        },
+    ]
+    assert agent.reference_was_given("FW-1002", said) is False
+
+
+def test_a_guessed_reference_is_refused_and_the_customer_is_asked(run_scenario):
+    results, state, _ = run_scenario(
+        script=[
+            tool_reply("look_up_client_query", {"reference": "FW-1002"}),
+            tool_reply(
+                "ask_for_clarification",
+                {"question": "Could you give me the full reference, in the form FW-XXXX?"},
+                call_id="t2",
+            ),
+        ],
+        user_messages=["any news on 1002?"],
+    )
+    result = results[0]
+    assert "reference_not_given" in result.trace.kinds()
+    assert result.evidence[0].startswith("look_up_client_query -> REFERENCE_NOT_GIVEN")
+    assert (
+        "Documents verified" not in result.answer and "Documents verified" not in result.evidence[0]
+    )
+    assert result.clarified is True and state["unclear_turns"] == 1
+
+
+def test_a_reference_given_in_full_is_looked_up_even_if_typed_loosely(run_scenario):
+    results, _, _ = run_scenario(
+        script=[
+            tool_reply("look_up_client_query", {"reference": "FW-1002"}),
+            text_reply('The status is: "Documents verified. Awaiting your signature to proceed."'),
+        ],
+        user_messages=["any update on fw 1002"],
+    )
+    assert "reference_not_given" not in results[0].trace.kinds()
+    assert "Documents verified" in results[0].answer
+
+
+def test_an_unresolved_reference_answered_without_a_question_is_escalated(run_scenario):
+    results, _, _ = run_scenario(
+        script=[
+            tool_reply("look_up_client_query", {"reference": "FW-1002"}),
+            text_reply("I cannot check that reference."),
+            text_reply("I do not have that. It has been passed to an adviser. Call 0117 496 0100."),
+        ],
+        user_messages=["any news on 1002?"],
+    )
+    assert results[0].escalated is True and "escalated by policy" in results[0].notes
