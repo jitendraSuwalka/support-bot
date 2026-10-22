@@ -216,7 +216,9 @@ EXAMPLES = [
     "What happens if I'm dissatisfied?",
 ]
 
-with gr.Blocks(title="Grounded Support Agent") as demo:
+# analytics_enabled=False: Gradio reports usage to api.gradio.app by default.
+# A support tool for a regulated firm sends nothing anywhere it does not have to.
+with gr.Blocks(title="Grounded Support Agent", analytics_enabled=False) as demo:
     conversation = gr.State([])
     policy_state = gr.State({"unclear_turns": 0})
 

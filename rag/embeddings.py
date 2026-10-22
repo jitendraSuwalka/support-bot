@@ -189,13 +189,19 @@ class LocalEmbedder:
             if self._factory is not None:
                 self._model = self._factory(model_name=self.model_name, cache_dir=self.cache_dir)
             else:
-                from fastembed import TextEmbedding
-
-                self.cache_dir.mkdir(parents=True, exist_ok=True)
-                self._model = TextEmbedding(
-                    model_name=self.model_name, cache_dir=str(self.cache_dir)
-                )
+                self._model = self._load()
         return self._model
+
+    def _load(self):
+        import onnxruntime
+        from fastembed import TextEmbedding
+
+        # ONNX Runtime can report usage to Microsoft on some platforms. A
+        # support tool for a regulated firm sends nothing it does not have to,
+        # so it is switched off before the first session is created.
+        onnxruntime.disable_telemetry_events()
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        return TextEmbedding(model_name=self.model_name, cache_dir=str(self.cache_dir))
 
     def embed_documents(self, texts: Sequence[str]) -> np.ndarray:
         if not texts:

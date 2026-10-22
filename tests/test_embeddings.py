@@ -162,6 +162,20 @@ def test_a_custom_query_prefix_and_no_prefix_are_both_honoured(tmp_path):
     assert plain.model.seen == [["z"]]
 
 
+def test_the_real_load_switches_runtime_telemetry_off_and_creates_the_cache(tmp_path, monkeypatch):
+    import fastembed
+    import onnxruntime
+
+    calls = []
+    embedder = LocalEmbedder(cache_dir=tmp_path / "models")  # dimension from the real table
+    monkeypatch.setattr(onnxruntime, "disable_telemetry_events", lambda: calls.append("off"))
+    monkeypatch.setattr(fastembed, "TextEmbedding", FakeModel)
+    model = embedder.model
+    assert calls == ["off"]
+    assert isinstance(model, FakeModel) and model.kwargs["cache_dir"] == str(tmp_path / "models")
+    assert (tmp_path / "models").is_dir()
+
+
 def test_an_unknown_model_name_is_rejected_before_any_download():
     with pytest.raises(ValueError, match="unknown embedding model"):
         LocalEmbedder("not-a-real/model")
