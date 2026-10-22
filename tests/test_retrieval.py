@@ -1,79 +1,168 @@
-"""Lexical retrieval: ranking, stopwords, stemming and the relevance floor."""
+"""The agent's search over the corpus: floors, expansion, reranking, the
+evidence it hands the model, and what it logs. Runs on the in-memory retriever
+from conftest (hash embedder), so the lexical side decides."""
+
+import pytest
 
 import agent
+from rag.retrieval import RetrievedChunk, open_retriever
+from rag.store import SyncReport
+from tests.conftest import make_chunk
 
 
-def top(query, extra=""):
-    tokens = set(agent.tokenize(query)) | set(agent.tokenize(extra))
-    scored = [r for r in agent.score_documents(tokens) if r[0] >= agent.RELEVANCE_FLOOR]
-    return [entry["topic"] for _, _, entry in scored[:2]]
-
-
-def test_relevant_query_ranks_the_right_entry_first():
-    assert top("where is your bristol office")[:1] == ["office locations bristol local offices"]
-
-
-def test_complaint_query_beats_the_long_financial_planning_entry():
-    assert top("how long does a complaint take")[:1] == ["how to make a complaint"]
-
-
-def test_off_topic_query_returns_nothing():
-    assert top("what is the weather in Paris") == []
-
-
-def test_expansion_terms_rescue_a_reworded_query():
-    assert any("complaint" in t for t in top("I am unhappy", "complaint resolution ombudsman"))
-
-
-def test_stopwords_drop_generic_query_words():
-    assert "long" not in agent.tokenize("how long does it take")
-
-
-def test_plurals_fold_together():
-    assert agent.tokenize("offices") == agent.tokenize("office")
-
-
-def test_tokenize_keeps_repeats_because_bm25_needs_term_frequency():
-    assert agent.tokenize("complaint about a complaint") == ["complaint", "complaint"]
-
-
-def test_scores_are_normalised_between_zero_and_one():
-    for query in ("bristol office", "complaint ombudsman eight weeks", "portal login"):
-        for score, _, _ in agent.score_documents(set(agent.tokenize(query))):
-            assert 0.0 <= score <= 1.0, (query, score)
-
-
-def test_term_frequency_raises_the_score():
-    # The complaints entry mentions "complaint" several times; the timescales
-    # entry mentions it once. Pure overlap would score them equally.
-    scored = {entry["topic"]: score for score, _, entry in agent.score_documents({"complaint"})}
-    assert (
-        scored["how to make a complaint"]
-        > scored["complaint timescales what happens next ombudsman"]
+def result_with(lexical=None, dense=None):
+    return RetrievedChunk(
+        chunk=make_chunk("d", "S", "text"),
+        score=0.01,
+        lexical_rank=1 if lexical is not None else None,
+        dense_rank=1 if dense is not None else None,
+        lexical_score=lexical,
+        dense_score=dense,
     )
 
 
-def test_words_the_corpus_has_never_seen_do_not_change_the_score():
-    known = agent.score_documents({"bristol", "office"})[0][0]
-    with_noise = agent.score_documents({"bristol", "office", "zzzunknownzzz"})[0][0]
-    assert with_noise == known
+@pytest.fixture
+def helper(monkeypatch):
+    """Script the helper model: expansion terms and the rerank verdict."""
+    calls = {"expand": set(), "rerank": {"relevant": [0, 1, 2]}}
+
+    def fake_call_json(prompt, *a, **k):
+        if "expand" in prompt.lower():
+            return sorted(calls["expand"])
+        return calls["rerank"]
+
+    monkeypatch.setattr(agent, "call_json", fake_call_json)
+    return calls
 
 
-def test_expansion_terms_absent_from_the_corpus_cannot_sink_a_real_match():
-    # The live failure: "Do you have a Manchester office?" plus a typical
-    # expansion set scored 0.146 against a floor of 0.15 and returned NO_MATCH,
-    # although the offices entry names Manchester.
-    expansion = {"branch", "location", "address", "city", "premises", "local", "visit", "nearby"}
-    tokens = set(agent.tokenize("Do you have a Manchester office?")) | expansion
-    best_score, _, best_entry = agent.score_documents(tokens)[0]
-    assert best_entry["topic"] == "office locations bristol local offices"
-    assert best_score >= agent.RELEVANCE_FLOOR + 0.3, f"{best_score:.3f} vs floor"
+@pytest.fixture
+def trace():
+    trace = agent.Trace()
+    token = agent._CURRENT_TRACE.set(trace)
+    yield trace
+    agent._CURRENT_TRACE.reset(token)
 
 
-def test_good_matches_clear_the_floor_with_margin_not_by_luck():
-    # A healthy config leaves room between real matches and the floor. Testing
-    # once found the complaint query at 0.91 against a floor of 0.90 -- passing
-    # by 0.01, which is luck, not correctness.
-    scored = agent.score_documents(agent.tokenize("how do I make a complaint"))
-    best = scored[0][0] if scored else 0
-    assert best >= agent.RELEVANCE_FLOOR + 0.3, f"best {best:.2f} vs floor {agent.RELEVANCE_FLOOR}"
+# --- floors -----------------------------------------------------------------------------
+
+
+def test_a_candidate_clears_the_floor_on_either_side():
+    assert agent.clears_floor(result_with(lexical=agent.RELEVANCE_FLOOR))
+    assert agent.clears_floor(result_with(dense=agent.DENSE_FLOOR))
+    assert agent.clears_floor(result_with(lexical=0.01, dense=0.9))
+
+
+def test_a_candidate_below_both_floors_is_dropped():
+    assert not agent.clears_floor(result_with(lexical=0.1, dense=0.5))
+    assert not agent.clears_floor(result_with(dense=0.59))
+    assert not agent.clears_floor(result_with())
+
+
+def test_the_dense_floor_sits_between_measured_off_topic_and_on_topic_scores():
+    # Step 2.3 calibration with BAAI/bge-small-en-v1.5: off-topic questions
+    # peaked at 0.529; on-topic chunks scored 0.681 and above.
+    assert 0.53 < agent.DENSE_FLOOR < 0.68
+
+
+def test_describe_hit_shows_both_methods_or_a_dash():
+    both = agent.describe_hit(result_with(lexical=0.5, dense=0.7))
+    assert both == "lexical #1 0.50 · dense #1 0.70"
+    assert agent.describe_hit(result_with(dense=0.7)) == "lexical — · dense #1 0.70"
+
+
+# --- search_knowledge_base ------------------------------------------------------------------
+
+
+def test_evidence_carries_title_section_text_and_source_url(helper, trace):
+    evidence = agent.search_knowledge_base("Do you have a Manchester office?")
+    assert evidence.startswith("[Contact us and our offices › Our offices › Manchester]\n")
+    assert "41 Mosley Street, Manchester, M2 3ZX" in evidence
+    assert "Source: https://www.fernhillwealth.example/contact-us/" in evidence
+    kept = trace.find("kept")
+    assert kept and kept[0].data["section"] == "Our offices › Manchester"
+    assert kept[0].data["found_by"] in ("both", "lexical")
+
+
+def test_expansion_terms_are_logged_and_widen_the_lexical_search(helper, trace):
+    helper["expand"] = {"complaint", "ombudsman"}
+    evidence = agent.search_knowledge_base("I am unhappy with the service")
+    assert "Complaints" in evidence or "complaint" in evidence.lower()
+    [expanded] = trace.find("expanded")
+    assert set(expanded.data["terms"]) >= {"complaint", "ombudsman"}
+
+
+def test_off_topic_questions_return_no_match_and_log_why(helper, trace):
+    helper["expand"] = set()
+    evidence = agent.search_knowledge_base("quiz")
+    assert evidence.startswith("NO_MATCH")
+    [event] = trace.find("no_candidates")
+    assert "best was" in event.message and "dense" in event.data["best"]
+
+
+def test_the_reranker_can_reject_every_candidate(helper, trace):
+    helper["rerank"] = {"relevant": [], "reason": "none answer it"}
+    assert agent.search_knowledge_base("Manchester office").startswith("NO_MATCH")
+    assert trace.find("rerank_rejected_all")
+
+
+def test_no_more_than_top_k_chunks_are_kept(helper):
+    helper["rerank"] = {"relevant": [0, 1, 2, 3, 4, 5]}
+    evidence = agent.search_knowledge_base("ISA allowance transfers Lifetime ISA")
+    assert evidence.count("\nSource: ") == agent.TOP_K
+
+
+def test_unknown_expansion_words_cannot_sink_a_real_match(helper):
+    # The Phase 1 live failure, now at corpus level: a typical expansion set
+    # full of words no chunk contains must not push Manchester below the floor.
+    helper["expand"] = {"branch", "location", "address", "city", "premises", "local", "visit"}
+    evidence = agent.search_knowledge_base("Do you have a Manchester office?")
+    assert "Our offices › Manchester" in evidence
+
+
+# --- building the real thing ----------------------------------------------------------------
+
+
+def test_open_retriever_syncs_the_index_and_honours_the_mode(tmp_path):
+    settings = agent.Settings(
+        embedder="hash", index_path=str(tmp_path / "idx"), retrieval_mode="lexical"
+    )
+    retriever, report = open_retriever(settings)
+    try:
+        assert report.added == report.total > 100 and report.removed == 0
+        assert retriever.dense_weight == 0.0 and retriever.lexical_weight == 1.0
+        assert retriever.search("0161 496 0170", k=1)[0].found_by == "lexical"
+    finally:
+        retriever.store.close()
+
+
+class FakeStore:
+    closed = False
+
+    def close(self):
+        self.closed = True
+
+
+class FakeRetriever:
+    def __init__(self):
+        self.store = FakeStore()
+
+
+def test_the_agent_builds_its_retriever_once_and_closes_it_at_exit(monkeypatch, trace):
+    built, registered = [], []
+
+    def fake_open(settings):
+        built.append(settings)
+        return FakeRetriever(), SyncReport(added=3, removed=0, unchanged=0)
+
+    monkeypatch.setattr(agent, "_RETRIEVER", None)
+    monkeypatch.setattr(agent, "open_retriever", fake_open)
+    monkeypatch.setattr(agent.atexit, "register", registered.append)
+    first = agent.get_retriever()
+    assert agent.get_retriever() is first
+    assert built == [agent.SETTINGS] and registered == [agent.close_retriever]
+    [event] = trace.find("index")
+    assert event.data == {"added": 3, "removed": 0, "unchanged": 0, "total": 3}
+
+    agent.close_retriever()
+    assert first.store.closed and agent._RETRIEVER is None
+    agent.close_retriever()  # idempotent

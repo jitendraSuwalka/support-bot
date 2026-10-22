@@ -69,7 +69,7 @@ Three tools, and a loop that runs while the model asks for them.
 
 | Tool | Purpose |
 |---|---|
-| `search_knowledge_base` | 12 public FAQ entries — offices, complaints, services, portal |
+| `search_knowledge_base` | the firm's documents in `corpus/` — 18 pages, hybrid BM25 + vector search |
 | `look_up_client_query` | Case status by reference (synthetic data) |
 | `escalate_to_adviser` | Hand-off to a human, mandatory for advice topics |
 
@@ -348,7 +348,7 @@ pytest -m live                  # the opt-in tests that call the real API
 |---|---|
 | `agent.py` | The agent — tools, retrieval, guards, policy, loop; returns a structured `AgentResult` |
 | `config.py` | Every runtime setting, read from the environment with validation |
-| `knowledge_base.py` | 12 entries for the fictional firm, each with a traceable URL |
+| `corpus/`, `rag/` | 18 documents for the fictional firm, and the chunker, embeddings, vector store and hybrid retriever that search them |
 | `tests/` | 83 pytest tests, scripted fake model, plus 6 opt-in live tests |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `requirements.txt` / `requirements.lock` | Direct dependencies / every resolved dependency |

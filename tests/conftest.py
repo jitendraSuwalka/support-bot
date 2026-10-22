@@ -14,7 +14,11 @@ import types
 import pytest
 
 import agent
-from rag.corpus import Chunk, chunk_id_for
+from rag.corpus import Chunk, chunk_corpus, chunk_id_for
+from rag.embeddings import HashEmbedder
+from rag.lexical import BM25Index
+from rag.retrieval import HybridRetriever
+from rag.store import VectorStore
 
 
 class Block:
@@ -81,6 +85,28 @@ def tool_reply(name, tool_input, call_id="t1", text=None):
         blocks.append(Block("text", text=text))
     blocks.append(Block("tool_use", id=call_id, name=name, input=tool_input))
     return Response(blocks, "tool_use")
+
+
+@pytest.fixture(scope="session")
+def corpus_retriever():
+    """A hybrid retriever over the real corpus with the hash embedder, in memory.
+
+    Built once per test session: no model download, no index on disk, and the
+    same vectors on every machine. Its dense scores are weak (hashing is not
+    meaning), so retrieval in tests is decided by the lexical side.
+    """
+    chunks = chunk_corpus()
+    store = VectorStore(HashEmbedder())
+    store.sync(chunks)
+    return HybridRetriever(BM25Index(chunks), store)
+
+
+@pytest.fixture(autouse=True)
+def offline_retriever(request, monkeypatch, corpus_retriever):
+    """Give the agent the in-memory retriever, except in live tests, which
+    must exercise the real model and the real index."""
+    if request.node.get_closest_marker("live") is None:
+        monkeypatch.setattr(agent, "_RETRIEVER", corpus_retriever)
 
 
 @pytest.fixture

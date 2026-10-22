@@ -34,9 +34,11 @@ order they run:
       Clarify once, then escalate. Enforced in code, so an unanswerable
       question always reaches a human regardless of what the model decides.
 
-Retrieval is two-stage: BM25 lexical scoring for recall, then an LLM rerank
-for precision. Lexical scoring counts words and cannot see that "not office
-opening hours" is a denial; reranking reads.
+Retrieval is hybrid: the firm's documents (corpus/) are chunked and searched
+by BM25 and by a local embedding model at once, the two rankings fused by
+reciprocal rank (the rag package), then an LLM rerank for precision. Lexical
+scoring counts words and a vector index matches meaning; neither can see
+that "not office opening hours" is a denial. Reranking reads.
 
 Every run returns an AgentResult: the customer-facing answer, the notes about
 what the guards did, the raw evidence, and a structured trace of every
@@ -45,25 +47,24 @@ pipeline event. Nothing is communicated through stdout.
 Model non-determinism is irreducible. That is why the guarantees are in code
 and why every answer carries its evidence.
 
-Personal learning project. Fernhill Wealth is invented; see knowledge_base.py.
+Personal learning project. Fernhill Wealth is invented; see corpus/README.md.
 Run `pytest` for the test suite.
 """
 
 from __future__ import annotations
 
+import atexit
 import contextvars
 import json
-import math
 import re
-from collections import Counter
 from dataclasses import dataclass, field
 
 from anthropic import Anthropic
 from dotenv import load_dotenv
 
 from config import Settings
-from knowledge_base import KNOWLEDGE_BASE
 from rag.lexical import tokenize
+from rag.retrieval import HybridRetriever, RetrievedChunk, open_retriever
 
 load_dotenv()
 client = Anthropic()
@@ -75,6 +76,7 @@ HELPER_MODEL = SETTINGS.helper_model
 
 MAX_STEPS = SETTINGS.max_steps
 RELEVANCE_FLOOR = SETTINGS.relevance_floor
+DENSE_FLOOR = SETTINGS.dense_floor
 CANDIDATES = SETTINGS.candidates
 TOP_K = SETTINGS.top_k
 
@@ -329,29 +331,46 @@ def check_citations(answer, evidence):
 
 
 # =========================================================
-# RETRIEVAL — BM25, normalised to the query's ceiling
+# RETRIEVAL — hybrid search over the document corpus
 # =========================================================
+#
+# The corpus (corpus/*.md) is chunked along its headings, embedded with a
+# local model and held in a vector index (see the rag package). A query runs
+# through BM25 and the vector index at once; the two rankings are fused by
+# reciprocal rank. Candidates must clear a floor on at least one side, then
+# an LLM rerank reads them and keeps the ones that answer the question.
 
-K1, B = 1.2, 0.75
-
-
-def build_index():
-    """Term frequencies per document, document lengths, and BM25 idf per term."""
-    documents = []
-    for entry in KNOWLEDGE_BASE:
-        tokens = tokenize(entry["topic"] + " " + entry["content"])
-        documents.append({"entry": entry, "tf": Counter(tokens), "length": len(tokens)})
-    total = len(documents)
-    document_frequency = Counter(term for document in documents for term in document["tf"])
-    idf = {
-        term: math.log(1 + (total - df + 0.5) / (df + 0.5))
-        for term, df in document_frequency.items()
-    }
-    return documents, idf
+_RETRIEVER: HybridRetriever | None = None
 
 
-DOCUMENTS, IDF = build_index()
-AVG_DOC_LENGTH = sum(document["length"] for document in DOCUMENTS) / len(DOCUMENTS)
+def get_retriever() -> HybridRetriever:
+    """The corpus retriever, built on first use.
+
+    Opening it loads the corpus, brings the vector index up to date (only
+    chunks whose text changed are re-embedded) and builds the BM25 index. On
+    a fresh machine the first call also downloads the embedding model, so
+    app.py warms this up at start rather than on the first question.
+    """
+    global _RETRIEVER
+    if _RETRIEVER is None:
+        _RETRIEVER, report = open_retriever(SETTINGS)
+        atexit.register(close_retriever)
+        log(
+            "index",
+            f"index ready: {report.total} chunks ({report.added} embedded, "
+            f"{report.removed} removed)",
+            **report.as_dict(),
+        )
+    return _RETRIEVER
+
+
+def close_retriever() -> None:
+    """Release the index (its on-disk lock, in local mode) before the interpreter
+    tears modules down; left to the garbage collector it closes too late."""
+    global _RETRIEVER
+    if _RETRIEVER is not None:
+        _RETRIEVER.store.close()
+        _RETRIEVER = None
 
 
 def expand_query(query):
@@ -374,35 +393,28 @@ def expand_query(query):
     return set()
 
 
-def score_documents(query_tokens):
-    """BM25 (Robertson/Spärck Jones idf, tf saturation, length normalisation).
+def clears_floor(result: RetrievedChunk) -> bool:
+    """A candidate must look relevant to at least one method.
 
-    Scores are divided by the query's saturation ceiling — the score a document
-    would get if every query term the corpus knows appeared in it with unbounded
-    frequency — so they fall between 0 and 1 and the relevance floor means the
-    same thing for a two-word query as for a ten-word one.
-
-    Query terms the corpus has never seen are left out of the ceiling. Query
-    expansion routinely adds words such as "premises" or "location" that no
-    entry contains; an earlier version counted them at full weight, and the
-    inflated ceiling pushed "Do you have a Manchester office?" below the
-    relevance floor even though the offices entry names Manchester.
+    The lexical score is a share of the query's BM25 ceiling; the dense score
+    is a cosine similarity. The dense floor was set from measurement: with
+    this model, off-topic questions peak at about 0.53 against the corpus
+    while on-topic ones score 0.68 and above (Step 2.3 calibration).
     """
-    known_terms = {term for term in query_tokens if term in IDF}
-    ceiling = sum(IDF[term] * (K1 + 1) for term in known_terms) or 1.0
-    results = []
-    for document in DOCUMENTS:
-        matched = known_terms & document["tf"].keys()
-        if not matched:
-            continue
-        length_norm = K1 * (1 - B + B * document["length"] / AVG_DOC_LENGTH)
-        score = 0.0
-        for term in matched:
-            tf = document["tf"][term]
-            score += IDF[term] * tf * (K1 + 1) / (tf + length_norm)
-        results.append((score / ceiling, matched, document["entry"]))
-    results.sort(key=lambda row: row[0], reverse=True)
-    return results
+    lexical = result.lexical_score or 0.0
+    dense = result.dense_score or 0.0
+    return lexical >= RELEVANCE_FLOOR or dense >= DENSE_FLOOR
+
+
+def describe_hit(result: RetrievedChunk) -> str:
+    """One line for the trace: where each method ranked the chunk, and its score."""
+    parts = []
+    for label, rank, score in (
+        ("lexical", result.lexical_rank, result.lexical_score),
+        ("dense", result.dense_rank, result.dense_score),
+    ):
+        parts.append(f"{label} #{rank} {score:.2f}" if rank else f"{label} —")
+    return " · ".join(parts)
 
 
 # =========================================================
@@ -424,24 +436,24 @@ def rerank(query, candidates):
         return []
 
     listing = "\n\n".join(
-        f"[{index}] topic: {entry['topic']}\ncontent: {entry['content']}"
-        for index, (_, _, entry) in enumerate(candidates)
+        f"[{index}] {result.chunk.title} › {result.chunk.section}\n{result.chunk.text}"
+        for index, result in enumerate(candidates)
     )
     result = call_json(
-        "Decide which knowledge base entries help answer the customer's question. "
-        "Judge meaning, not shared words.\n\n"
-        "An entry is RELEVANT if it contains information that answers the question "
-        "in whole or in part, even when the entry is mostly about something else. "
-        "For example, an entry listing the firm's offices answers \"do you have an "
-        'office in X" whenever X is on the list, even if the rest of the entry '
+        "Decide which passages from the firm's documents help answer the customer's "
+        "question. Judge meaning, not shared words.\n\n"
+        "A passage is RELEVANT if it contains information that answers the question "
+        "in whole or in part, even when the passage is mostly about something else. "
+        "For example, a passage listing the firm's offices answers \"do you have an "
+        'office in X" whenever X is on the list, even if the rest of the passage '
         "describes a different office.\n\n"
-        "An entry is NOT relevant if it only shares vocabulary with the question, "
+        "A passage is NOT relevant if it only shares vocabulary with the question, "
         'or explicitly says it does NOT cover what was asked (for example, "these '
         'are callback slots, not office opening hours" does not answer a question '
         "about opening hours).\n\n"
-        f'CUSTOMER QUESTION: "{query}"\n\nENTRIES:\n{listing}\n\n'
+        f'CUSTOMER QUESTION: "{query}"\n\nPASSAGES:\n{listing}\n\n'
         'Return ONLY: {"relevant": [0, 2], "reason": "<one sentence>"} listing the '
-        "indexes of relevant entries, best first, and a one-sentence reason. "
+        "indexes of relevant passages, best first, and a one-sentence reason. "
         'Return {"relevant": [], "reason": "..."} if none are relevant.',
     )
 
@@ -467,22 +479,22 @@ def rerank(query, candidates):
 
 
 def search_knowledge_base(query):
+    retriever = get_retriever()
     raw_tokens = set(tokenize(query))
     expanded = expand_query(query)
-    all_tokens = raw_tokens | set(tokenize(" ".join(expanded)))
-
-    added = sorted(all_tokens - raw_tokens)
+    added = sorted(set(tokenize(" ".join(expanded))) - raw_tokens)
     if added:
         log("expanded", f"expanded +{len(added)}: {', '.join(added[:8])}", terms=added)
 
-    scored = score_documents(all_tokens)
-    candidates = [row for row in scored if row[0] >= RELEVANCE_FLOOR][:CANDIDATES]
+    results = retriever.search(query, k=CANDIDATES, extra_terms=expanded)
+    candidates = [result for result in results if clears_floor(result)]
 
     if not candidates:
-        best = scored[0][0] if scored else 0.0
+        best = describe_hit(results[0]) if results else "nothing retrieved"
         log(
             "no_candidates",
-            f"no candidates above floor {RELEVANCE_FLOOR} — best was {best:.2f}",
+            f"no candidates above the floors ({RELEVANCE_FLOOR} lexical, {DENSE_FLOOR} dense) "
+            f"— best was {best}",
             best=best,
         )
 
@@ -498,12 +510,20 @@ def search_knowledge_base(query):
         )
 
     blocks = []
-    for score, _, entry in kept:
-        log("kept", f"kept {score:.2f} {entry['topic']}", score=score, topic=entry["topic"])
-        blocks.append(
-            f"[{entry['topic']}] (relevance {score:.2f})\n"
-            f"{entry['content']}\nSource: {entry['source']}"
+    for result in kept:
+        chunk = result.chunk
+        label = f"{chunk.title} › {chunk.section}"
+        log(
+            "kept",
+            f"kept {label} ({describe_hit(result)})",
+            chunk_id=chunk.chunk_id,
+            title=chunk.title,
+            section=chunk.section,
+            found_by=result.found_by,
+            lexical_score=result.lexical_score,
+            dense_score=result.dense_score,
         )
+        blocks.append(f"[{label}]\n{chunk.text}\nSource: {chunk.url}")
     return "\n\n".join(blocks)
 
 
@@ -553,9 +573,11 @@ tools = [
     {
         "name": "search_knowledge_base",
         "description": (
-            "Search the company knowledge base for facts about services, offices, "
-            "phone numbers, the client portal, complaints, appointments and account "
-            "admin.\n\nRun one search per distinct topic. Pass the customer's own "
+            "Search the firm's documents: services and fees, ISAs, pensions, tax "
+            "reporting, cash and dealing, becoming a client, offices and contact "
+            "details, the client portal, account administration, closing or "
+            "transferring, complaints, life events, security and accessibility."
+            "\n\nRun one search per distinct topic. Pass the customer's own "
             "wording. If the result begins with NO_MATCH, escalate rather than "
             "improvising."
         ),

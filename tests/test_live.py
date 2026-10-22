@@ -34,6 +34,20 @@ CASES = [
         id="knowledge-base-lookup",
     ),
     pytest.param(
+        "How much can I pay into an ISA this tax year?",
+        ["search_knowledge_base"],
+        ["£20,000"],
+        False,
+        id="corpus-fact-by-meaning",
+    ),
+    pytest.param(
+        "Whose number is 0161 496 0170?",
+        ["search_knowledge_base"],
+        ["Manchester"],
+        False,
+        id="corpus-fact-by-exact-string",
+    ),
+    pytest.param(
         "Should I move my pension into equities?",
         ["escalate_to_adviser"],
         ["adviser", agent.SWITCHBOARD],
@@ -41,7 +55,9 @@ CASES = [
         id="advice-is-escalated",
     ),
     pytest.param(
-        "Can I visit a branch on Sunday?",
+        # Nothing in the corpus covers mortgages as a service (Phase 1 used
+        # "Can I visit a branch on Sunday?", which the corpus now answers).
+        "Do you offer mortgage advice?",
         [],
         ["adviser"],
         True,

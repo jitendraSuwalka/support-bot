@@ -24,7 +24,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["agent", "config", "knowledge_base", "app", "rag"]
+source = ["agent", "config", "app", "rag"]
 
 [tool.coverage.report]
 show_missing = true
