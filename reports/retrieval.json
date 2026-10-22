@@ -1,18 +1,19 @@
 {
-  "generated": "2026-10-22T18:38:23Z",
+  "generated": "2026-10-22T20:36:50Z",
   "embedder": "BAAI/bge-small-en-v1.5-384",
   "cases": 169,
-  "cases_with_gold": 135,
+  "cases_with_gold": 136,
   "chunks": 129,
   "dense_floor": 0.5,
   "relevance_floor": 0.15,
+  "rrf_k": 20,
   "modes": {
     "hybrid": {
-      "n": 135,
-      "recall@1": 0.637,
-      "recall@3": 0.881,
-      "recall@6": 0.956,
-      "mrr": 0.764,
+      "n": 136,
+      "recall@1": 0.647,
+      "recall@3": 0.897,
+      "recall@6": 0.971,
+      "mrr": 0.774,
       "pool": 10,
       "by_kind": {
         "action": {
@@ -20,9 +21,16 @@
           "recall@1": 0.0,
           "recall@3": 0.0,
           "recall@6": 1.0,
-          "mrr": 0.25
+          "mrr": 0.2
         },
         "advice": {
+          "n": 1,
+          "recall@1": 1.0,
+          "recall@3": 1.0,
+          "recall@6": 1.0,
+          "mrr": 1.0
+        },
+        "ambiguous": {
           "n": 1,
           "recall@1": 1.0,
           "recall@3": 1.0,
@@ -34,7 +42,7 @@
           "recall@1": 0.625,
           "recall@3": 0.75,
           "recall@6": 0.875,
-          "mrr": 0.713
+          "mrr": 0.719
         },
         "exact-string": {
           "n": 6,
@@ -44,18 +52,18 @@
           "mrr": 0.75
         },
         "factual": {
-          "n": 111,
-          "recall@1": 0.622,
-          "recall@3": 0.901,
-          "recall@6": 0.964,
-          "mrr": 0.763
+          "n": 109,
+          "recall@1": 0.633,
+          "recall@3": 0.927,
+          "recall@6": 0.982,
+          "mrr": 0.776
         },
         "handoff": {
-          "n": 4,
-          "recall@1": 0.75,
-          "recall@3": 0.75,
-          "recall@6": 0.75,
-          "mrr": 0.75
+          "n": 6,
+          "recall@1": 0.667,
+          "recall@3": 0.667,
+          "recall@6": 0.833,
+          "mrr": 0.7
         },
         "multi-part": {
           "n": 4,
@@ -679,7 +687,7 @@
           "kind": "factual",
           "gold_rank": 1,
           "gold_dense": 0.6734588193319111,
-          "top_dense": 0.6734588193319111
+          "top_dense": 0.6799696664340662
         },
         {
           "id": "security-05",
@@ -719,7 +727,7 @@
         {
           "id": "life-02",
           "kind": "factual",
-          "gold_rank": 9,
+          "gold_rank": 6,
           "gold_dense": 0.7577755229108921,
           "top_dense": 0.7577755229108921
         },
@@ -815,9 +823,16 @@
           "top_dense": 0.6059316955623146
         },
         {
+          "id": "ambiguous-03",
+          "kind": "ambiguous",
+          "gold_rank": 1,
+          "gold_dense": 0.7307772021982138,
+          "top_dense": 0.7307772021982138
+        },
+        {
           "id": "portal-06",
           "kind": "factual",
-          "gold_rank": 5,
+          "gold_rank": 3,
           "gold_dense": 0.5037669682922908,
           "top_dense": 0.5887510513619174
         },
@@ -831,7 +846,7 @@
         {
           "id": "invest-06",
           "kind": "factual",
-          "gold_rank": 3,
+          "gold_rank": 2,
           "gold_dense": 0.7161595332440538,
           "top_dense": 0.7161595332440538
         },
@@ -866,7 +881,7 @@
         {
           "id": "fees-13",
           "kind": "denial",
-          "gold_rank": 5,
+          "gold_rank": 4,
           "gold_dense": 0.7314113283298834,
           "top_dense": 0.7314113283298834
         },
@@ -950,14 +965,14 @@
         {
           "id": "access-04",
           "kind": "factual",
-          "gold_rank": 4,
+          "gold_rank": 2,
           "gold_dense": 0.5594316064764983,
           "top_dense": 0.5594316064764983
         },
         {
           "id": "security-06",
-          "kind": "factual",
-          "gold_rank": 7,
+          "kind": "handoff",
+          "gold_rank": 5,
           "gold_dense": 0.7838728411359367,
           "top_dense": 0.7838728411359367
         },
@@ -991,15 +1006,15 @@
         },
         {
           "id": "life-07",
-          "kind": "factual",
-          "gold_rank": 2,
+          "kind": "handoff",
+          "gold_rank": 1,
           "gold_dense": 0.6355219960864221,
           "top_dense": 0.6355219960864221
         },
         {
           "id": "action-01",
           "kind": "action",
-          "gold_rank": 4,
+          "gold_rank": 5,
           "gold_dense": 0.6859740422377179,
           "top_dense": 0.7245557279291076
         },
@@ -1165,13 +1180,6 @@
           "top_dense": 0.5275872627427198
         },
         {
-          "id": "ambiguous-03",
-          "kind": "ambiguous",
-          "gold_rank": null,
-          "gold_dense": null,
-          "top_dense": 0.7307772021982138
-        },
-        {
           "id": "greeting-01",
           "kind": "greeting",
           "gold_rank": null,
@@ -1190,7 +1198,7 @@
           "kind": "advice",
           "gold_rank": null,
           "gold_dense": null,
-          "top_dense": 0.6861162920636963
+          "top_dense": 0.6930107178027266
         },
         {
           "id": "advice-12",
@@ -1258,29 +1266,29 @@
       ],
       "dense_calibration": {
         "gold_chunk_cosine": {
-          "n": 131,
+          "n": 132,
           "min": 0.504,
           "p10": 0.618,
-          "median": 0.735,
+          "median": 0.734,
           "p90": 0.834,
           "max": 0.893
         },
         "best_cosine_without_gold": {
-          "n": 34,
+          "n": 33,
           "min": 0.447,
           "p10": 0.525,
-          "median": 0.618,
+          "median": 0.612,
           "p90": 0.762,
           "max": 0.811
         }
       }
     },
     "lexical": {
-      "n": 135,
-      "recall@1": 0.6,
-      "recall@3": 0.785,
-      "recall@6": 0.896,
-      "mrr": 0.71,
+      "n": 136,
+      "recall@1": 0.603,
+      "recall@3": 0.787,
+      "recall@6": 0.897,
+      "mrr": 0.712,
       "pool": 10,
       "by_kind": {
         "action": {
@@ -1297,6 +1305,13 @@
           "recall@6": 1.0,
           "mrr": 0.333
         },
+        "ambiguous": {
+          "n": 1,
+          "recall@1": 1.0,
+          "recall@3": 1.0,
+          "recall@6": 1.0,
+          "mrr": 1.0
+        },
         "denial": {
           "n": 8,
           "recall@1": 0.5,
@@ -1312,18 +1327,18 @@
           "mrr": 1.0
         },
         "factual": {
-          "n": 111,
-          "recall@1": 0.595,
-          "recall@3": 0.793,
-          "recall@6": 0.91,
-          "mrr": 0.712
+          "n": 109,
+          "recall@1": 0.606,
+          "recall@3": 0.807,
+          "recall@6": 0.927,
+          "mrr": 0.724
         },
         "handoff": {
-          "n": 4,
-          "recall@1": 0.25,
-          "recall@3": 0.25,
-          "recall@6": 0.5,
-          "mrr": 0.323
+          "n": 6,
+          "recall@1": 0.167,
+          "recall@3": 0.167,
+          "recall@6": 0.333,
+          "mrr": 0.234
         },
         "multi-part": {
           "n": 4,
@@ -2090,6 +2105,13 @@
           "top_dense": null
         },
         {
+          "id": "ambiguous-03",
+          "kind": "ambiguous",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
           "id": "portal-06",
           "kind": "factual",
           "gold_rank": 1,
@@ -2231,7 +2253,7 @@
         },
         {
           "id": "security-06",
-          "kind": "factual",
+          "kind": "handoff",
           "gold_rank": null,
           "gold_dense": null,
           "top_dense": null
@@ -2266,7 +2288,7 @@
         },
         {
           "id": "life-07",
-          "kind": "factual",
+          "kind": "handoff",
           "gold_rank": 9,
           "gold_dense": null,
           "top_dense": null
@@ -2295,11 +2317,11 @@
       ]
     },
     "dense": {
-      "n": 135,
-      "recall@1": 0.726,
-      "recall@3": 0.867,
-      "recall@6": 0.933,
-      "mrr": 0.806,
+      "n": 136,
+      "recall@1": 0.728,
+      "recall@3": 0.868,
+      "recall@6": 0.934,
+      "mrr": 0.808,
       "pool": 10,
       "by_kind": {
         "action": {
@@ -2310,6 +2332,13 @@
           "mrr": 0.125
         },
         "advice": {
+          "n": 1,
+          "recall@1": 1.0,
+          "recall@3": 1.0,
+          "recall@6": 1.0,
+          "mrr": 1.0
+        },
+        "ambiguous": {
           "n": 1,
           "recall@1": 1.0,
           "recall@3": 1.0,
@@ -2331,18 +2360,18 @@
           "mrr": 0.694
         },
         "factual": {
-          "n": 111,
-          "recall@1": 0.739,
-          "recall@3": 0.892,
-          "recall@6": 0.955,
-          "mrr": 0.822
+          "n": 109,
+          "recall@1": 0.734,
+          "recall@3": 0.89,
+          "recall@6": 0.954,
+          "mrr": 0.819
         },
         "handoff": {
-          "n": 4,
-          "recall@1": 0.75,
+          "n": 6,
+          "recall@1": 0.833,
           "recall@3": 1.0,
           "recall@6": 1.0,
-          "mrr": 0.875
+          "mrr": 0.917
         },
         "multi-part": {
           "n": 4,
@@ -3103,6 +3132,13 @@
           "top_dense": 0.6059316955623146
         },
         {
+          "id": "ambiguous-03",
+          "kind": "ambiguous",
+          "gold_rank": 1,
+          "gold_dense": 0.7307772021982138,
+          "top_dense": 0.7307772021982138
+        },
+        {
           "id": "portal-06",
           "kind": "factual",
           "gold_rank": null,
@@ -3244,7 +3280,7 @@
         },
         {
           "id": "security-06",
-          "kind": "factual",
+          "kind": "handoff",
           "gold_rank": 1,
           "gold_dense": 0.7838728411359367,
           "top_dense": 0.7838728411359367
@@ -3279,7 +3315,7 @@
         },
         {
           "id": "life-07",
-          "kind": "factual",
+          "kind": "handoff",
           "gold_rank": 1,
           "gold_dense": 0.6355219960864221,
           "top_dense": 0.6355219960864221
@@ -3453,13 +3489,6 @@
           "top_dense": 0.5275872627427198
         },
         {
-          "id": "ambiguous-03",
-          "kind": "ambiguous",
-          "gold_rank": null,
-          "gold_dense": null,
-          "top_dense": 0.7307772021982138
-        },
-        {
           "id": "greeting-01",
           "kind": "greeting",
           "gold_rank": null,
@@ -3546,104 +3575,104 @@
       ],
       "dense_calibration": {
         "gold_chunk_cosine": {
-          "n": 130,
+          "n": 131,
           "min": 0.54,
           "p10": 0.628,
-          "median": 0.736,
-          "p90": 0.835,
+          "median": 0.735,
+          "p90": 0.834,
           "max": 0.893
         },
         "best_cosine_without_gold": {
-          "n": 34,
+          "n": 33,
           "min": 0.447,
           "p10": 0.525,
-          "median": 0.618,
+          "median": 0.612,
           "p90": 0.762,
           "max": 0.811
         }
       }
     }
   },
-  "seconds": 19.5,
+  "seconds": 20.4,
   "sweep": [
     {
       "rrf_k": 20,
       "dense_weight": 0.5,
-      "recall@1": 0.607,
-      "recall@6": 0.948,
-      "mrr": 0.748,
+      "recall@1": 0.61,
+      "recall@6": 0.949,
+      "mrr": 0.75,
       "misses": 4
     },
     {
       "rrf_k": 20,
       "dense_weight": 1.0,
-      "recall@1": 0.644,
-      "recall@6": 0.97,
-      "mrr": 0.772,
+      "recall@1": 0.647,
+      "recall@6": 0.971,
+      "mrr": 0.774,
       "misses": 4
     },
     {
       "rrf_k": 20,
       "dense_weight": 1.5,
-      "recall@1": 0.637,
+      "recall@1": 0.64,
       "recall@6": 0.956,
-      "mrr": 0.767,
+      "mrr": 0.769,
       "misses": 4
     },
     {
       "rrf_k": 20,
       "dense_weight": 2.0,
-      "recall@1": 0.667,
+      "recall@1": 0.669,
       "recall@6": 0.956,
-      "mrr": 0.781,
+      "mrr": 0.783,
       "misses": 2
     },
     {
       "rrf_k": 20,
       "dense_weight": 3.0,
-      "recall@1": 0.696,
-      "recall@6": 0.948,
-      "mrr": 0.794,
+      "recall@1": 0.699,
+      "recall@6": 0.949,
+      "mrr": 0.795,
       "misses": 1
     },
     {
       "rrf_k": 60,
       "dense_weight": 0.5,
-      "recall@1": 0.607,
-      "recall@6": 0.948,
-      "mrr": 0.744,
+      "recall@1": 0.61,
+      "recall@6": 0.949,
+      "mrr": 0.746,
       "misses": 6
     },
     {
       "rrf_k": 60,
       "dense_weight": 1.0,
-      "recall@1": 0.637,
+      "recall@1": 0.64,
       "recall@6": 0.956,
-      "mrr": 0.764,
+      "mrr": 0.765,
       "misses": 4
     },
     {
       "rrf_k": 60,
       "dense_weight": 1.5,
-      "recall@1": 0.637,
+      "recall@1": 0.64,
       "recall@6": 0.956,
-      "mrr": 0.764,
+      "mrr": 0.765,
       "misses": 4
     },
     {
       "rrf_k": 60,
       "dense_weight": 2.0,
-      "recall@1": 0.659,
+      "recall@1": 0.662,
       "recall@6": 0.956,
-      "mrr": 0.774,
+      "mrr": 0.775,
       "misses": 4
     },
     {
       "rrf_k": 60,
       "dense_weight": 3.0,
-      "recall@1": 0.681,
+      "recall@1": 0.684,
       "recall@6": 0.956,
-      "mrr": 0.785,
+      "mrr": 0.787,
       "misses": 4
     }
   ]

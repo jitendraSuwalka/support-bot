@@ -464,19 +464,20 @@ other eighteen failures stood, and failure modes 10–13 above are what they
 turned out to be.
 
 <!-- eval:start -->
-Retrieval alone, before expansion and reranking: the 135 cases with gold sections of 169, 129 chunks, embedder `BAAI/bge-small-en-v1.5-384`, fusion k = 60, dense floor 0.5 (`python -m eval.retrieval`, 2026-10-22).
+Retrieval alone, before expansion and reranking: the 136 cases with gold sections of 169, 129 chunks, embedder `BAAI/bge-small-en-v1.5-384`, fusion k = 20, dense floor 0.5 (`python -m eval.retrieval`, 2026-10-22).
 
 | Mode | recall@1 | recall@3 | recall@6 | MRR | misses |
 |---|---:|---:|---:|---:|---:|
-| hybrid | 0.637 | 0.881 | 0.956 | 0.764 | 4 of 135 |
-| lexical | 0.600 | 0.785 | 0.896 | 0.710 | 11 of 135 |
-| dense | 0.726 | 0.867 | 0.933 | 0.806 | 5 of 135 |
+| hybrid | 0.647 | 0.897 | 0.971 | 0.774 | 4 of 136 |
+| lexical | 0.603 | 0.787 | 0.897 | 0.712 | 11 of 136 |
+| dense | 0.728 | 0.868 | 0.934 | 0.808 | 5 of 136 |
 
 End to end: every case through the real agent (`claude-sonnet-5-5` answering, `claude-haiku-5-5` for expansion, reranking and fact-checking), scored against its label (`python -m eval.live`).
 
 | Run | Date | Cases | Behaviour accuracy | Answers correct | Escalation precision | Escalation recall | Untouched by guards | Median latency | Tokens per case |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|
 | baseline | 2026-10-22 | 169 | 89.3% | 91.7% | 65.8% | 96.2% | 74.4% | 9.1 s | 6,335 |
+| current | 2026-10-22 | 169 | 97.0% | 97.0% | 92.6% | 96.2% | 76.2% | 8.4 s | 8,040 |
 
 Behaviour accuracy: the agent did what the label expects (answer, escalate, clarify, decline, greeting). Answers correct: answerable questions answered with every required fact. Escalation precision: escalations that were wanted; recall: wanted escalations that happened. Untouched: answers that passed the citation guard and the fact-check without a rewrite. Every failure is listed by id in the report.
 <!-- eval:end -->
