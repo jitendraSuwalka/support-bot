@@ -17,9 +17,10 @@ select = ["E", "W", "F", "I", "B", "UP", "SIM"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q --strict-markers -m \"not live\""
+addopts = "-q --strict-markers -m \"not live and not model\""
 markers = [
     "live: calls the real Anthropic API and costs money; run with -m live and an API key",
+    "model: downloads and runs the real embedding model (about 70 MB); run with -m model",
 ]
 
 [tool.coverage.run]

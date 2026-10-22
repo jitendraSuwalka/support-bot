@@ -2,201 +2,359 @@
 #    uv pip compile requirements-dev.txt --universal --python-version 3.11 -o requirements.lock
 annotated-doc==0.0.5
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
     #   fastapi
     #   typer
 annotated-types==0.8.0
-    # via pydantic
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   pydantic
 anthropic==1.15.0
-    # via -r requirements.txt
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   -r requirements.txt
 anyio==4.15.1
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
     #   anthropic
     #   gradio
     #   httpx
     #   httpx2
     #   starlette
 audioop-lts==0.2.2 ; python_full_version >= '3.13'
-    # via gradio
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   gradio
 brotli==1.2.0
-    # via gradio
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   gradio
 certifi==2026.10.19
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
     #   httpcore
     #   httpx
+    #   requests
+charset-normalizer==3.5.2
+    # via requests
 click==8.5.0
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
     #   huggingface-hub
     #   uvicorn
 colorama==0.4.6 ; sys_platform == 'win32'
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   loguru
     #   pytest
     #   tqdm
     #   typer
 coverage==7.16.2
-    # via pytest-cov
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   pytest-cov
 docstring-parser==0.18.0
-    # via anthropic
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   anthropic
 fastapi==0.151.0
-    # via gradio
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   gradio
+fastembed==0.9.0
+    # via -r requirements.txt
 filelock==4.2.4
-    # via huggingface-hub
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   huggingface-hub
+flatbuffers==25.12.19
+    # via onnxruntime
 fsspec==2026.9.0
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
     #   gradio-client
     #   huggingface-hub
 gradio==6.30.0
-    # via -r requirements.txt
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   -r requirements.txt
 gradio-client==2.7.2
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
     #   gradio
     #   hf-gradio
 groovy==0.1.2
-    # via gradio
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   gradio
+grpcio==1.84.0
+    # via qdrant-client
 h11==0.16.0
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
     #   httpcore
     #   httpcore2
     #   uvicorn
-hf-gradio==0.4.1
-    # via gradio
-hf-xet==1.7.0 ; platform_machine == 'AMD64' or platform_machine == 'ARM64' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'arm64' or platform_machine == 'x86_64'
-    # via huggingface-hub
-httpcore==1.0.9
+h2==4.4.1
     # via httpx
+hf-gradio==0.4.1
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   gradio
+hf-xet==1.7.0 ; platform_machine == 'AMD64' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'arm64' or platform_machine == 'x86_64'
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   huggingface-hub
+hpack==4.2.0
+    # via h2
+httpcore==1.0.9
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   httpx
 httpcore2==2.15.1 ; sys_platform != 'emscripten'
-    # via httpx2
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   httpx2
 httpx==0.28.1
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
     #   gradio
     #   gradio-client
+    #   huggingface-hub
+    #   qdrant-client
     #   safehttpx
 httpx2==2.15.1
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
     #   anthropic
-    #   huggingface-hub
 httpx2-jsfetch==1.0 ; python_full_version >= '3.12' and sys_platform == 'emscripten'
-    # via httpx2
-huggingface-hub==2.2.0
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   httpx2
+huggingface-hub==1.33.0
+    # via
+    #   fastembed
     #   gradio
     #   gradio-client
+    #   tokenizers
+hyperframe==6.1.0
+    # via h2
 idna==3.20
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
     #   anyio
     #   httpx
     #   httpx2
+    #   requests
 iniconfig==2.3.1
-    # via pytest
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   pytest
 jinja2==3.1.6
-    # via gradio
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   gradio
 jiter==0.17.0
-    # via anthropic
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   anthropic
+loguru==0.7.3
+    # via fastembed
 markdown-it-py==4.2.0
-    # via rich
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   rich
 markupsafe==3.0.4
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
     #   gradio
     #   jinja2
 mdurl==0.1.2
-    # via markdown-it-py
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   markdown-it-py
+mmh3==5.3.1
+    # via fastembed
 numpy==2.4.6 ; python_full_version < '3.12'
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   fastembed
     #   gradio
+    #   onnxruntime
     #   pandas
+    #   qdrant-client
 numpy==2.5.4 ; python_full_version >= '3.12'
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   fastembed
     #   gradio
+    #   onnxruntime
     #   pandas
+    #   qdrant-client
+onnxruntime==1.31.0
+    # via fastembed
 opentelemetry-api==1.45.1
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
     #   anthropic
     #   fastapi
 orjson==3.13.0
-    # via gradio
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   gradio
 packaging==26.3
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
     #   gradio
     #   gradio-client
     #   huggingface-hub
+    #   onnxruntime
     #   pytest
 pandas==3.0.6
-    # via gradio
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   gradio
 pillow==12.3.0
-    # via gradio
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   fastembed
+    #   gradio
 pluggy==1.7.0
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
     #   pytest
     #   pytest-cov
+portalocker==3.2.0
+    # via qdrant-client
+protobuf==7.36.2
+    # via
+    #   onnxruntime
+    #   qdrant-client
+py-rust-stemmers==0.1.8
+    # via fastembed
 pydantic==2.14.1
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
     #   anthropic
     #   fastapi
     #   gradio
+    #   qdrant-client
 pydantic-core==2.50.1
-    # via pydantic
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   pydantic
 pydub==0.25.1
-    # via gradio
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   gradio
 pygments==2.21.0
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
     #   pytest
     #   rich
 pytest==9.1.1
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
     #   -r requirements-dev.txt
     #   pytest-cov
 pytest-cov==7.1.0
-    # via -r requirements-dev.txt
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   -r requirements-dev.txt
 python-dateutil==2.9.0.post0
-    # via pandas
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   pandas
 python-dotenv==1.2.4
-    # via -r requirements.txt
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   -r requirements.txt
 python-multipart==0.0.32
-    # via gradio
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   gradio
 pytz==2026.5
-    # via gradio
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   gradio
+pywin32==312 ; sys_platform == 'win32'
+    # via portalocker
 pyyaml==6.0.3
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
     #   gradio
     #   huggingface-hub
+qdrant-client==1.19.1
+    # via -r requirements.txt
+requests==2.34.2
+    # via fastembed
 rich==15.0.0
-    # via typer
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   typer
 ruff==0.17.1
-    # via -r requirements-dev.txt
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   -r requirements-dev.txt
 safehttpx==0.1.7
-    # via gradio
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   gradio
 semantic-version==2.10.0
-    # via gradio
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   gradio
 shellingham==1.5.4
-    # via typer
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   typer
 six==1.17.0
-    # via python-dateutil
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   python-dateutil
 sniffio==1.3.1
-    # via anthropic
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   anthropic
 starlette==1.9.0
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
     #   fastapi
     #   gradio
+tokenizers==0.23.3
+    # via fastembed
 tomli==2.5.0 ; python_full_version <= '3.11'
-    # via coverage
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   coverage
 tomlkit==0.14.0
-    # via gradio
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   gradio
 tqdm==4.70.1
-    # via huggingface-hub
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   fastembed
+    #   huggingface-hub
 truststore==0.10.5 ; sys_platform != 'emscripten'
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
     #   httpcore2
     #   httpx2
 typer==0.27.3
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
     #   gradio
     #   hf-gradio
 typing-extensions==4.16.0
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
     #   anthropic
     #   anyio
     #   fastapi
     #   gradio
     #   gradio-client
+    #   grpcio
     #   httpx2
     #   huggingface-hub
     #   opentelemetry-api
@@ -206,9 +364,20 @@ typing-extensions==4.16.0
     #   typing-inspection
 typing-inspection==0.4.4
     # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
     #   fastapi
     #   pydantic
 tzdata==2026.5 ; sys_platform == 'emscripten' or sys_platform == 'win32'
-    # via pandas
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   pandas
+urllib3==2.8.0
+    # via
+    #   qdrant-client
+    #   requests
 uvicorn==0.54.0
-    # via gradio
+    # via
+    #   -c /tmp/claude-0/-home-claude/c335cc07-7a06-5344-94c1-82240f2bd64c/scratchpad/depcheck/constraints.txt
+    #   gradio
+win32-setctime==1.2.0 ; sys_platform == 'win32'
+    # via loguru
