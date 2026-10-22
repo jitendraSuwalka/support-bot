@@ -109,6 +109,22 @@ def test_run_evaluates_every_mode_on_one_index(tmp_path):
     assert text.count("\n") >= 4 and "lexical" in text and "dense floor" in text
 
 
+def test_the_sweep_tabulates_every_fusion_setting(parts):
+    chunks, store, cases = parts
+    rows = metrics.sweep(BM25Index(chunks), store, cases[:30], pool=6)
+    assert len(rows) == len(metrics.SWEEP_RRF_KS) * len(metrics.SWEEP_DENSE_WEIGHTS)
+    assert {row["rrf_k"] for row in rows} == set(metrics.SWEEP_RRF_KS)
+    assert all(0.0 <= row["recall@6"] <= 1.0 and row["misses"] >= 0 for row in rows)
+
+
+def test_outcomes_are_recorded_per_case_for_analysis(parts):
+    chunks, store, cases = parts
+    retriever = HybridRetriever(BM25Index(chunks), store, **weights_for("hybrid"))
+    report = evaluate_mode(retriever, cases[:12], pool=6)
+    assert len(report["outcomes"]) == 12  # with and without gold
+    assert {"id", "kind", "gold_rank", "gold_dense", "top_dense"} <= set(report["outcomes"][0])
+
+
 def test_the_cli_writes_the_report_where_asked(tmp_path, monkeypatch, capsys):
     monkeypatch.setenv("SUPPORT_BOT_EMBEDDER", "hash")
     monkeypatch.setenv("SUPPORT_BOT_INDEX_PATH", str(tmp_path / "idx"))
@@ -116,4 +132,16 @@ def test_the_cli_writes_the_report_where_asked(tmp_path, monkeypatch, capsys):
     assert metrics.main(["--mode", "lexical", "--pool", "6", "--out", str(out)]) == 0
     report = json.loads(out.read_text(encoding="utf-8"))
     assert list(report["modes"]) == ["lexical"] and report["modes"]["lexical"]["pool"] == 6
+    assert "sweep" not in report
     assert "report written to" in capsys.readouterr().out
+    assert b"\r\n" not in out.read_bytes()  # LF on every platform
+
+
+def test_the_cli_can_include_the_sweep(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("SUPPORT_BOT_EMBEDDER", "hash")
+    monkeypatch.setenv("SUPPORT_BOT_INDEX_PATH", str(tmp_path / "idx"))
+    out = tmp_path / "r.json"
+    assert metrics.main(["--mode", "hybrid", "--pool", "6", "--sweep", "--out", str(out)]) == 0
+    report = json.loads(out.read_text(encoding="utf-8"))
+    assert len(report["sweep"]) == 10
+    assert "sweep (lexical weight 1.0)" in capsys.readouterr().out

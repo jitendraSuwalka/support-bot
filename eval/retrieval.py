@@ -16,7 +16,12 @@ those two distributions, and the report shows whether it does.
 
     python -m eval.retrieval                      # all modes, report to reports/retrieval.json
     python -m eval.retrieval --mode lexical       # one mode
+    python -m eval.retrieval --sweep              # also try fusion weights and rank constants
     python -m eval.retrieval --out somewhere.json
+
+The sweep answers "are the fusion weights right?": it re-runs the hybrid mode
+with the dense side weighted from half to three times the lexical side, and
+with the rank constant at 20 and 60, and tabulates recall@6 and MRR for each.
 
 The numbers that matter are the ones from the real embedding model; CI runs
 this with the hash embedder only to prove the harness itself.
@@ -30,7 +35,7 @@ import statistics
 import sys
 import time
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from config import Settings
@@ -44,6 +49,8 @@ from rag.store import open_store
 MODES = ("hybrid", "lexical", "dense")
 KS = (1, 3, 6)
 DEFAULT_REPORT = Path(__file__).resolve().parent.parent / "reports" / "retrieval.json"
+SWEEP_DENSE_WEIGHTS = (0.5, 1.0, 1.5, 2.0, 3.0)
+SWEEP_RRF_KS = (20, 60)
 
 
 @dataclass(frozen=True)
@@ -117,6 +124,7 @@ def evaluate_mode(retriever: HybridRetriever, cases: list[Case], pool: int) -> d
         "pool": pool,
         "by_kind": {kind: summarise_ranks(group) for kind, group in sorted(by_kind.items())},
         "misses": sorted(o.id for o in outcomes if o.gold_rank is None),
+        "outcomes": [asdict(o) for o in outcomes],
     }
     if retriever.dense_weight > 0:
         no_gold = [evaluate_case(retriever, case, pool) for case in without_gold]
@@ -124,10 +132,37 @@ def evaluate_mode(retriever: HybridRetriever, cases: list[Case], pool: int) -> d
             "gold_chunk_cosine": quantiles([o.gold_dense for o in outcomes if o.gold_dense]),
             "best_cosine_without_gold": quantiles([o.top_dense for o in no_gold if o.top_dense]),
         }
+        report["outcomes"] += [asdict(o) for o in no_gold]
     return report
 
 
-def run(settings: Settings, modes: tuple[str, ...] = MODES, pool: int = 10) -> dict:
+def sweep(lexical: BM25Index, store, cases: list[Case], pool: int) -> list[dict]:
+    """Hybrid retrieval under each fusion setting: dense weight and rank constant."""
+    rows = []
+    for rrf_k in SWEEP_RRF_KS:
+        for dense_weight in SWEEP_DENSE_WEIGHTS:
+            retriever = HybridRetriever(
+                lexical, store, rrf_k=rrf_k, lexical_weight=1.0, dense_weight=dense_weight
+            )
+            with_gold = [case for case in cases if case.gold]
+            outcomes = [evaluate_case(retriever, case, pool) for case in with_gold]
+            summary = summarise_ranks(outcomes)
+            rows.append(
+                {
+                    "rrf_k": rrf_k,
+                    "dense_weight": dense_weight,
+                    "recall@1": summary["recall@1"],
+                    "recall@6": summary["recall@6"],
+                    "mrr": summary["mrr"],
+                    "misses": sum(1 for o in outcomes if o.gold_rank is None),
+                }
+            )
+    return rows
+
+
+def run(
+    settings: Settings, modes: tuple[str, ...] = MODES, pool: int = 10, with_sweep: bool = False
+) -> dict:
     """Evaluate every mode on one shared index and corpus; return the report."""
     started = time.perf_counter()
     cases = load_cases()
@@ -141,9 +176,10 @@ def run(settings: Settings, modes: tuple[str, ...] = MODES, pool: int = 10) -> d
             mode: evaluate_mode(HybridRetriever(lexical, store, **weights_for(mode)), cases, pool)
             for mode in modes
         }
+        sweep_rows = sweep(lexical, store, cases, pool) if with_sweep else None
     finally:
         store.close()
-    return {
+    report = {
         "generated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "embedder": embedder.name,
         "cases": len(cases),
@@ -154,6 +190,9 @@ def run(settings: Settings, modes: tuple[str, ...] = MODES, pool: int = 10) -> d
         "modes": results,
         "seconds": round(time.perf_counter() - started, 1),
     }
+    if sweep_rows is not None:
+        report["sweep"] = sweep_rows
+    return report
 
 
 def render(report: dict) -> str:
@@ -173,9 +212,19 @@ def render(report: dict) -> str:
         none = hybrid["dense_calibration"]["best_cosine_without_gold"]
         lines.append(
             f"dense floor {report['dense_floor']}: gold chunks score "
-            f"p10 {gold.get('p10')} / median {gold.get('median')}; "
+            f"min {gold.get('min')} / p10 {gold.get('p10')} / median {gold.get('median')}; "
             f"questions without gold peak at p90 {none.get('p90')} / max {none.get('max')}"
         )
+    if "sweep" in report:
+        lines.append(
+            f"\nsweep (lexical weight 1.0):\n{'rrf_k':>6} {'dense_w':>8} "
+            f"{'recall@1':>9} {'recall@6':>9} {'MRR':>6}  misses"
+        )
+        for row in report["sweep"]:
+            lines.append(
+                f"{row['rrf_k']:>6} {row['dense_weight']:>8.2f} {row['recall@1']:>9.3f} "
+                f"{row['recall@6']:>9.3f} {row['mrr']:>6.3f}  {row['misses']}"
+            )
     return "\n".join(lines)
 
 
@@ -184,12 +233,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--mode", choices=MODES, help="one mode instead of all three")
     parser.add_argument("--pool", type=int, default=10, help="results examined per question")
     parser.add_argument("--out", type=Path, default=DEFAULT_REPORT, help="where to write the JSON")
+    parser.add_argument(
+        "--sweep", action="store_true", help="also try fusion weights and rank constants"
+    )
     args = parser.parse_args(argv)
 
     modes = (args.mode,) if args.mode else MODES
-    report = run(Settings.from_env(), modes=modes, pool=args.pool)
+    report = run(Settings.from_env(), modes=modes, pool=args.pool, with_sweep=args.sweep)
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    args.out.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8", newline="\n")
     print(render(report))
     print(f"report written to {args.out}")
     return 0
