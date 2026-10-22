@@ -1,13 +1,20 @@
 """
 Build the vector index from the corpus, or search it.
 
-    python -m rag.index                      # sync the index with corpus/
-    python -m rag.index --query "ISA limit"  # show the closest chunks
+    python -m rag.index                                  # sync the index with corpus/
+    python -m rag.index --query "ISA limit"              # hybrid search: BM25 + vectors
+    python -m rag.index --query "ISA limit" --mode dense # one method on its own
 
 Settings come from the environment (SUPPORT_BOT_*; see config.py). The first
 run with the default "local" embedder downloads the model, about 70 MB, to
 the model cache; later runs reuse it. Syncing re-embeds only chunks whose
 text changed since the last run.
+
+A search result line reads, for example,
+``1. rrf 0.0325  lexical #1 (0.74)  dense #2 (0.713)  Title › Section``:
+the fused score, then where each method ranked the chunk and that method's
+own score (BM25 share of ceiling; cosine similarity). A dash means that
+method did not return the chunk at all.
 """
 
 from __future__ import annotations
@@ -20,7 +27,10 @@ import time
 from config import Settings
 from rag.corpus import chunk_corpus, load_corpus
 from rag.embeddings import build_embedder
+from rag.retrieval import HybridRetriever, RetrievedChunk, build_retriever
 from rag.store import VectorStore, open_store
+
+MODES = ("hybrid", "lexical", "dense")
 
 
 def sync_index(settings: Settings, store: VectorStore | None = None) -> dict:
@@ -47,32 +57,65 @@ def sync_index(settings: Settings, store: VectorStore | None = None) -> dict:
             store.close()
 
 
-def search_index(settings: Settings, query: str, k: int, store: VectorStore | None = None) -> list:
+def search_index(
+    settings: Settings,
+    query: str,
+    k: int,
+    mode: str = "hybrid",
+    store: VectorStore | None = None,
+) -> list[RetrievedChunk]:
+    """Search with both methods, or one of them, over the live corpus and index."""
+    if mode not in MODES:
+        raise ValueError(f"mode must be one of {MODES}")
     owned = store is None
     if owned:
         store = open_store(settings, build_embedder(settings))
     try:
-        return store.search(query, k=k)
+        if store.count() == 0:
+            return []
+        retriever: HybridRetriever = build_retriever(
+            chunk_corpus(load_corpus()),
+            store,
+            lexical_weight=0.0 if mode == "dense" else 1.0,
+            dense_weight=0.0 if mode == "lexical" else 1.0,
+        )
+        return retriever.search(query, k=k)
     finally:
         if owned:
             store.close()
 
 
-def format_hit(rank: int, hit) -> str:
+def _method(label: str, rank: int | None, score: float | None, digits: int) -> str:
+    if rank is None:
+        return f"{label} —"
+    return f"{label} #{rank} ({score:.{digits}f})"
+
+
+def format_hit(position: int, hit: RetrievedChunk) -> str:
     chunk = hit.chunk
     preview = " ".join(chunk.text.split())[:160]
-    return f"{rank}. {hit.score:.3f}  {chunk.title} › {chunk.section}\n   {chunk.url}\n   {preview}"
+    methods = (
+        f"{_method('lexical', hit.lexical_rank, hit.lexical_score, 2)}  "
+        f"{_method('dense', hit.dense_rank, hit.dense_score, 3)}"
+    )
+    return (
+        f"{position}. rrf {hit.score:.4f}  {methods}  {chunk.title} › {chunk.section}\n"
+        f"   {chunk.url}\n   {preview}"
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m rag.index", description=__doc__)
     parser.add_argument("--query", "-q", help="search the index instead of syncing it")
     parser.add_argument("-k", type=int, default=5, help="how many chunks to show (default 5)")
+    parser.add_argument(
+        "--mode", choices=MODES, default="hybrid", help="which method(s) to search with"
+    )
     args = parser.parse_args(argv)
 
     settings = Settings.from_env()
     if args.query:
-        hits = search_index(settings, args.query, args.k)
+        hits = search_index(settings, args.query, args.k, args.mode)
         if not hits:
             print("The index is empty. Run `python -m rag.index` first.")
             return 1

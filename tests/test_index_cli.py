@@ -35,9 +35,26 @@ def test_query_prints_ranked_hits_with_their_sources(offline_index, capsys):
     assert index.main(["--query", "Peterloo Buildings Mosley Street Manchester", "-k", "3"]) == 0
     out = capsys.readouterr().out
     lines = out.splitlines()
-    assert lines[0].startswith("1. ") and "Contact us and our offices" in lines[0]
+    assert lines[0].startswith("1. rrf ") and "Contact us and our offices" in lines[0]
+    assert "lexical #1 (" in lines[0] and "dense #" in lines[0]
     assert "https://www.fernhillwealth.example/contact-us/" in lines[1]
     assert sum(line[:2] in ("1.", "2.", "3.") for line in lines) == 3
+
+
+def test_each_mode_searches_with_that_method_alone(offline_index, capsys):
+    index.main([])
+    capsys.readouterr()
+    assert index.main(["-q", "0161 496 0170", "-k", "2", "--mode", "lexical"]) == 0
+    lexical = capsys.readouterr().out
+    assert "dense —" in lexical and "lexical #1 (" in lexical
+    assert "Our offices › Manchester" in lexical.splitlines()[0]
+
+    assert index.main(["-q", "0161 496 0170", "-k", "2", "--mode", "dense"]) == 0
+    dense = capsys.readouterr().out
+    assert "lexical —" in dense and "dense #1 (" in dense
+
+    with pytest.raises(ValueError, match="mode must be one of"):
+        index.search_index(index.Settings.from_env(), "x", 1, mode="magic")
 
 
 def test_querying_an_empty_index_says_so(offline_index, capsys):
