@@ -4,7 +4,7 @@ exact-string matching, and deterministic order."""
 import pytest
 
 from rag.corpus import chunk_corpus
-from rag.lexical import BM25Index, LexicalHit, tokenize
+from rag.lexical import BM25Index, LexicalHit, singular, tokenize
 from tests.conftest import make_chunk
 
 # --- tokenize -----------------------------------------------------------------------
@@ -35,6 +35,26 @@ def test_digits_are_tokens_so_numbers_can_be_matched_exactly():
 
 def test_stopwords_go_and_plurals_fold_but_ss_words_keep_their_s():
     assert tokenize("how do I address the offices") == ["address", "office"]
+
+
+@pytest.mark.parametrize(
+    ("plural", "expected"),
+    [
+        ("offices", "office"),
+        ("isas", "isa"),
+        ("fees", "fee"),
+        ("branches", "branch"),  # was "branche" in Phase 1
+        ("addresses", "address"),  # was "addresse"
+        ("taxes", "tax"),
+        ("bonus", "bonus"),  # was "bonu"
+        ("analysis", "analysis"),
+        ("class", "class"),
+        ("bus", "bus"),
+        ("yes", "yes"),  # too short to touch
+    ],
+)
+def test_plural_folding_rules(plural, expected):
+    assert singular(plural) == expected
 
 
 # --- the index ------------------------------------------------------------------------

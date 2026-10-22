@@ -56,10 +56,25 @@ def tokenize(text: str) -> list[str]:
         word = word.strip(".")
         if word in STOPWORDS or len(word) < 2:
             continue
-        if len(word) > 3 and word.endswith("s") and not word.endswith("ss"):
-            word = word[:-1]
-        tokens.append(word)
+        tokens.append(singular(word))
     return tokens
+
+
+def singular(word: str) -> str:
+    """Fold common English plurals so "offices" and "office" are one term.
+
+    A rule, not a dictionary: "-ches", "-shes", "-sses", "-xes" and "-zes"
+    drop "es" (branches, addresses, taxes); other words drop a final "s"
+    unless they end in "ss", "us" or "is" (bonus, analysis). Short words are
+    left alone. Good enough for retrieval; not a stemmer.
+    """
+    if len(word) <= 3 or not word.endswith("s"):
+        return word
+    if word.endswith(("ches", "shes", "sses", "xes", "zes")):
+        return word[:-2]
+    if word.endswith(("ss", "us", "is")):
+        return word
+    return word[:-1]
 
 
 @dataclass(frozen=True)
