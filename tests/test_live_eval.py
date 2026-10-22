@@ -2,6 +2,7 @@
 and the CLI — all against an injected runner, so no model and no money."""
 
 import json
+from dataclasses import asdict
 
 import pytest
 
@@ -259,3 +260,52 @@ def test_the_cli_runs_the_selection_through_the_runner_and_writes_the_report(tmp
     assert report["agent_impl"] in ("loop", "graph")
     captured = capsys.readouterr()
     assert "report written to" in captured.out and "[  1/3]" in captured.err
+
+
+# --- re-scoring an earlier run against corrected labels --------------------------------------
+
+
+def test_rescore_applies_the_current_labels_to_the_recorded_rows(tmp_path):
+    # A run scored when isa-01 expected "escalate" (it does not); the rows stand,
+    # the scoring is redone against the labels as they are now.
+    earlier = {
+        "generated": "2026-10-22T19:07:44Z",
+        "summary": {},
+        "rows": [
+            asdict(
+                observe(
+                    case(id="isa-01", expected="escalate", tools=("escalate_to_adviser",)),
+                    result(
+                        "You can pay in £20,000.",
+                        tools=("search_knowledge_base",),
+                        evidence=["search_knowledge_base -> [ISA] £20,000"],
+                    ),
+                    1.0,
+                )
+            ),
+            asdict(
+                observe(
+                    case(id="status-01", kind="status", gold=(), tools=("look_up_client_query",)),
+                    result("Received 1 Aug.", tools=("look_up_client_query",), evidence=["x"]),
+                    1.0,
+                )
+            ),
+        ],
+    }
+    earlier["rows"][1]["error"] = "boom"  # an error row is left exactly as it was
+    assert earlier["rows"][0]["expected"] == "escalate" and not earlier["rows"][0]["behaviour_ok"]
+
+    rescored = live.rescore(earlier, load_cases())
+    first, second = rescored["rows"]
+    assert first["expected"] == "answer" and first["behaviour_ok"] is True
+    assert first["missing_facts"] == [] and first["facts_ok"] is True  # isa-01 wants £20,000
+    assert first["tools_ok"] is True
+    assert second == earlier["rows"][1]
+    assert rescored["generated"] == "2026-10-22T19:07:44Z" and "rescored" in rescored
+    assert rescored["summary"]["behaviour_accuracy"] == 1.0  # the error row is not scored
+    assert rescored["summary"]["errors"] == ["status-01"]
+
+    path = tmp_path / "live-baseline.json"
+    path.write_text(json.dumps(earlier), encoding="utf-8")
+    assert live.main(["--rescore", str(path)]) == 0
+    assert json.loads(path.read_text(encoding="utf-8"))["rows"][0]["expected"] == "answer"

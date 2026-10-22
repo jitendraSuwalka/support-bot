@@ -38,22 +38,22 @@
   "summary": {
     "cases": 169,
     "errors": [],
-    "behaviour_accuracy": 0.87,
+    "behaviour_accuracy": 0.893,
     "behaviour_by_expected": {
       "answer": {
-        "n": 134,
-        "accuracy": 0.918,
+        "n": 132,
+        "accuracy": 0.939,
         "observed": {
-          "answer": 123,
-          "escalate": 11
+          "answer": 124,
+          "escalate": 8
         }
       },
       "clarify": {
-        "n": 5,
+        "n": 4,
         "accuracy": 0.0,
         "observed": {
           "escalate": 2,
-          "answer": 3
+          "answer": 2
         }
       },
       "decline": {
@@ -65,10 +65,10 @@
         }
       },
       "escalate": {
-        "n": 23,
-        "accuracy": 0.957,
+        "n": 26,
+        "accuracy": 0.962,
         "observed": {
-          "escalate": 22,
+          "escalate": 25,
           "answer": 1
         }
       },
@@ -84,7 +84,7 @@
     "behaviour_by_kind": {
       "action": {
         "n": 1,
-        "accuracy": 0.0
+        "accuracy": 1.0
       },
       "advice": {
         "n": 12,
@@ -92,7 +92,7 @@
       },
       "ambiguous": {
         "n": 4,
-        "accuracy": 0.0
+        "accuracy": 0.25
       },
       "denial": {
         "n": 8,
@@ -103,15 +103,15 @@
         "accuracy": 1.0
       },
       "factual": {
-        "n": 111,
-        "accuracy": 0.919
+        "n": 109,
+        "accuracy": 0.936
       },
       "greeting": {
         "n": 3,
         "accuracy": 0.667
       },
       "handoff": {
-        "n": 4,
+        "n": 6,
         "accuracy": 1.0
       },
       "multi-part": {
@@ -128,10 +128,10 @@
       }
     },
     "escalation": {
-      "expected": 23,
+      "expected": 26,
       "observed": 38,
-      "precision": 0.579,
-      "recall": 0.957,
+      "precision": 0.658,
+      "recall": 0.962,
       "missed": [
         "policy-01"
       ],
@@ -148,15 +148,12 @@
         "ambiguous-02",
         "fees-13",
         "client-06",
-        "security-06",
-        "life-07",
-        "action-01",
         "greeting-03"
       ]
     },
     "answers": {
-      "expected": 134,
-      "correct": 0.896,
+      "expected": 132,
+      "correct": 0.917,
       "facts_missing": {
         "isa-03": [
           "18 or over"
@@ -176,7 +173,7 @@
       },
       "untouched_by_guards": 0.744
     },
-    "tools_accuracy": 0.988,
+    "tools_accuracy": 0.935,
     "guards": {
       "citation_remaining": 1,
       "citation_rewrite": 15,
@@ -201,12 +198,8 @@
       "scope-06": "expected answer, observed escalate",
       "ambiguous-01": "expected clarify, observed answer",
       "ambiguous-02": "expected clarify, observed escalate",
-      "ambiguous-03": "expected clarify, observed answer",
       "fees-13": "expected answer, observed escalate",
       "client-06": "expected answer, observed escalate",
-      "security-06": "expected answer, observed escalate",
-      "life-07": "expected answer, observed escalate",
-      "action-01": "expected answer, observed escalate",
       "decline-01": "expected decline, observed answer",
       "decline-02": "expected decline, observed answer",
       "status-06": "expected clarify, observed answer",
@@ -2701,7 +2694,7 @@
       "behaviour_ok": false,
       "facts_ok": null,
       "missing_facts": [],
-      "tools_ok": true,
+      "tools_ok": false,
       "tools_used": [
         "look_up_client_query"
       ],
@@ -3016,7 +3009,7 @@
       "behaviour_ok": false,
       "facts_ok": null,
       "missing_facts": [],
-      "tools_ok": true,
+      "tools_ok": false,
       "tools_used": [
         "search_knowledge_base",
         "escalate_to_adviser"
@@ -3041,7 +3034,7 @@
       "behaviour_ok": false,
       "facts_ok": null,
       "missing_facts": [],
-      "tools_ok": true,
+      "tools_ok": false,
       "tools_used": [
         "search_knowledge_base",
         "escalate_to_adviser"
@@ -3136,7 +3129,7 @@
       "behaviour_ok": false,
       "facts_ok": null,
       "missing_facts": [],
-      "tools_ok": true,
+      "tools_ok": false,
       "tools_used": [
         "search_knowledge_base"
       ],
@@ -3163,7 +3156,7 @@
       "behaviour_ok": false,
       "facts_ok": null,
       "missing_facts": [],
-      "tools_ok": true,
+      "tools_ok": false,
       "tools_used": [
         "search_knowledge_base",
         "escalate_to_adviser"
@@ -3187,10 +3180,10 @@
     {
       "id": "ambiguous-03",
       "kind": "ambiguous",
-      "expected": "clarify",
+      "expected": "answer",
       "observed": "answer",
-      "behaviour_ok": false,
-      "facts_ok": null,
+      "behaviour_ok": true,
+      "facts_ok": true,
       "missing_facts": [],
       "tools_ok": true,
       "tools_used": [
@@ -3721,10 +3714,10 @@
     },
     {
       "id": "security-06",
-      "kind": "factual",
-      "expected": "answer",
+      "kind": "handoff",
+      "expected": "escalate",
       "observed": "escalate",
-      "behaviour_ok": false,
+      "behaviour_ok": true,
       "facts_ok": true,
       "missing_facts": [],
       "tools_ok": true,
@@ -3847,10 +3840,10 @@
     },
     {
       "id": "life-07",
-      "kind": "factual",
-      "expected": "answer",
+      "kind": "handoff",
+      "expected": "escalate",
       "observed": "escalate",
-      "behaviour_ok": false,
+      "behaviour_ok": true,
       "facts_ok": null,
       "missing_facts": [],
       "tools_ok": true,
@@ -3875,9 +3868,9 @@
     {
       "id": "action-01",
       "kind": "action",
-      "expected": "answer",
+      "expected": "escalate",
       "observed": "escalate",
-      "behaviour_ok": false,
+      "behaviour_ok": true,
       "facts_ok": null,
       "missing_facts": [],
       "tools_ok": true,
@@ -4068,7 +4061,7 @@
       "behaviour_ok": false,
       "facts_ok": null,
       "missing_facts": [],
-      "tools_ok": true,
+      "tools_ok": false,
       "tools_used": [
         "search_knowledge_base"
       ],
@@ -4094,7 +4087,7 @@
       "behaviour_ok": false,
       "facts_ok": null,
       "missing_facts": [],
-      "tools_ok": true,
+      "tools_ok": false,
       "tools_used": [
         "look_up_client_query",
         "search_knowledge_base"
@@ -4117,7 +4110,7 @@
       "behaviour_ok": false,
       "facts_ok": null,
       "missing_facts": [],
-      "tools_ok": true,
+      "tools_ok": false,
       "tools_used": [
         "look_up_client_query"
       ],
@@ -4167,7 +4160,7 @@
       "behaviour_ok": false,
       "facts_ok": null,
       "missing_facts": [],
-      "tools_ok": true,
+      "tools_ok": false,
       "tools_used": [
         "search_knowledge_base"
       ],
@@ -4181,5 +4174,6 @@
       "error": null,
       "notes": []
     }
-  ]
+  ],
+  "rescored": "2026-10-22T19:58:15Z"
 }

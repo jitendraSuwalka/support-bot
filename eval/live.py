@@ -29,6 +29,12 @@ This costs money: about four model calls per case. Run it with
     python -m eval.live --ids isa-01,status-01
     python -m eval.live --kind advice
     python -m eval.live --limit 10
+
+When a label is corrected after a run, the run's rows are still what the
+agent did; only the scoring is stale. ``--rescore reports/live-baseline.json``
+re-scores an earlier report's rows against the labels as they now stand,
+without a model call, so a baseline and a later run are compared on one set
+of labels.
 """
 
 from __future__ import annotations
@@ -40,7 +46,7 @@ import sys
 import time
 from collections import Counter, defaultdict
 from collections.abc import Callable
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 
 import agent
@@ -186,6 +192,44 @@ def run_case(case: Case, runner: Runner) -> Observation:
             error=f"{type(error).__name__}: {error}",
         )
     return observe(case, result, time.perf_counter() - started)
+
+
+def rescore(report: dict, cases: list[Case]) -> dict:
+    """Score an earlier report's rows against the labels as they now stand.
+
+    The rows record what the agent did (observed, answer, tools, escalated);
+    expected, the fact check and the tool check are recomputed from the
+    current label, and the summary is rebuilt. The original generation time
+    and settings stay; `rescored` records when the labels were applied.
+    """
+    by_id = {case.id: case for case in cases}
+    rows = []
+    for raw in report["rows"]:
+        row = Observation(**raw)
+        case = by_id.get(row.id)
+        if case is None or row.error:
+            rows.append(row)
+            continue
+        answer_lower = row.answer.lower()
+        missing = [needle for needle in case.must_contain if needle.lower() not in answer_lower]
+        credited = set(row.tools_used) | ({"escalate_to_adviser"} if row.escalated else set())
+        rows.append(
+            replace(
+                row,
+                kind=case.kind,
+                expected=case.expected,
+                behaviour_ok=row.observed == case.expected,
+                facts_ok=(not missing) if case.must_contain else None,
+                missing_facts=missing,
+                tools_ok=set(case.tools) <= credited,
+            )
+        )
+    return {
+        **report,
+        "rescored": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "summary": summarise(rows),
+        "rows": [asdict(row) for row in rows],
+    }
 
 
 # =========================================================
@@ -359,7 +403,17 @@ def main(argv: list[str] | None = None, runner: Runner = agent.run_agent) -> int
     parser.add_argument("--kind", help="only cases of this kind")
     parser.add_argument("--limit", type=int, help="run the first N selected cases")
     parser.add_argument("--out", type=Path, default=DEFAULT_REPORT, help="where to write the JSON")
+    parser.add_argument(
+        "--rescore", type=Path, help="re-score this report against the current labels, in place"
+    )
     args = parser.parse_args(argv)
+
+    if args.rescore:
+        report = rescore(json.loads(args.rescore.read_text(encoding="utf-8")), load_cases())
+        args.rescore.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8", newline="\n")
+        print(render(report["summary"]))
+        print(f"re-scored against the current labels: {args.rescore}")
+        return 0
 
     cases = select(load_cases(), args.ids, args.kind, args.limit)
     if not cases:

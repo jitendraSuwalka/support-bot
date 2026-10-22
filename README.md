@@ -39,6 +39,7 @@ pytest                 # 225 tests, under ten seconds, no API calls, no network
 - [Why this project](#why-this-project)
 - [Architecture](#architecture)
 - [Failure modes found in testing](#failure-modes-found-in-testing)
+- [Evaluation](#evaluation)
 - [Testing strategy](#testing-strategy)
 - [Design decisions and trade-offs](#design-decisions-and-trade-offs)
 - [Known limitations](#known-limitations)
@@ -335,6 +336,50 @@ offline suite it claims to be.
 **Fix.** Gradio analytics off in code; ONNX Runtime telemetry disabled before
 the model's first session, with a test. The suite now makes no outbound
 connection at all.
+
+---
+
+## Evaluation
+
+A labelled set of 169 questions (`eval/questions.yaml`) says what a correct
+turn looks like: the behaviour (answer, escalate, clarify, decline, greeting),
+the corpus sections that answer or signpost it, the strings a correct answer
+must copy, and the tools a correct turn uses. The questions are written the
+way customers write; the set was reviewed by an independent compliance-style
+reviewer and again after the first end-to-end run, and the validator
+(`python -m eval.dataset`) checks every label against the corpus. Two
+harnesses score the agent against it:
+
+- `python -m eval.retrieval` — retrieval alone, offline, in seconds: recall@k
+  and MRR per search mode, the misses by id, the dense-floor calibration, and
+  `--sweep` for the fusion weights and rank constant.
+- `python -m eval.live` — every case through the real agent, about four model
+  calls each: behaviour accuracy, escalation precision and recall, answer
+  correctness, guard activity, latency and tokens, every failure listed by id.
+
+The numbers below are rendered from the reports in `reports/` by
+`python -m eval.report`, and a test fails if the README and the reports
+disagree. The baseline is the first end-to-end run, re-scored against the
+labels as corrected after it (`python -m eval.live --rescore`), so every row
+is measured against one set of labels.
+
+<!-- eval:start -->
+Retrieval alone, before expansion and reranking: the 135 cases with gold sections of 169, 129 chunks, embedder `BAAI/bge-small-en-v1.5-384`, fusion k = 60, dense floor 0.5 (`python -m eval.retrieval`, 2026-10-22).
+
+| Mode | recall@1 | recall@3 | recall@6 | MRR | misses |
+|---|---:|---:|---:|---:|---:|
+| hybrid | 0.637 | 0.881 | 0.956 | 0.764 | 4 of 135 |
+| lexical | 0.600 | 0.785 | 0.896 | 0.710 | 11 of 135 |
+| dense | 0.726 | 0.867 | 0.933 | 0.806 | 5 of 135 |
+
+End to end: every case through the real agent (`claude-sonnet-5-5` answering, `claude-haiku-5-5` for expansion, reranking and fact-checking), scored against its label (`python -m eval.live`).
+
+| Run | Date | Cases | Behaviour accuracy | Answers correct | Escalation precision | Escalation recall | Untouched by guards | Median latency | Tokens per case |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| baseline | 2026-10-22 | 169 | 89.3% | 91.7% | 65.8% | 96.2% | 74.4% | 9.1 s | 6,335 |
+
+Behaviour accuracy: the agent did what the label expects (answer, escalate, clarify, decline, greeting). Answers correct: answerable questions answered with every required fact. Escalation precision: escalations that were wanted; recall: wanted escalations that happened. Untouched: answers that passed the citation guard and the fact-check without a rewrite. Every failure is listed by id in the report.
+<!-- eval:end -->
 
 ---
 
