@@ -44,12 +44,16 @@ def test_behaviours_come_with_the_right_tools(cases):
             assert case.tools == (), case.id
         if case.kind in ("advice", "handoff"):
             assert "escalate_to_adviser" in case.tools, case.id
-        if case.kind == "status":
+        if case.kind == "status" and case.expected == "answer":
             assert case.tools == ("look_up_client_query",), case.id
         if case.expected == "answer" and case.kind != "status":
             assert "search_knowledge_base" in case.tools, case.id
         if case.expected == "escalate" and case.gold:
             assert "search_knowledge_base" in case.tools, case.id  # signposting needs a lookup
+        if case.expected == "clarify":
+            assert "ask_for_clarification" in case.tools, case.id
+        if case.expected == "decline":
+            assert case.tools == ("decline_out_of_scope",), case.id  # nothing else is run
 
 
 def test_conversations_with_earlier_turns_are_labelled_on_the_final_turn(cases):

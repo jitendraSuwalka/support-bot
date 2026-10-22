@@ -12,7 +12,9 @@ from eval.live import Observation, observe, observe_behaviour, run_case, summari
 from tests.conftest import make_chunk
 
 
-def result(answer="x", escalated=False, tools=(), evidence=(), notes=(), kinds=(), usage=None):
+def result(
+    answer="x", escalated=False, tools=(), evidence=(), notes=(), kinds=(), usage=None, **flags
+):
     trace = agent.Trace()
     for kind in kinds:
         trace.log(kind, kind)
@@ -26,6 +28,7 @@ def result(answer="x", escalated=False, tools=(), evidence=(), notes=(), kinds=(
         escalated=escalated,
         tools_used=list(tools),
         models={},
+        **flags,
     )
 
 
@@ -59,10 +62,34 @@ def test_behaviours_are_read_from_the_result():
         observe_behaviour(result("Which one?", tools=search, evidence=["search -> NO_MATCH"]))
         == "clarify"
     )
+    # The agent records the two tool-ended behaviours itself; they outrank the heuristics.
     assert (
-        observe_behaviour(result("I can't help with that.", tools=search, evidence=["x NO_MATCH"]))
+        observe_behaviour(result("Which one?", tools=("ask_for_clarification",), clarified=True))
+        == "clarify"
+    )
+    assert (
+        observe_behaviour(
+            result(agent.DECLINE_REPLY, tools=("decline_out_of_scope",), declined=True)
+        )
         == "decline"
     )
+    assert (
+        observe_behaviour(result("...", tools=search, evidence=["NO_MATCH"], clarified=True))
+        == "clarify"
+    )
+    # A declarative reply on unresolved evidence is an answer (the policy would have escalated it).
+    assert (
+        observe_behaviour(result("I can't help with that.", tools=search, evidence=["x NO_MATCH"]))
+        == "answer"
+    )
+
+
+def test_a_policy_forced_escalation_counts_as_the_escalation_tool():
+    labelled = case(expected="escalate", tools=("search_knowledge_base", "escalate_to_adviser"))
+    forced = result(escalated=True, tools=("search_knowledge_base",), notes=["escalated by policy"])
+    assert observe(labelled, forced, 1.0).tools_ok is True
+    unforced = result(escalated=False, tools=("search_knowledge_base",))
+    assert observe(labelled, unforced, 1.0).tools_ok is False
 
 
 def test_facts_tools_guards_and_tokens_are_scored():

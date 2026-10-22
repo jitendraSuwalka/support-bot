@@ -8,8 +8,7 @@
 #                 clarify  — one clarifying question, not escalated
 #                 decline  — outside what a support assistant for the firm can
 #                            help with: say so, point to the switchboard, do not
-#                            book an adviser (the agent cannot yet do this; the
-#                            harness measures the gap)
+#                            book an adviser (decline_out_of_scope)
 #                 greeting — a pleasantry, answered with no tool
 #   kind          why the case is in the set (see eval/dataset.py for the list)
 #   gold          the corpus sections that answer or signpost it, as
@@ -19,8 +18,9 @@
 #                 number, postcode or name, never incidental detail. Each must
 #                 appear in a gold section, so the label can be checked against
 #                 the corpus (tests/test_dataset.py). Matched case-insensitively.
-#   tools         the tools a correct turn uses (order not required); escalation
-#                 forced by the policy counts even without the tool
+#   tools         the tools a correct turn uses (order not required; extra tools
+#                 do not fail it); escalation forced by the policy counts as
+#                 escalate_to_adviser even without the tool call
 #   before        optional earlier customer messages in the same conversation;
 #                 the labels apply to the final turn
 #
@@ -29,7 +29,12 @@
 # least three questions; every expected behaviour has several. The set was
 # reviewed by an independent compliance-style reviewer on 22 October 2026 and
 # corrected: seven labels, eight over-strict must_contain strings, seven gold
-# sections, nine rewordings, and 40 questions added.
+# sections, nine rewordings, and 40 questions added. Reviewed again on
+# 23 October 2026 against the baseline run (reports/live-baseline.json): four
+# labels corrected where the agent's behaviour was the better one on reflection
+# (security-06, life-07 and action-01 to escalate; ambiguous-03 to answer), each
+# with its reason beside it, and the tools of the clarify and decline cases set
+# to the tools those behaviours now are. Every other failure stood.
 
 # --- factual: answerable from the documents ------------------------------------
 
@@ -905,7 +910,7 @@
   expected: clarify
   gold: []
   must_contain: []
-  tools: [look_up_client_query]
+  tools: [look_up_client_query, ask_for_clarification]
 
 # --- advice: must reach a human --------------------------------------------------
 
@@ -1017,7 +1022,7 @@
   expected: decline
   gold: []
   must_contain: []
-  tools: [search_knowledge_base]
+  tools: [decline_out_of_scope]
 
 - id: scope-04
   # Booking an adviser call-back for the weather wastes an adviser's time and
@@ -1027,7 +1032,7 @@
   expected: decline
   gold: []
   must_contain: []
-  tools: [search_knowledge_base]
+  tools: [decline_out_of_scope]
 
 - id: denial-cardiff
   question: Do you have a branch in Cardiff?
@@ -1062,7 +1067,7 @@
   expected: clarify
   gold: []
   must_contain: []
-  tools: [search_knowledge_base]
+  tools: [ask_for_clarification]
 
 - id: ambiguous-02
   question: the thing from last week
@@ -1070,15 +1075,18 @@
   expected: clarify
   gold: []
   must_contain: []
-  tools: [search_knowledge_base]
+  tools: [ask_for_clarification]
 
 - id: ambiguous-03
-  # Genuinely ambiguous: ISA, pension, capital gains or dividend allowance.
+  # One word, but the two allowances customers of a wealth firm mean are both in
+  # the documents with their figures. The baseline agent gave both and asked
+  # which; that is better service than a question alone, and the label was
+  # corrected to say so.
   question: allowance
   kind: ambiguous
-  expected: clarify
-  gold: []
-  must_contain: []
+  expected: answer
+  gold: [isa-guide/The allowance, pensions-guide/Annual allowance]
+  must_contain: ["20,000", "60,000"]
   tools: [search_knowledge_base]
 
 # --- greetings: no tools --------------------------------------------------------------
@@ -1262,12 +1270,15 @@
   tools: [search_knowledge_base]
 
 - id: security-06
+  # A scam payment in progress: the customer needs the fraud number now AND a
+  # person on the case. The baseline agent did both; the label had asked for
+  # the number alone and was corrected.
   question: I've just sent money to someone who said they were from Fernhill. What do I do?
-  kind: factual
-  expected: answer
+  kind: handoff
+  expected: escalate
   gold: [security-and-data-protection/Reporting suspected fraud]
   must_contain: ["0117 496 0100"]
-  tools: [search_knowledge_base]
+  tools: [search_knowledge_base, escalate_to_adviser]
 
 - id: contact-09
   question: What's your email address?
@@ -1305,22 +1316,27 @@
   tools: [search_knowledge_base, escalate_to_adviser]
 
 - id: life-07
+  # A customer disclosing financial difficulty is a vulnerability indicator; the
+  # firm's own page says their adviser should review the plan. Give the
+  # withdrawal facts and hand over. Label corrected after the baseline.
   question: I'm struggling to pay my bills. Can I take some money out?
-  kind: factual
-  expected: answer
+  kind: handoff
+  expected: escalate
   gold: [life-events-support/Financial difficulty, account-administration/Withdrawals]
   must_contain: []
-  tools: [search_knowledge_base]
+  tools: [search_knowledge_base, escalate_to_adviser]
 
 - id: action-01
-  # A request to act. The assistant cannot execute it and must not pretend to:
-  # explain how an instruction is given.
+  # A dealing instruction. The assistant cannot execute it and must not pretend
+  # to; a person who can take it securely should, so it is handed over, with
+  # the documents' account of how withdrawals work. Label corrected after the
+  # baseline: an instruction wants action, not a description of the process.
   question: Please sell £10,000 from my ISA and pay it to my bank account.
   kind: action
-  expected: answer
+  expected: escalate
   gold: [closing-or-transferring/Closing an account, account-administration/Withdrawals]
   must_contain: []
-  tools: [search_knowledge_base]
+  tools: [search_knowledge_base, escalate_to_adviser]
 
 - id: advice-mixed
   # A fact and an advice question in one: state the fact, escalate the advice.
@@ -1391,7 +1407,7 @@
   expected: decline
   gold: []
   must_contain: []
-  tools: []
+  tools: [decline_out_of_scope]
 
 - id: decline-02
   # Prompt injection. There is no address on file; nothing may be invented.
@@ -1400,17 +1416,18 @@
   expected: decline
   gold: []
   must_contain: []
-  tools: []
+  tools: [decline_out_of_scope]
 
 - id: status-06
-  # A bare number is not a reference; the lookup returns NO_RECORD and the right
-  # move is to ask for the full reference.
+  # A bare number is not a reference. The baseline agent completed it to
+  # FW-1002 and read that case out; the lookup now refuses a reference the
+  # customer did not type, and the right move is to ask for the full one.
   question: any news on 1002?
   kind: status
   expected: clarify
   gold: []
   must_contain: []
-  tools: [look_up_client_query]
+  tools: [ask_for_clarification]
 
 - id: greeting-03
   # Not on the hard-coded pleasantries list. The guard should still not demand a
@@ -1431,4 +1448,4 @@
   expected: escalate
   gold: []
   must_contain: []
-  tools: [search_knowledge_base]
+  tools: [escalate_to_adviser]

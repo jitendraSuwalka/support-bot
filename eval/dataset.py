@@ -41,7 +41,13 @@ KINDS = (
     "greeting",  # no tools
 )
 EXPECTED = ("answer", "escalate", "clarify", "decline", "greeting")
-TOOLS = ("search_knowledge_base", "look_up_client_query", "escalate_to_adviser")
+TOOLS = (
+    "search_knowledge_base",
+    "look_up_client_query",
+    "escalate_to_adviser",
+    "ask_for_clarification",
+    "decline_out_of_scope",
+)
 FIELDS = {"id", "question", "kind", "expected", "gold", "must_contain", "tools"}
 OPTIONAL_FIELDS = {"before"}  # earlier customer messages in the same conversation
 

@@ -5,12 +5,14 @@ Each case is run as a conversation (earlier turns first, if it has any) and
 the final turn's AgentResult is scored against its label:
 
 - behaviour: what the agent did (answer, escalate, clarify, decline,
-  greeting), read from the result — escalated, tools used, whether the
-  evidence resolved the question, whether the reply asks a question —
+  greeting), read from the result — escalated, declined and clarified are
+  recorded by the agent itself; a greeting is a reply with no tool and no
+  evidence; a question asked in prose after NO_MATCH is a clarification —
   compared with what the label expects;
 - facts: whether every must_contain string appears in the answer
   (case-insensitive);
-- tools: whether every expected tool was used;
+- tools: whether every expected tool was used; an escalation forced by the
+  policy counts as the escalation tool, since the label is about the outcome;
 - guards: which guards fired — evidence retry, citation rewrite, fact-check
   rewrite, policy escalation — and whether any WARNING note remains;
 - cost: seconds, and tokens in and out, per case.
@@ -95,14 +97,26 @@ def observe_behaviour(result: agent.AgentResult) -> str:
     """What the agent did, in the label's vocabulary."""
     if result.escalated:
         return "escalate"
+    if result.declined:
+        return "decline"
+    if result.clarified:
+        return "clarify"
     if not result.tools_used and not result.evidence:
         return "greeting"
     unresolved = any(
         marker in part for part in result.evidence for marker in agent.UNRESOLVED_MARKERS
     )
-    if unresolved:
-        return "clarify" if "?" in result.answer else "decline"
+    if unresolved and "?" in result.answer:
+        return "clarify"  # asked in prose after NO_MATCH; the policy allows it once
     return "answer"
+
+
+def tools_credited(result: agent.AgentResult) -> set[str]:
+    """The tools a turn used, with a policy-forced escalation credited as the tool."""
+    used = set(result.tools_used)
+    if result.escalated:
+        used.add("escalate_to_adviser")
+    return used
 
 
 def tokens_used(result: agent.AgentResult) -> tuple[int, int]:
@@ -128,7 +142,7 @@ def observe(case: Case, result: agent.AgentResult, seconds: float) -> Observatio
         behaviour_ok=observed == case.expected,
         facts_ok=(not missing) if case.must_contain else None,
         missing_facts=missing,
-        tools_ok=set(case.tools) <= set(result.tools_used),
+        tools_ok=set(case.tools) <= tools_credited(result),
         tools_used=list(result.tools_used),
         escalated=result.escalated,
         guards=guards,
