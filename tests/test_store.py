@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from config import Settings
-from rag.corpus import Chunk, chunk_id_for
+from rag.corpus import Chunk
 from rag.embeddings import HashEmbedder
 from rag.store import (
     Hit,
@@ -20,19 +20,7 @@ from rag.store import (
     payload_to_chunk,
     point_id,
 )
-
-
-def make_chunk(doc_id: str, section: str, text: str, position: int = 0) -> Chunk:
-    return Chunk(
-        chunk_id=chunk_id_for(doc_id, section, text),
-        doc_id=doc_id,
-        title=doc_id.replace("-", " ").title(),
-        section=section,
-        url=f"https://www.fernhillwealth.example/{doc_id}/",
-        text=text,
-        position=position,
-        metadata={"version": "2026-10", "last_reviewed": "2026-10-20", "owner": "Test"},
-    )
+from tests.conftest import make_chunk
 
 
 @pytest.fixture

@@ -14,6 +14,7 @@ import types
 import pytest
 
 import agent
+from rag.corpus import Chunk, chunk_id_for
 
 
 class Block:
@@ -101,3 +102,17 @@ def run_scenario(monkeypatch):
         return results, state, fake
 
     return _run
+
+
+def make_chunk(doc_id: str, section: str, text: str, position: int = 0) -> Chunk:
+    """A corpus chunk with realistic provenance, for retrieval tests that build their own corpus."""
+    return Chunk(
+        chunk_id=chunk_id_for(doc_id, section, text),
+        doc_id=doc_id,
+        title=doc_id.replace("-", " ").title(),
+        section=section,
+        url=f"https://www.fernhillwealth.example/{doc_id}/",
+        text=text,
+        position=position,
+        metadata={"version": "2026-10", "last_reviewed": "2026-10-20", "owner": "Test"},
+    )

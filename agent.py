@@ -63,6 +63,7 @@ from dotenv import load_dotenv
 
 from config import Settings
 from knowledge_base import KNOWLEDGE_BASE
+from rag.lexical import tokenize
 
 load_dotenv()
 client = Anthropic()
@@ -330,34 +331,6 @@ def check_citations(answer, evidence):
 # =========================================================
 # RETRIEVAL — BM25, normalised to the query's ceiling
 # =========================================================
-
-STOPWORDS = {
-    "the", "a", "an", "is", "are", "was", "were", "to", "of", "and", "or",
-    "i", "im", "my", "me", "we", "you", "your", "how", "do", "does", "did",
-    "what", "when", "where", "which", "who", "can", "could", "would", "should",
-    "for", "in", "on", "at", "it", "this", "that", "with", "about", "from",
-    "have", "has", "had", "be", "been", "get", "got", "any", "please", "thanks",
-    "long", "take", "takes", "make", "made", "need", "want", "know", "tell",
-    "help", "like", "just", "also", "there", "their", "am", "if", "so", "but",
-    "not", "no", "yes", "all", "out", "up", "by", "as",
-}  # fmt: skip
-
-
-def tokenize(text):
-    """Lower-case word tokens with stopwords removed and plurals folded.
-
-    Returns a list, not a set: BM25 needs to know how often a term occurs in
-    a document, not only whether it occurs.
-    """
-    tokens = []
-    for word in re.findall(r"[a-z0-9@.]+", text.lower()):
-        if word in STOPWORDS or len(word) < 2:
-            continue
-        if len(word) > 3 and word.endswith("s") and not word.endswith("ss"):
-            word = word[:-1]
-        tokens.append(word)
-    return tokens
-
 
 K1, B = 1.2, 0.75
 
