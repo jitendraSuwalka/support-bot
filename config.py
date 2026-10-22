@@ -61,6 +61,11 @@ class Settings:
     dense_floor: float = 0.50
     candidates: int = 6
     top_k: int = 3
+    # Reciprocal rank fusion adds 1/(rrf_k + rank) per ranking. The literature's
+    # default is 60; the sweep in reports/retrieval.json (python -m eval.retrieval
+    # --sweep) put 20 ahead on every metric at the depth the agent reads
+    # (recall@6 0.970 against 0.956), so 20 is the setting.
+    rrf_k: int = 20
 
     # Guards. Each can be switched off independently; a fully guarded answer
     # costs several model calls, which is right for a regulated firm and wrong
@@ -99,7 +104,14 @@ class Settings:
         for name in ("main_effort", "helper_effort"):
             if getattr(self, name) not in EFFORT_LEVELS:
                 raise ValueError(f"{name} must be one of {EFFORT_LEVELS}")
-        for name in ("main_max_tokens", "helper_max_tokens", "max_steps", "candidates", "top_k"):
+        for name in (
+            "main_max_tokens",
+            "helper_max_tokens",
+            "max_steps",
+            "candidates",
+            "top_k",
+            "rrf_k",
+        ):
             if getattr(self, name) < 1:
                 raise ValueError(f"{name} must be at least 1")
         if not 0.0 <= self.relevance_floor <= 1.0:

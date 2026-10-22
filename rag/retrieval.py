@@ -160,5 +160,7 @@ def open_retriever(settings) -> tuple[HybridRetriever, SyncReport]:
     chunks = chunk_corpus(load_corpus())
     store = open_store(settings, build_embedder(settings))
     report = store.sync(chunks)
-    retriever = HybridRetriever(BM25Index(chunks), store, **weights_for(settings.retrieval_mode))
+    retriever = HybridRetriever(
+        BM25Index(chunks), store, rrf_k=settings.rrf_k, **weights_for(settings.retrieval_mode)
+    )
     return retriever, report

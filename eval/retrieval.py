@@ -173,7 +173,11 @@ def run(
         store.sync(chunks)
         lexical = BM25Index(chunks)
         results = {
-            mode: evaluate_mode(HybridRetriever(lexical, store, **weights_for(mode)), cases, pool)
+            mode: evaluate_mode(
+                HybridRetriever(lexical, store, rrf_k=settings.rrf_k, **weights_for(mode)),
+                cases,
+                pool,
+            )
             for mode in modes
         }
         sweep_rows = sweep(lexical, store, cases, pool) if with_sweep else None
@@ -187,6 +191,7 @@ def run(
         "chunks": len(chunks),
         "dense_floor": settings.dense_floor,
         "relevance_floor": settings.relevance_floor,
+        "rrf_k": settings.rrf_k,
         "modes": results,
         "seconds": round(time.perf_counter() - started, 1),
     }
@@ -198,7 +203,7 @@ def run(
 def render(report: dict) -> str:
     lines = [
         f"{report['cases_with_gold']} cases with gold of {report['cases']}, "
-        f"{report['chunks']} chunks, embedder {report['embedder']}",
+        f"{report['chunks']} chunks, embedder {report['embedder']}, fusion k {report['rrf_k']}",
         f"{'mode':8} {'recall@1':>9} {'recall@3':>9} {'recall@6':>9} {'MRR':>6}  misses",
     ]
     for mode, summary in report["modes"].items():

@@ -118,7 +118,8 @@ answer can be traced to the page it came from. Chunk ids are content hashes:
 edit one sentence and one chunk is re-embedded, not the corpus.
 
 Two searches run on every question and their rankings are merged by
-**reciprocal rank fusion** (score = Σ 1/(60 + rank)). Each is good at what
+**reciprocal rank fusion** (score = Σ 1/(k + rank), with k = 20 chosen from a
+sweep on the labelled set; see [Evaluation](#evaluation)). Each is good at what
 the other is bad at, and the live run showed it in one line: asked *"Whose
 number is 0161 496 0170?"*, the vector index on its own ranked the Manchester
 office **fifth** — a phone number means nothing to a meaning model — while

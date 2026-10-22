@@ -74,7 +74,7 @@ def search_index(
         if store.count() == 0:
             return []
         retriever: HybridRetriever = build_retriever(
-            chunk_corpus(load_corpus()), store, **weights_for(mode)
+            chunk_corpus(load_corpus()), store, rrf_k=settings.rrf_k, **weights_for(mode)
         )
         return retriever.search(query, k=k)
     finally:

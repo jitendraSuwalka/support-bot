@@ -104,9 +104,10 @@ def test_run_evaluates_every_mode_on_one_index(tmp_path):
     assert report["embedder"] == "hash-256" and report["cases"] == report["cases_with_gold"] + sum(
         1 for case in load_cases() if not case.gold
     )
-    assert report["dense_floor"] == settings.dense_floor
+    assert report["dense_floor"] == settings.dense_floor and report["rrf_k"] == settings.rrf_k
     text = metrics.render(report)
     assert text.count("\n") >= 4 and "lexical" in text and "dense floor" in text
+    assert "fusion k 20" in text
 
 
 def test_the_sweep_tabulates_every_fusion_setting(parts):

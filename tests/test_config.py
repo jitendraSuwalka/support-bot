@@ -60,6 +60,7 @@ def test_blank_values_fall_back_to_defaults():
         ("SUPPORT_BOT_EMBEDDER", "openai"),
         ("SUPPORT_BOT_DENSE_FLOOR", "-0.1"),
         ("SUPPORT_BOT_RETRIEVAL_MODE", "sparse"),
+        ("SUPPORT_BOT_RRF_K", "0"),
     ],
 )
 def test_invalid_values_are_rejected_loudly(name, value):

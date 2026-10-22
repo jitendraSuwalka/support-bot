@@ -173,6 +173,7 @@ def test_open_retriever_syncs_the_index_and_honours_the_mode(tmp_path):
     try:
         assert report.added == report.total > 100 and report.removed == 0
         assert retriever.dense_weight == 0.0 and retriever.lexical_weight == 1.0
+        assert retriever.rrf_k == settings.rrf_k == 20  # the setting, not the library default
         assert retriever.search("0161 496 0170", k=1)[0].found_by == "lexical"
     finally:
         retriever.store.close()
