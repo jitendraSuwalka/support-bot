@@ -32,15 +32,18 @@ KINDS = (
     "exact-string",  # a number, postcode, address or email identifies the answer
     "multi-part",  # two facts, possibly from two documents
     "denial",  # the documents answer it with a "no"
+    "action",  # a request to do something the assistant cannot: explain, never pretend
     "status",  # live case data, quoted verbatim
-    "advice",  # must reach a human
+    "advice",  # personal advice: must reach a human
+    "handoff",  # a contact a human must own (bereavement, complaint, vulnerability)
     "out-of-scope",  # nothing in the documents answers it
     "ambiguous",  # too little to act on: clarify once
     "greeting",  # no tools
 )
-EXPECTED = ("answer", "escalate", "clarify", "greeting")
+EXPECTED = ("answer", "escalate", "clarify", "decline", "greeting")
 TOOLS = ("search_knowledge_base", "look_up_client_query", "escalate_to_adviser")
 FIELDS = {"id", "question", "kind", "expected", "gold", "must_contain", "tools"}
+OPTIONAL_FIELDS = {"before"}  # earlier customer messages in the same conversation
 
 
 class DatasetError(ValueError):
@@ -57,6 +60,7 @@ class Case:
     must_contain: tuple[str, ...]
     tools: tuple[str, ...]
     gold_chunk_ids: frozenset[str]  # resolved against the corpus
+    before: tuple[str, ...] = ()  # earlier customer messages; labels apply to the final turn
 
     def as_dict(self) -> dict:
         data = asdict(self)
@@ -76,9 +80,17 @@ def _check(condition: bool, case_id: str, message: str) -> None:
 def parse_case(raw: dict, by_section: dict[str, list[Chunk]]) -> Case:
     case_id = str(raw.get("id", "<no id>"))
     _check(
-        isinstance(raw, dict) and set(raw) == FIELDS, case_id, f"fields must be {sorted(FIELDS)}"
+        isinstance(raw, dict) and FIELDS <= set(raw) <= FIELDS | OPTIONAL_FIELDS,
+        case_id,
+        f"fields must be {sorted(FIELDS)} plus optionally {sorted(OPTIONAL_FIELDS)}",
     )
     _check(isinstance(raw["question"], str) and raw["question"].strip(), case_id, "empty question")
+    before = raw.get("before", [])
+    _check(
+        isinstance(before, list) and all(isinstance(m, str) and m.strip() for m in before),
+        case_id,
+        "before must be a list of non-empty strings",
+    )
     _check(raw["kind"] in KINDS, case_id, f"kind must be one of {KINDS}")
     _check(raw["expected"] in EXPECTED, case_id, f"expected must be one of {EXPECTED}")
     for name in ("gold", "must_contain", "tools"):
@@ -88,8 +100,9 @@ def parse_case(raw: dict, by_section: dict[str, list[Chunk]]) -> Case:
     gold = tuple(raw["gold"])
     if raw["expected"] == "answer" and raw["kind"] != "status":
         _check(bool(gold), case_id, "an answerable question needs at least one gold section")
-    else:
-        _check(not gold, case_id, "only answerable questions have gold sections")
+    elif raw["expected"] != "escalate":
+        _check(not gold, case_id, "only answer and escalate cases have gold sections")
+    # An escalate case may carry gold: the sections a correct hand-off signposts.
 
     chunk_ids: set[str] = set()
     gold_text = ""
@@ -102,6 +115,12 @@ def parse_case(raw: dict, by_section: dict[str, list[Chunk]]) -> Case:
     if gold:
         for needle in must_contain:
             _check(needle in gold_text, case_id, f"must_contain {needle!r} is not in the gold text")
+    else:
+        _check(
+            not must_contain or raw["kind"] == "status",
+            case_id,
+            "must_contain needs gold sections to be checked against",
+        )
 
     return Case(
         id=case_id,
@@ -112,6 +131,7 @@ def parse_case(raw: dict, by_section: dict[str, list[Chunk]]) -> Case:
         must_contain=must_contain,
         tools=tuple(raw["tools"]),
         gold_chunk_ids=frozenset(chunk_ids),
+        before=tuple(before),
     )
 
 

@@ -42,12 +42,21 @@ def test_behaviours_come_with_the_right_tools(cases):
     for case in cases:
         if case.expected == "greeting":
             assert case.tools == (), case.id
-        if case.kind == "advice":
-            assert case.tools == ("escalate_to_adviser",), case.id
+        if case.kind in ("advice", "handoff"):
+            assert "escalate_to_adviser" in case.tools, case.id
         if case.kind == "status":
             assert case.tools == ("look_up_client_query",), case.id
         if case.expected == "answer" and case.kind != "status":
             assert "search_knowledge_base" in case.tools, case.id
+        if case.expected == "escalate" and case.gold:
+            assert "search_knowledge_base" in case.tools, case.id  # signposting needs a lookup
+
+
+def test_conversations_with_earlier_turns_are_labelled_on_the_final_turn(cases):
+    multi = [case for case in cases if case.before]
+    assert multi, "the clarify-once policy needs at least one two-turn case"
+    for case in multi:
+        assert all(message.strip() for message in case.before), case.id
 
 
 def test_status_cases_quote_the_live_data_exactly(cases):
@@ -93,6 +102,20 @@ def test_a_good_case_resolves_to_its_chunk_ids():
     case = parse_case(good(), BY_SECTION)
     assert case.gold_chunk_ids == {CHUNKS[0].chunk_id}
     assert case.as_dict()["gold_chunk_ids"] == [CHUNKS[0].chunk_id]
+    assert case.before == ()
+
+
+def test_an_escalate_case_may_signpost_gold_sections():
+    case = parse_case(
+        good(expected="escalate", tools=["search_knowledge_base", "escalate_to_adviser"]),
+        BY_SECTION,
+    )
+    assert case.gold_chunk_ids and case.expected == "escalate"
+
+
+def test_earlier_turns_are_kept_in_order():
+    case = parse_case(good(before=["quiz", "the quiz"]), BY_SECTION)
+    assert case.before == ("quiz", "the quiz")
 
 
 @pytest.mark.parametrize(
@@ -104,9 +127,11 @@ def test_a_good_case_resolves_to_its_chunk_ids():
         ({"expected": "guess"}, "expected must be one of"),
         ({"tools": ["search_web"]}, "tools must be from"),
         ({"gold": []}, "needs at least one gold section"),
-        ({"expected": "escalate", "gold": ["isa-guide/The allowance"]}, "only answerable"),
+        ({"expected": "clarify", "gold": ["isa-guide/The allowance"]}, "only answer and escalate"),
+        ({"expected": "decline", "gold": [], "must_contain": ["£20,000"]}, "needs gold sections"),
         ({"question": "   "}, "empty question"),
         ({"extra": 1}, "fields must be"),
+        ({"before": ["", "x"]}, "before must be a list"),
     ],
 )
 def test_bad_labels_are_rejected_with_the_case_id(overrides, message):
