@@ -17,3 +17,7 @@ qdrant-client==1.19.1
 # parts, langchain-core, langsmith (inert without an API key), and small
 # utilities (ormsgpack, xxhash, jsonpatch, tenacity, zstandard, distro).
 langgraph==1.2.16
+
+# The evaluation harness reads its labelled question set from YAML. Already in
+# the lockfile through gradio; pinned here because eval/ imports it directly.
+pyyaml==6.0.3

@@ -458,8 +458,11 @@ pip install -r requirements.lock
 
 **Updating dependencies.** Edit the pin in `requirements.txt` or
 `requirements-dev.txt`, regenerate the lock with
-`uv pip compile requirements-dev.txt --universal --python-version 3.11 -o requirements.lock`,
-and let CI prove the change before merging.
+`uv pip compile requirements-dev.txt --universal --python-version 3.11 -c requirements.lock -o requirements.lock`,
+and let CI prove the change before merging. Passing the current lock as a
+constraint keeps every unrelated pin where it is, so a one-line change to the
+requirements produces a one-package change to the lock; drop the `-c` to
+refresh everything deliberately.
 
 Copy `.env.example` to `.env` and add your key:
 
