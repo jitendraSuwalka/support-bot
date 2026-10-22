@@ -287,4 +287,9 @@ with gr.Blocks(title="Grounded Support Agent") as demo:
 
 
 if __name__ == "__main__":
+    # Open the document index before serving, so the first question is not
+    # the one that pays for loading (and, on a new machine, downloading) the
+    # embedding model. The trace line it logs is printed, as there is no run.
+    print("Preparing the document index (first run: downloads the embedding model, about 70 MB)")
+    agent.get_retriever()
     demo.queue(default_concurrency_limit=4).launch(theme=THEME, css=CSS)
