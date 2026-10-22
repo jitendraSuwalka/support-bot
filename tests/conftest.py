@@ -14,6 +14,7 @@ import types
 import pytest
 
 import agent
+import agent_graph
 from rag.corpus import Chunk, chunk_corpus, chunk_id_for
 from rag.embeddings import HashEmbedder
 from rag.lexical import BM25Index
@@ -109,12 +110,18 @@ def offline_retriever(request, monkeypatch, corpus_retriever):
         monkeypatch.setattr(agent, "_RETRIEVER", corpus_retriever)
 
 
-@pytest.fixture
-def run_scenario(monkeypatch):
-    """Run user turns through the real ``run_agent`` against a scripted model.
+IMPLEMENTATIONS = {"loop": agent.run_loop_agent, "graph": agent_graph.run_graph_agent}
 
-    Returns one AgentResult per user turn, the policy state, and the fake client.
+
+@pytest.fixture(params=sorted(IMPLEMENTATIONS))
+def run_scenario(request, monkeypatch):
+    """Run user turns through the real agent against a scripted model.
+
+    Parametrised over both implementations, the hand-written loop and the
+    LangGraph graph, so every scenario is proved on each. Returns one
+    AgentResult per user turn, the policy state, and the fake client.
     """
+    run_turn = IMPLEMENTATIONS[request.param]
 
     def _run(script, user_messages, helper=None, state=None):
         fake = FakeClient(script, helper)
@@ -124,9 +131,10 @@ def run_scenario(monkeypatch):
         results = []
         for text in user_messages:
             messages.append({"role": "user", "content": text})
-            results.append(agent.run_agent(messages, state))
+            results.append(run_turn(messages, state))
         return results, state, fake
 
+    _run.implementation = request.param
     return _run
 
 

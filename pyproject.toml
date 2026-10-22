@@ -22,9 +22,16 @@ markers = [
     "live: calls the real Anthropic API and costs money; run with -m live and an API key",
     "model: downloads and runs the real embedding model (about 70 MB); run with -m model",
 ]
+filterwarnings = [
+    # qdrant-client probes sqlite's thread safety through a throwaway in-memory
+    # connection opened with `with sqlite3.connect(...)`, which commits but does
+    # not close (qdrant_client/local/persistence.py). The connection leaks once
+    # per process and Python reports it when it is collected. Not ours to fix.
+    "ignore:unclosed database:ResourceWarning",
+]
 
 [tool.coverage.run]
-source = ["agent", "config", "app", "rag"]
+source = ["agent", "agent_graph", "config", "app", "rag"]
 
 [tool.coverage.report]
 show_missing = true

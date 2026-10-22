@@ -18,7 +18,7 @@ a hope.
 ```
 python app.py          # web interface
 python agent.py        # same agent, in the terminal
-pytest                 # 83 tests, under five seconds, no API calls
+pytest                 # 220 tests, under ten seconds, no API calls
 ```
 
 > **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
@@ -222,8 +222,9 @@ diagnostic that names the cause: `best 0.91 vs floor 0.9`.
 
 ## Testing strategy
 
-`tests/` — **83 tests, under five seconds, no API calls.** Run with `pytest`.
-Six further tests call the real API and run only on request: `pytest -m live`.
+`tests/` — **220 tests, under ten seconds, no API calls, no network.** Run with `pytest`.
+Eight further tests call the real API and run only on request: `pytest -m live`;
+one downloads the real embedding model: `pytest -m model`.
 
 The core technique is a **scripted fake model**. Behaviour is non-deterministic:
 asking `quiz` twice produced two different execution paths, so the
@@ -347,9 +348,10 @@ pytest -m live                  # the opt-in tests that call the real API
 | File | Purpose |
 |---|---|
 | `agent.py` | The agent — tools, retrieval, guards, policy, loop; returns a structured `AgentResult` |
+| `agent_graph.py` | The same turn as a LangGraph state graph, selectable by `SUPPORT_BOT_AGENT_IMPL=graph`; `python agent_graph.py --mermaid` draws it |
 | `config.py` | Every runtime setting, read from the environment with validation |
 | `corpus/`, `rag/` | 18 documents for the fictional firm, and the chunker, embeddings, vector store and hybrid retriever that search them |
-| `tests/` | 83 pytest tests, scripted fake model, plus 6 opt-in live tests |
+| `tests/` | 220 pytest tests run against both agent implementations, scripted fake model, in-memory index; 8 opt-in live tests |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `requirements.txt` / `requirements.lock` | Direct dependencies / every resolved dependency |
 
