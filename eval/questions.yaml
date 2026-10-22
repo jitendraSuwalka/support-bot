@@ -1,0 +1,1063 @@
+# The labelled question set for the evaluation harness.
+#
+# Each case says what a correct turn looks like:
+#   expected      answer | escalate | clarify | greeting
+#   kind          why the case is in the set (see eval/dataset.py for the list)
+#   gold          the corpus sections that answer it, as "doc-id/Section name";
+#                 any chunk of a gold section counts as a retrieval hit
+#   must_contain  strings a correct answer copies exactly: figures, phone numbers,
+#                 postcodes, addresses. Each must appear in a gold section, so the
+#                 label can be checked against the corpus (tests/test_dataset.py)
+#   tools         the tools a correct turn uses (order not required)
+#
+# Questions are written the way customers write: short, long, polite, blunt,
+# with typos, with context the documents do not need. Every document has at
+# least two questions; every expected behaviour has several.
+
+# --- factual: answerable from the documents ------------------------------------
+
+- id: isa-01
+  question: How much can I pay into an ISA this tax year?
+  kind: factual
+  expected: answer
+  gold: [isa-guide/The allowance]
+  must_contain: ["£20,000"]
+  tools: [search_knowledge_base]
+
+- id: isa-02
+  question: whats the isa limit for 2026/27
+  kind: factual
+  expected: answer
+  gold: [isa-guide/The allowance]
+  must_contain: ["£20,000"]
+  tools: [search_knowledge_base]
+
+- id: isa-03
+  question: My daughter is 17. Can she open an ISA with you?
+  kind: factual
+  expected: answer
+  gold: [isa-guide/The allowance]
+  must_contain: ["18"]
+  tools: [search_knowledge_base]
+
+- id: isa-04
+  question: How much can go into a Lifetime ISA each year, and what does the government add?
+  kind: factual
+  expected: answer
+  gold: [isa-guide/Lifetime ISA]
+  must_contain: ["£4,000", "25%"]
+  tools: [search_knowledge_base]
+
+- id: isa-05
+  question: I'm 42. Am I too old to open a Lifetime ISA?
+  kind: factual
+  expected: answer
+  gold: [isa-guide/Lifetime ISA]
+  must_contain: ["39"]
+  tools: [search_knowledge_base]
+
+- id: isa-06
+  question: What is changing for cash ISAs next April?
+  kind: factual
+  expected: answer
+  gold: [isa-guide/Changes from 6 April 2027]
+  must_contain: ["£12,000"]
+  tools: [search_knowledge_base]
+
+- id: isa-07
+  question: I'm 70. Does the new cash ISA cap apply to me?
+  kind: factual
+  expected: answer
+  gold: [isa-guide/Changes from 6 April 2027]
+  must_contain: ["65"]
+  tools: [search_knowledge_base]
+
+- id: isa-08
+  question: How long does an ISA transfer take?
+  kind: factual
+  expected: answer
+  gold: [isa-guide/Transfers]
+  must_contain: ["15 working days", "30 calendar days"]
+  tools: [search_knowledge_base]
+
+- id: isa-09
+  question: If I take money out of my stocks and shares ISA can I put it back in the same year?
+  kind: factual
+  expected: answer
+  gold: [isa-guide/Flexible ISAs]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: isa-10
+  question: Does my wife get my ISA allowance when I die?
+  kind: factual
+  expected: answer
+  gold: [isa-guide/Tax and inheritance]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: pension-01
+  question: What's the pension annual allowance?
+  kind: factual
+  expected: answer
+  gold: [pensions-guide/Annual allowance]
+  must_contain: ["£60,000"]
+  tools: [search_knowledge_base]
+
+- id: pension-02
+  question: I've started drawing from my pension flexibly. How much can I still pay in?
+  kind: factual
+  expected: answer
+  gold: [pensions-guide/Money purchase annual allowance]
+  must_contain: ["£10,000"]
+  tools: [search_knowledge_base]
+
+- id: pension-03
+  question: How much of my pension can I take tax free?
+  kind: factual
+  expected: answer
+  gold: [pensions-guide/Tax-free lump sum]
+  must_contain: ["25%", "£268,275"]
+  tools: [search_knowledge_base]
+
+- id: pension-04
+  question: At what age can I start taking my pension?
+  kind: factual
+  expected: answer
+  gold: [pensions-guide/Drawing an income]
+  must_contain: ["55", "57"]
+  tools: [search_knowledge_base]
+
+- id: pension-05
+  question: Is there a rule about getting advice before transferring a final salary pension?
+  kind: factual
+  expected: answer
+  gold: [pensions-guide/Transfers from defined benefit schemes]
+  must_contain: ["£30,000"]
+  tools: [search_knowledge_base]
+
+- id: pension-06
+  question: Will my pension be subject to inheritance tax?
+  kind: factual
+  expected: answer
+  gold: [pensions-guide/Death benefits]
+  must_contain: ["6 April 2027"]
+  tools: [search_knowledge_base]
+
+- id: pension-07
+  question: I don't earn anything at the moment. Can I still pay into a pension and get tax relief?
+  kind: factual
+  expected: answer
+  gold: [pensions-guide/Tax relief on contributions]
+  must_contain: ["£3,600"]
+  tools: [search_knowledge_base]
+
+- id: pension-08
+  question: Can I carry forward unused pension allowance?
+  kind: factual
+  expected: answer
+  gold: [pensions-guide/Annual allowance]
+  must_contain: ["three"]
+  tools: [search_knowledge_base]
+
+- id: fees-01
+  question: What do you charge for financial planning?
+  kind: factual
+  expected: answer
+  gold: [fees-and-charges/Initial financial planning]
+  must_contain: ["£2,400"]
+  tools: [search_knowledge_base]
+
+- id: fees-02
+  question: how much is ongoing advice
+  kind: factual
+  expected: answer
+  gold: [fees-and-charges/Ongoing advice]
+  must_contain: ["0.75%"]
+  tools: [search_knowledge_base]
+
+- id: fees-03
+  question: What are your discretionary management fees on a £2m portfolio?
+  kind: factual
+  expected: answer
+  gold: [fees-and-charges/Discretionary investment management]
+  must_contain: ["0.60%", "0.45%"]
+  tools: [search_knowledge_base]
+
+- id: fees-04
+  question: Do you charge for dealing?
+  kind: factual
+  expected: answer
+  gold: [fees-and-charges/Custody and dealing]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: fees-05
+  question: Is VAT added to your fees?
+  kind: factual
+  expected: answer
+  gold: [fees-and-charges/VAT]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: fees-06
+  question: Do you take commission from the products you recommend?
+  kind: factual
+  expected: answer
+  gold: [fees-and-charges/Overview]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: fees-07
+  question: What's the minimum you'll manage?
+  kind: factual
+  expected: answer
+  gold: [fees-and-charges/Minimum portfolio, becoming-a-client/Who we work with]
+  must_contain: ["£250,000"]
+  tools: [search_knowledge_base]
+
+- id: fees-08
+  question: Is there a charge to close my account?
+  kind: factual
+  expected: answer
+  gold: [closing-or-transferring/Charges, fees-and-charges/What we do not charge for]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: fees-09
+  question: How much do the funds themselves cost on top of your fee?
+  kind: factual
+  expected: answer
+  gold: [fees-and-charges/Fund costs]
+  must_contain: ["0.21%"]
+  tools: [search_knowledge_base]
+
+- id: complaints-01
+  question: How do I make a complaint?
+  kind: factual
+  expected: answer
+  gold: [complaints-procedure/How to complain]
+  must_contain: ["0117 496 0355"]
+  tools: [search_knowledge_base]
+
+- id: complaints-02
+  question: How long do you have to respond to a complaint?
+  kind: factual
+  expected: answer
+  gold: [complaints-procedure/What happens next]
+  must_contain: ["eight weeks"]
+  tools: [search_knowledge_base]
+
+- id: complaints-03
+  question: I'm not happy with your final response. What can I do?
+  kind: factual
+  expected: answer
+  gold: [complaints-procedure/The Financial Ombudsman Service]
+  must_contain: ["six months"]
+  tools: [search_knowledge_base]
+
+- id: complaints-04
+  question: What's the ombudsman's phone number?
+  kind: factual
+  expected: answer
+  gold: [complaints-procedure/The Financial Ombudsman Service]
+  must_contain: ["0800 023 4567"]
+  tools: [search_knowledge_base]
+
+- id: complaints-05
+  question: Something went wrong four years ago. Is it too late to complain?
+  kind: factual
+  expected: answer
+  gold: [complaints-procedure/Complaints about events some time ago]
+  must_contain: ["six years"]
+  tools: [search_knowledge_base]
+
+- id: contact-01
+  question: Do you have a Manchester office?
+  kind: factual
+  expected: answer
+  gold: [contact-and-offices/Our offices › Manchester]
+  must_contain: ["M2 3ZX"]
+  tools: [search_knowledge_base]
+
+- id: contact-02
+  question: Where is your head office?
+  kind: factual
+  expected: answer
+  gold: [contact-and-offices/Our offices › Bristol (head office)]
+  must_contain: ["22 Harbourside Walk"]
+  tools: [search_knowledge_base]
+
+- id: contact-03
+  question: What's the nearest station to your London office?
+  kind: factual
+  expected: answer
+  gold: [contact-and-offices/Our offices › London]
+  must_contain: ["Moorgate"]
+  tools: [search_knowledge_base]
+
+- id: contact-04
+  question: When is the switchboard open?
+  kind: factual
+  expected: answer
+  gold: [contact-and-offices/Main switchboard]
+  must_contain: ["08:30", "18:00"]
+  tools: [search_knowledge_base]
+
+- id: contact-05
+  question: Can I visit a branch on Sunday?
+  kind: denial
+  expected: answer
+  gold: [contact-and-offices/Opening hours]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: contact-06
+  question: Is there a free number for new enquiries?
+  kind: factual
+  expected: answer
+  gold: [contact-and-offices/Specialist lines, appointments-and-callbacks/Becoming a client]
+  must_contain: ["0808 157 0450"]
+  tools: [search_knowledge_base]
+
+- id: contact-07
+  question: What address do I post documents to?
+  kind: factual
+  expected: answer
+  gold: [contact-and-offices/Writing to us]
+  must_contain: ["BS1 5XY"]
+  tools: [search_knowledge_base]
+
+- id: contact-08
+  question: Do you have an office in Scotland?
+  kind: factual
+  expected: answer
+  gold: [contact-and-offices/Our offices › Edinburgh, about-fernhill-wealth/Our firm today]
+  must_contain: ["Edinburgh"]
+  tools: [search_knowledge_base]
+
+- id: portal-01
+  question: How do I reset my password?
+  kind: factual
+  expected: answer
+  gold: [client-portal/If you cannot log in]
+  must_contain: ["30 minutes"]
+  tools: [search_knowledge_base]
+
+- id: portal-02
+  question: I've been locked out of the portal, what now?
+  kind: factual
+  expected: answer
+  gold: [client-portal/If you cannot log in]
+  must_contain: ["0117 496 0233"]
+  tools: [search_knowledge_base]
+
+- id: portal-03
+  question: Can I turn off two-step verification? It's annoying.
+  kind: denial
+  expected: answer
+  gold: [client-portal/Logging in]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: portal-04
+  question: How far back can I see my transactions online?
+  kind: factual
+  expected: answer
+  gold: [client-portal/What you can see]
+  must_contain: ["seven years"]
+  tools: [search_knowledge_base]
+
+- id: portal-05
+  question: How quickly do you reply to a secure message?
+  kind: factual
+  expected: answer
+  gold: [client-portal/What you can see]
+  must_contain: ["two working days"]
+  tools: [search_knowledge_base]
+
+- id: admin-01
+  question: I've moved house. How do I update my address?
+  kind: factual
+  expected: answer
+  gold: [account-administration/Updating your details]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: admin-02
+  question: I got married and changed my name. What do you need from me?
+  kind: factual
+  expected: answer
+  gold: [account-administration/Updating your details]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: admin-03
+  question: How long does a withdrawal take?
+  kind: factual
+  expected: answer
+  gold: [account-administration/Withdrawals]
+  must_contain: ["five working days"]
+  tools: [search_knowledge_base]
+
+- id: admin-04
+  question: When are valuation reports sent out?
+  kind: factual
+  expected: answer
+  gold: [account-administration/Statements and valuations]
+  must_contain: ["15 working days"]
+  tools: [search_knowledge_base]
+
+- id: admin-05
+  question: I want withdrawals paid to a different bank account. How do I change it?
+  kind: factual
+  expected: answer
+  gold: [account-administration/Changing the bank account we pay to, security-and-data-protection/Payments out]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: admin-06
+  question: Can I get paper statements instead of online?
+  kind: factual
+  expected: answer
+  gold: [account-administration/Paper or online, client-portal/Documents]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: cash-01
+  question: Do I get interest on cash in my account?
+  kind: factual
+  expected: answer
+  gold: [cash-income-and-dealing/How cash is held]
+  must_contain: ["0.25%"]
+  tools: [search_knowledge_base]
+
+- id: cash-02
+  question: What day of the month is regular income paid?
+  kind: factual
+  expected: answer
+  gold: [cash-income-and-dealing/Regular income and withdrawals]
+  must_contain: ["25th"]
+  tools: [search_knowledge_base]
+
+- id: cash-03
+  question: What's the smallest monthly amount I can set up by direct debit?
+  kind: factual
+  expected: answer
+  gold: [cash-income-and-dealing/Regular contributions]
+  must_contain: ["£250"]
+  tools: [search_knowledge_base]
+
+- id: cash-04
+  question: How long do fund sales take to settle?
+  kind: factual
+  expected: answer
+  gold: [cash-income-and-dealing/Dealing and settlement]
+  must_contain: ["four working days"]
+  tools: [search_knowledge_base]
+
+- id: tax-01
+  question: What's the capital gains tax allowance?
+  kind: factual
+  expected: answer
+  gold: [tax-and-reporting/Capital gains tax]
+  must_contain: ["£3,000"]
+  tools: [search_knowledge_base]
+
+- id: tax-02
+  question: How are dividends taxed outside an ISA?
+  kind: factual
+  expected: answer
+  gold: [tax-and-reporting/Dividends]
+  must_contain: ["£500"]
+  tools: [search_knowledge_base]
+
+- id: tax-03
+  question: When will my tax certificate be available?
+  kind: factual
+  expected: answer
+  gold: [tax-and-reporting/Documents we provide, account-administration/Statements and valuations]
+  must_contain: ["May"]
+  tools: [search_knowledge_base]
+
+- id: tax-04
+  question: Do you do my tax return for me?
+  kind: denial
+  expected: answer
+  gold: [tax-and-reporting/Documents we provide]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: tax-05
+  question: What is a Bed and ISA?
+  kind: factual
+  expected: answer
+  gold: [tax-and-reporting/Moving investments into an ISA]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: transfer-01
+  question: How long does a pension transfer to another provider take?
+  kind: factual
+  expected: answer
+  gold: [closing-or-transferring/Transferring investments to another provider]
+  must_contain: ["four to eight weeks"]
+  tools: [search_knowledge_base]
+
+- id: transfer-02
+  question: Who starts an ISA transfer, you or the new provider?
+  kind: factual
+  expected: answer
+  gold: [closing-or-transferring/Transferring investments to another provider, isa-guide/Transfers]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: transfer-03
+  question: Can I still see my documents after I close my account?
+  kind: factual
+  expected: answer
+  gold: [closing-or-transferring/Documents after closing]
+  must_contain: ["seven years"]
+  tools: [search_knowledge_base]
+
+- id: invest-01
+  question: What's the difference between discretionary and advisory management?
+  kind: factual
+  expected: answer
+  gold: [investment-management/Discretionary and advisory]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: invest-02
+  question: How many risk profiles do you have?
+  kind: factual
+  expected: answer
+  gold: [investment-management/Risk profiles]
+  must_contain: ["seven"]
+  tools: [search_knowledge_base]
+
+- id: invest-03
+  question: Will you tell me if my portfolio drops a lot?
+  kind: factual
+  expected: answer
+  gold: [investment-management/Reporting]
+  must_contain: ["10%"]
+  tools: [search_knowledge_base]
+
+- id: invest-04
+  question: Are my investments held in my own name?
+  kind: factual
+  expected: answer
+  gold: [investment-management/Where your assets are held]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: invest-05
+  question: Do you offer an ethical or responsible investment option?
+  kind: factual
+  expected: answer
+  gold: [investment-management/Responsible investment]
+  must_contain: ["10%"]
+  tools: [search_knowledge_base]
+
+- id: about-01
+  question: Are you covered by the FSCS?
+  kind: factual
+  expected: answer
+  gold: [about-fernhill-wealth/Protection]
+  must_contain: ["£85,000"]
+  tools: [search_knowledge_base]
+
+- id: about-02
+  question: How much of my cash is protected if a bank fails?
+  kind: factual
+  expected: answer
+  gold: [about-fernhill-wealth/Protection]
+  must_contain: ["£120,000"]
+  tools: [search_knowledge_base]
+
+- id: about-03
+  question: How many offices do you have?
+  kind: factual
+  expected: answer
+  gold: [about-fernhill-wealth/Our firm today, contact-and-offices/Our offices]
+  must_contain: ["six"]
+  tools: [search_knowledge_base]
+
+- id: about-04
+  question: Are you regulated by the FCA?
+  kind: factual
+  expected: answer
+  gold: [about-fernhill-wealth/Legal information, about-fernhill-wealth/Our firm today]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: about-05
+  question: Is your advice independent or restricted?
+  kind: factual
+  expected: answer
+  gold: [financial-planning/Independence]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: planning-01
+  question: What happens at the first meeting?
+  kind: factual
+  expected: answer
+  gold: [financial-planning/The process, appointments-and-callbacks/Becoming a client]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: planning-02
+  question: How long does it take to get the written plan?
+  kind: factual
+  expected: answer
+  gold: [financial-planning/The process]
+  must_contain: ["three to four weeks"]
+  tools: [search_knowledge_base]
+
+- id: planning-03
+  question: Can I get advice on just one thing, like consolidating my pensions?
+  kind: factual
+  expected: answer
+  gold: [financial-planning/One-off advice, fees-and-charges/Initial financial planning]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: appt-01
+  question: How do I book an introductory meeting and does it cost anything?
+  kind: factual
+  expected: answer
+  gold: [appointments-and-callbacks/Becoming a client]
+  must_contain: ["0808 157 0450"]
+  tools: [search_knowledge_base]
+
+- id: appt-02
+  question: I asked for a call back at 10am. Does that mean the office opens at 10?
+  kind: denial
+  expected: answer
+  gold: [appointments-and-callbacks/Requesting a call back, contact-and-offices/Opening hours]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: appt-03
+  question: What should I bring to a planning meeting?
+  kind: factual
+  expected: answer
+  gold: [appointments-and-callbacks/What to bring]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: client-01
+  question: What ID do you need to open an account?
+  kind: factual
+  expected: answer
+  gold: [becoming-a-client/Identity and anti-money-laundering checks]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: client-02
+  question: How long does it take to open an account?
+  kind: factual
+  expected: answer
+  gold: [becoming-a-client/How long it takes]
+  must_contain: ["five working days"]
+  tools: [search_knowledge_base]
+
+- id: client-03
+  question: I'm a US citizen living in London. Can you take me on?
+  kind: denial
+  expected: answer
+  gold: [becoming-a-client/Clients outside the UK]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: client-04
+  question: What happens if my adviser leaves?
+  kind: factual
+  expected: answer
+  gold: [becoming-a-client/If your adviser leaves]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: security-01
+  question: Someone rang claiming to be from Fernhill and asked for my login code. What should I do?
+  kind: factual
+  expected: answer
+  gold: [security-and-data-protection/How to check a call is from us, security-and-data-protection/What we will never ask for]
+  must_contain: ["0117 496 0100"]
+  tools: [search_knowledge_base]
+
+- id: security-02
+  question: How do I report a fraud to the police?
+  kind: factual
+  expected: answer
+  gold: [security-and-data-protection/Reporting suspected fraud]
+  must_contain: ["0300 123 2040"]
+  tools: [search_knowledge_base]
+
+- id: security-03
+  question: How long do you keep my personal data after I leave?
+  kind: factual
+  expected: answer
+  gold: [security-and-data-protection/Your personal data]
+  must_contain: ["seven years"]
+  tools: [search_knowledge_base]
+
+- id: security-04
+  question: I want a copy of all the data you hold on me. How long will it take?
+  kind: factual
+  expected: answer
+  gold: [security-and-data-protection/Your personal data]
+  must_contain: ["one month"]
+  tools: [search_knowledge_base]
+
+- id: security-05
+  question: Are my calls recorded?
+  kind: factual
+  expected: answer
+  gold: [security-and-data-protection/Recording of calls]
+  must_contain: ["five years"]
+  tools: [search_knowledge_base]
+
+- id: access-01
+  question: Can I have my statements in large print?
+  kind: factual
+  expected: answer
+  gold: [accessibility-and-additional-support/Documents in other formats]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: access-02
+  question: I'm deaf. Can I have a meeting with a BSL interpreter?
+  kind: factual
+  expected: answer
+  gold: [accessibility-and-additional-support/Communicating with us]
+  must_contain: ["one week"]
+  tools: [search_knowledge_base]
+
+- id: access-03
+  question: Can my son speak to you about my account on my behalf?
+  kind: factual
+  expected: answer
+  gold: [accessibility-and-additional-support/Trusted contacts and third parties]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: life-01
+  question: My father was a client and has died. What do you need from me?
+  kind: factual
+  expected: answer
+  gold: [life-events-support/Bereavement]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: life-02
+  question: Do your fees carry on after someone dies?
+  kind: factual
+  expected: answer
+  gold: [life-events-support/Bereavement]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: life-03
+  question: What's the number for the bereavement team?
+  kind: factual
+  expected: answer
+  gold: [contact-and-offices/Specialist lines]
+  must_contain: ["0117 496 0412"]
+  tools: [search_knowledge_base]
+
+- id: life-04
+  question: I have power of attorney for my mother. How do I register it with you?
+  kind: factual
+  expected: answer
+  gold: [life-events-support/Power of attorney]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+# --- exact strings: numbers, references, postcodes -------------------------------
+
+- id: exact-01
+  question: Whose number is 0161 496 0170?
+  kind: exact-string
+  expected: answer
+  gold: [contact-and-offices/Our offices › Manchester]
+  must_contain: ["Manchester"]
+  tools: [search_knowledge_base]
+
+- id: exact-02
+  question: What is 0117 496 0233 for?
+  kind: exact-string
+  expected: answer
+  gold: [contact-and-offices/Specialist lines, client-portal/If you cannot log in]
+  must_contain: ["portal"]
+  tools: [search_knowledge_base]
+
+- id: exact-03
+  question: Which office is at EC2R 6ZX?
+  kind: exact-string
+  expected: answer
+  gold: [contact-and-offices/Our offices › London]
+  must_contain: ["London"]
+  tools: [search_knowledge_base]
+
+- id: exact-04
+  question: Is complaints@fernhillwealth.example the right email for a complaint?
+  kind: exact-string
+  expected: answer
+  gold: [complaints-procedure/How to complain, contact-and-offices/Specialist lines]
+  must_contain: ["complaints@fernhillwealth.example"]
+  tools: [search_knowledge_base]
+
+- id: exact-05
+  question: What's at 55 Colmore Row?
+  kind: exact-string
+  expected: answer
+  gold: [contact-and-offices/Our offices › Birmingham]
+  must_contain: ["Birmingham"]
+  tools: [search_knowledge_base]
+
+# --- multi-part: two facts in one question ---------------------------------------
+
+- id: multi-01
+  question: What's the address of your Leeds office and what time does it open?
+  kind: multi-part
+  expected: answer
+  gold: [contact-and-offices/Our offices › Leeds, contact-and-offices/Opening hours]
+  must_contain: ["LS11 5ZX", "09:00"]
+  tools: [search_knowledge_base]
+
+- id: multi-02
+  question: What are the ISA and pension annual allowances this year?
+  kind: multi-part
+  expected: answer
+  gold: [isa-guide/The allowance, pensions-guide/Annual allowance]
+  must_contain: ["£20,000", "£60,000"]
+  tools: [search_knowledge_base]
+
+- id: multi-03
+  question: How much does a full financial plan cost, and how long until I get it?
+  kind: multi-part
+  expected: answer
+  gold: [fees-and-charges/Initial financial planning, financial-planning/The process]
+  must_contain: ["£2,400", "three to four weeks"]
+  tools: [search_knowledge_base]
+
+# --- case status: live data, quoted verbatim ----------------------------------------
+
+- id: status-01
+  question: What's the status of FW-1001?
+  kind: status
+  expected: answer
+  gold: []
+  must_contain: ["Received 1 Aug. With your adviser. Response due by 6 Aug."]
+  tools: [look_up_client_query]
+
+- id: status-02
+  question: any update on fw-1002
+  kind: status
+  expected: answer
+  gold: []
+  must_contain: ["Documents verified. Awaiting your signature to proceed."]
+  tools: [look_up_client_query]
+
+- id: status-03
+  question: Is my query FW-1003 still open?
+  kind: status
+  expected: answer
+  gold: []
+  must_contain: ["Closed 28 July. Summary letter posted to your address."]
+  tools: [look_up_client_query]
+
+- id: status-04
+  question: What is happening with FW-1004? It has been weeks.
+  kind: status
+  expected: answer
+  gold: []
+  must_contain: ["Escalated to the Client Resolution team on 4 Aug."]
+  tools: [look_up_client_query]
+
+- id: status-05
+  question: Can you check FW-9999 for me?
+  kind: status
+  expected: clarify
+  gold: []
+  must_contain: []
+  tools: [look_up_client_query]
+
+# --- advice: must reach a human --------------------------------------------------
+
+- id: advice-01
+  question: Should I move my pension into equities?
+  kind: advice
+  expected: escalate
+  gold: []
+  must_contain: []
+  tools: [escalate_to_adviser]
+
+- id: advice-02
+  question: Is it a good idea to transfer my final salary pension to you?
+  kind: advice
+  expected: escalate
+  gold: []
+  must_contain: []
+  tools: [escalate_to_adviser]
+
+- id: advice-03
+  question: I have £50,000 in savings. Should I put it in an ISA or my pension?
+  kind: advice
+  expected: escalate
+  gold: []
+  must_contain: []
+  tools: [escalate_to_adviser]
+
+- id: advice-04
+  question: Which risk profile should I pick?
+  kind: advice
+  expected: escalate
+  gold: []
+  must_contain: []
+  tools: [escalate_to_adviser]
+
+- id: advice-05
+  question: Is now a good time to invest, with markets where they are?
+  kind: advice
+  expected: escalate
+  gold: []
+  must_contain: []
+  tools: [escalate_to_adviser]
+
+- id: advice-06
+  question: My husband died last month and I don't know what to do with his pension. Can you help?
+  kind: advice
+  expected: escalate
+  gold: []
+  must_contain: []
+  tools: [escalate_to_adviser]
+
+- id: advice-07
+  question: Should I take my 25% tax-free cash now or leave it?
+  kind: advice
+  expected: escalate
+  gold: []
+  must_contain: []
+  tools: [escalate_to_adviser]
+
+- id: advice-08
+  question: Can you recommend some good funds for me?
+  kind: advice
+  expected: escalate
+  gold: []
+  must_contain: []
+  tools: [escalate_to_adviser]
+
+- id: advice-09
+  question: I want to complain right now about my adviser. Can you log it?
+  kind: advice
+  expected: escalate
+  gold: []
+  must_contain: []
+  tools: [escalate_to_adviser]
+
+- id: advice-10
+  question: We're getting divorced. How should we split the investments?
+  kind: advice
+  expected: escalate
+  gold: []
+  must_contain: []
+  tools: [escalate_to_adviser]
+
+# --- out of scope: nothing in the documents answers it ------------------------------
+
+- id: scope-01
+  question: Do you offer mortgage advice?
+  kind: out-of-scope
+  expected: escalate
+  gold: []
+  must_contain: []
+  tools: []
+
+- id: scope-02
+  question: Can I hold Bitcoin in my ISA with you?
+  kind: out-of-scope
+  expected: escalate
+  gold: []
+  must_contain: []
+  tools: []
+
+- id: scope-03
+  question: Who is your chief executive?
+  kind: out-of-scope
+  expected: escalate
+  gold: []
+  must_contain: []
+  tools: []
+
+- id: scope-04
+  question: What's the weather like in Bristol today?
+  kind: out-of-scope
+  expected: escalate
+  gold: []
+  must_contain: []
+  tools: []
+
+- id: denial-cardiff
+  question: Do you have a branch in Cardiff?
+  kind: denial
+  expected: answer
+  gold: [about-fernhill-wealth/Our firm today, contact-and-offices/Our offices]
+  must_contain: []
+  tools: [search_knowledge_base]
+
+- id: scope-06
+  question: Can you recommend a good accountant in Leeds?
+  kind: out-of-scope
+  expected: escalate
+  gold: []
+  must_contain: []
+  tools: []
+
+- id: scope-07
+  question: Do you sponsor any local sports clubs?
+  kind: out-of-scope
+  expected: escalate
+  gold: []
+  must_contain: []
+  tools: []
+
+# --- ambiguous: clarify once ----------------------------------------------------------
+
+- id: ambiguous-01
+  question: quiz
+  kind: ambiguous
+  expected: clarify
+  gold: []
+  must_contain: []
+  tools: []
+
+- id: ambiguous-02
+  question: the thing from last week
+  kind: ambiguous
+  expected: clarify
+  gold: []
+  must_contain: []
+  tools: []
+
+# --- greetings: no tools --------------------------------------------------------------
+
+- id: greeting-01
+  question: hello
+  kind: greeting
+  expected: greeting
+  gold: []
+  must_contain: []
+  tools: []
+
+- id: greeting-02
+  question: Thanks a lot
+  kind: greeting
+  expected: greeting
+  gold: []
+  must_contain: []
+  tools: []
