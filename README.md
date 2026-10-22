@@ -184,6 +184,7 @@ graph TD;
 	groundedness_check --> escalation_policy;
 	prepare --> call_model;
 	run_tools -.-> call_model;
+	run_tools -.-> escalation_policy;
 	run_tools -.-> give_up;
 	finish --> __end__;
 	give_up --> __end__;

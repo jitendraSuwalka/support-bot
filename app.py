@@ -29,6 +29,8 @@ TOOL_LABELS = {
     "search_knowledge_base": "Searched knowledge base",
     "look_up_client_query": "Looked up case status",
     "escalate_to_adviser": "Escalated to adviser",
+    "ask_for_clarification": "Asked the customer to clarify",
+    "decline_out_of_scope": "Declined: outside scope",
 }
 
 
@@ -47,8 +49,12 @@ def build_status(result):
     kinds = result.trace.kinds()
     chips = []
 
+    skipped = [event.data["name"] for event in result.trace.find("tool_skipped")]
     for name in dict.fromkeys(result.tools_used):
-        chips.append(("tool", TOOL_LABELS.get(name, name)))
+        if name not in skipped:
+            chips.append(("tool", TOOL_LABELS.get(name, name)))
+    for name in dict.fromkeys(skipped):
+        chips.append(("none", f"Not run: {TOOL_LABELS.get(name, name)}"))
 
     if "evidence_guard" in kinds:
         chips.append(("warn", "Sent back for a lookup"))
