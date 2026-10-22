@@ -888,14 +888,44 @@ def verify_answer(answer, evidence):
 UNRESOLVED_MARKERS = ("NO_MATCH", "NO_RECORD", "REFERENCE_NOT_GIVEN")
 
 PLEASANTRIES = {
-    "hi", "hello", "hey", "good morning", "good afternoon", "good evening",
-    "thanks", "thank you", "thanks a lot", "cheers", "ok", "okay", "bye",
-    "goodbye", "great", "perfect", "no thanks", "that's all", "thats all",
+    "hi", "hello", "hey", "hi there", "hello there", "morning", "afternoon",
+    "good morning", "good afternoon", "good evening", "hope you're well",
+    "hope you are well", "hope youre well", "how are you", "how are you doing",
+    "thanks", "thank you", "thanks a lot", "thanks very much", "thank you very much",
+    "thanks so much", "thank you so much", "many thanks", "ta", "cheers", "ok", "okay",
+    "bye", "goodbye", "take care", "see you", "speak soon", "have a nice day",
+    "have a good day", "you too", "great", "perfect", "brilliant", "lovely",
+    "no thanks", "no thank you", "that's all", "thats all", "that's helpful",
+    "thats helpful", "that helps", "got it", "understood", "will do",
 }  # fmt: skip
+
+PLEASANTRY_SPLIT = re.compile(r"[,.!?;:\-–—]+|\band\b")
+
+
+def _is_pleasantry_part(part):
+    if part in PLEASANTRIES:
+        return True
+    # Two pleasantries run together: "ok thanks", "great thank you".
+    return any(
+        part[:i].strip() in PLEASANTRIES and part[i:].strip() in PLEASANTRIES
+        for i in range(1, len(part))
+        if part[i] == " "
+    )
 
 
 def is_pleasantry(text):
-    return text.lower().strip(" .!?,") in PLEASANTRIES
+    """A greeting, thanks or sign-off, and nothing else.
+
+    The message is split on punctuation and "and", and every part must be
+    on the list: "Hi, hope you're well." passes, "Hi, what's the ISA
+    allowance?" does not. Deterministic, so a greeting never needs a model
+    call and never earns an escalation; the baseline evaluation had the
+    unlisted "Hi, hope you're well." answered without a tool, sent back for a
+    lookup, and finally escalated by the policy.
+    """
+    parts = [part.strip(" '\"-") for part in PLEASANTRY_SPLIT.split(text.lower())]
+    parts = [part for part in parts if part]
+    return bool(parts) and all(_is_pleasantry_part(part) for part in parts)
 
 
 POLICY_ESCALATION_REPLY = (

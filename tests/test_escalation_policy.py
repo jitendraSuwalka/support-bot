@@ -95,3 +95,32 @@ def test_the_tool_signal_outranks_the_prose_heuristic():
         "Tell me more about it.", UNRESOLVED, False, state, "clarified"
     )
     assert forced is False and state["unclear_turns"] == 1
+
+
+# --- greetings with something attached ------------------------------------------
+
+
+def test_a_greeting_with_a_pleasantry_attached_is_still_a_greeting():
+    for text in (
+        "Hi, hope you're well.",
+        "Hello there!",
+        "ok thanks",
+        "Great, thank you and goodbye",
+        "Thanks a lot - that's helpful",
+        "good morning",
+    ):
+        assert agent.is_pleasantry(text) is True, text
+
+
+def test_a_greeting_with_a_question_attached_is_not():
+    for text in (
+        "Hi, what's the ISA allowance?",
+        "thanks, and what about pensions",
+        "hello, FW-1001?",
+        "allowance",
+        "quiz",
+        "yes",
+        "no",
+        "",
+    ):
+        assert agent.is_pleasantry(text) is False, text
