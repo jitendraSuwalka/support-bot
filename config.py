@@ -17,6 +17,9 @@ from dataclasses import dataclass, fields
 
 ENV_PREFIX = "SUPPORT_BOT_"
 EFFORT_LEVELS = ("low", "medium", "high", "xhigh", "max")
+EMBEDDERS = ("local", "hash")
+RETRIEVAL_MODES = ("hybrid", "lexical", "dense")
+AGENT_IMPLS = ("loop", "graph")
 
 
 @dataclass(frozen=True)
@@ -36,14 +39,25 @@ class Settings:
     main_max_tokens: int = 4096
     helper_max_tokens: int = 2048
 
-    # Agent loop.
+    # Agent loop. "loop" is the hand-written loop in agent.py; "graph" is the
+    # same turn as a LangGraph state graph (agent_graph.py). Both share every
+    # model call, tool and guard; the scenario tests run both.
+    agent_impl: str = "loop"
     max_steps: int = 8
 
-    # Retrieval. The floor is deliberately loose: reranking does the real
-    # filtering. Retrieve `candidates` widely, keep `top_k` after reranking.
+    # Retrieval. Search is hybrid: BM25 and the vector index, fused by
+    # reciprocal rank; "lexical" or "dense" runs one method alone (used to
+    # compare them). A candidate must clear a floor on at least one side.
+    # The lexical floor is a share of the query's BM25 ceiling and is
+    # deliberately loose; the dense floor is a cosine similarity, set from
+    # measurement (off-topic questions peak at about 0.53, on-topic start at
+    # 0.68). Reranking does the real filtering: retrieve `candidates` widely,
+    # keep `top_k` after reranking.
+    retrieval_mode: str = "hybrid"
     relevance_floor: float = 0.15
-    candidates: int = 5
-    top_k: int = 2
+    dense_floor: float = 0.60
+    candidates: int = 6
+    top_k: int = 3
 
     # Guards. Each can be switched off independently; a fully guarded answer
     # costs several model calls, which is right for a regulated firm and wrong
@@ -52,6 +66,17 @@ class Settings:
     verify_answers: bool = True
     check_citations: bool = True
     require_evidence: bool = True
+
+    # Embeddings and the vector index. "local" runs a small ONNX model on the
+    # CPU, downloaded to model_cache on first use; "hash" is a deterministic
+    # stand-in with no model, for tests and offline CI. The index lives in
+    # index_path unless qdrant_url points at a Qdrant server, in which case
+    # the same code talks to the server instead.
+    embedder: str = "local"
+    embedding_model: str = "BAAI/bge-small-en-v1.5"
+    model_cache: str = ".models"
+    index_path: str = ".index"
+    qdrant_url: str = ""
 
     @classmethod
     def from_env(cls, env: dict[str, str] | None = None) -> Settings:
@@ -76,8 +101,19 @@ class Settings:
                 raise ValueError(f"{name} must be at least 1")
         if not 0.0 <= self.relevance_floor <= 1.0:
             raise ValueError("relevance_floor must be between 0 and 1")
+        if not 0.0 <= self.dense_floor <= 1.0:
+            raise ValueError("dense_floor must be between 0 and 1")
+        if self.retrieval_mode not in RETRIEVAL_MODES:
+            raise ValueError(f"retrieval_mode must be one of {RETRIEVAL_MODES}")
         if self.top_k > self.candidates:
             raise ValueError("top_k cannot exceed candidates")
+        if self.agent_impl not in AGENT_IMPLS:
+            raise ValueError(f"agent_impl must be one of {AGENT_IMPLS}")
+        if self.embedder not in EMBEDDERS:
+            raise ValueError(f"embedder must be one of {EMBEDDERS}")
+        for name in ("embedding_model", "model_cache", "index_path"):
+            if not getattr(self, name).strip():
+                raise ValueError(f"{name} must not be blank")
 
     def describe(self) -> dict[str, object]:
         """A plain dictionary, attached to every result for auditability."""

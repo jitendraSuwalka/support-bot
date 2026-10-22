@@ -4,3 +4,16 @@
 anthropic==1.15.0
 python-dotenv==1.2.4
 gradio==6.30.0
+
+# Retrieval (Phase 2). fastembed runs the embedding model on the CPU through
+# ONNX Runtime: measured against this lockfile it adds 12 packages, where
+# sentence-transformers adds 37 including PyTorch and the CUDA libraries.
+# qdrant-client in local mode keeps the vector index on disk with no server.
+fastembed==0.9.0
+qdrant-client==1.19.1
+
+# The LangGraph variant of the agent (agent_graph.py). Measured against this
+# lockfile it adds 17 packages: langgraph and its checkpoint, prebuilt and sdk
+# parts, langchain-core, langsmith (inert without an API key), and small
+# utilities (ormsgpack, xxhash, jsonpatch, tenacity, zstandard, distro).
+langgraph==1.2.16

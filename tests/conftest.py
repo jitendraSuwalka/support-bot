@@ -14,6 +14,12 @@ import types
 import pytest
 
 import agent
+import agent_graph
+from rag.corpus import Chunk, chunk_corpus, chunk_id_for
+from rag.embeddings import HashEmbedder
+from rag.lexical import BM25Index
+from rag.retrieval import HybridRetriever
+from rag.store import VectorStore
 
 
 class Block:
@@ -82,12 +88,40 @@ def tool_reply(name, tool_input, call_id="t1", text=None):
     return Response(blocks, "tool_use")
 
 
-@pytest.fixture
-def run_scenario(monkeypatch):
-    """Run user turns through the real ``run_agent`` against a scripted model.
+@pytest.fixture(scope="session")
+def corpus_retriever():
+    """A hybrid retriever over the real corpus with the hash embedder, in memory.
 
-    Returns one AgentResult per user turn, the policy state, and the fake client.
+    Built once per test session: no model download, no index on disk, and the
+    same vectors on every machine. Its dense scores are weak (hashing is not
+    meaning), so retrieval in tests is decided by the lexical side.
     """
+    chunks = chunk_corpus()
+    store = VectorStore(HashEmbedder())
+    store.sync(chunks)
+    return HybridRetriever(BM25Index(chunks), store)
+
+
+@pytest.fixture(autouse=True)
+def offline_retriever(request, monkeypatch, corpus_retriever):
+    """Give the agent the in-memory retriever, except in live tests, which
+    must exercise the real model and the real index."""
+    if request.node.get_closest_marker("live") is None:
+        monkeypatch.setattr(agent, "_RETRIEVER", corpus_retriever)
+
+
+IMPLEMENTATIONS = {"loop": agent.run_loop_agent, "graph": agent_graph.run_graph_agent}
+
+
+@pytest.fixture(params=sorted(IMPLEMENTATIONS))
+def run_scenario(request, monkeypatch):
+    """Run user turns through the real agent against a scripted model.
+
+    Parametrised over both implementations, the hand-written loop and the
+    LangGraph graph, so every scenario is proved on each. Returns one
+    AgentResult per user turn, the policy state, and the fake client.
+    """
+    run_turn = IMPLEMENTATIONS[request.param]
 
     def _run(script, user_messages, helper=None, state=None):
         fake = FakeClient(script, helper)
@@ -97,7 +131,22 @@ def run_scenario(monkeypatch):
         results = []
         for text in user_messages:
             messages.append({"role": "user", "content": text})
-            results.append(agent.run_agent(messages, state))
+            results.append(run_turn(messages, state))
         return results, state, fake
 
+    _run.implementation = request.param
     return _run
+
+
+def make_chunk(doc_id: str, section: str, text: str, position: int = 0) -> Chunk:
+    """A corpus chunk with realistic provenance, for retrieval tests that build their own corpus."""
+    return Chunk(
+        chunk_id=chunk_id_for(doc_id, section, text),
+        doc_id=doc_id,
+        title=doc_id.replace("-", " ").title(),
+        section=section,
+        url=f"https://www.fernhillwealth.example/{doc_id}/",
+        text=text,
+        position=position,
+        metadata={"version": "2026-10", "last_reviewed": "2026-10-20", "owner": "Test"},
+    )

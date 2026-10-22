@@ -43,9 +43,11 @@ def test_the_result_records_which_models_answered(run_scenario):
 
 # --- citation violation forces a rewrite --------------------------------
 
+# The evidence gives https://www.fernhillwealth.example/contact-us/; the model
+# "helpfully" shortens it to the site root, which was never in the evidence.
 TRUNCATED_URL_SCRIPT = [
     tool_reply("search_knowledge_base", {"query": "offices"}),
-    text_reply("We have offices. See fernhillwealth.example/offices for the list."),
+    text_reply("We have offices. See www.fernhillwealth.example for the list."),
     text_reply("We have offices across England and Scotland."),
 ]
 
@@ -56,7 +58,7 @@ def test_truncated_url_triggers_an_automatic_rewrite(run_scenario):
         ["Do you have a Manchester office?"],
         helper={"rerank": '{"relevant": [0]}'},
     )
-    assert "fernhillwealth.example/offices for the list" not in results[0].answer
+    assert "www.fernhillwealth.example for the list" not in results[0].answer
 
 
 def test_rewrite_is_recorded_in_notes_and_trace(run_scenario):

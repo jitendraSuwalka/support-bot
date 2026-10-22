@@ -216,7 +216,9 @@ EXAMPLES = [
     "What happens if I'm dissatisfied?",
 ]
 
-with gr.Blocks(title="Grounded Support Agent") as demo:
+# analytics_enabled=False: Gradio reports usage to api.gradio.app by default.
+# A support tool for a regulated firm sends nothing anywhere it does not have to.
+with gr.Blocks(title="Grounded Support Agent", analytics_enabled=False) as demo:
     conversation = gr.State([])
     policy_state = gr.State({"unclear_turns": 0})
 
@@ -287,4 +289,9 @@ with gr.Blocks(title="Grounded Support Agent") as demo:
 
 
 if __name__ == "__main__":
+    # Open the document index before serving, so the first question is not
+    # the one that pays for loading (and, on a new machine, downloading) the
+    # embedding model. The trace line it logs is printed, as there is no run.
+    print("Preparing the document index (first run: downloads the embedding model, about 70 MB)")
+    agent.get_retriever()
     demo.queue(default_concurrency_limit=4).launch(theme=THEME, css=CSS)

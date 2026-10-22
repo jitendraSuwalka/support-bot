@@ -12,6 +12,10 @@ __pycache__/
 build/
 dist/
 
+# Local retrieval index and the downloaded embedding model (rebuilt by `python -m rag.index`)
+.index/
+.models/
+
 # Tooling caches and reports
 .pytest_cache/
 .ruff_cache/
