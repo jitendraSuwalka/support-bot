@@ -1,0 +1,251 @@
+{
+  "generated": "2026-10-22T18:05:36Z",
+  "embedder": "BAAI/bge-small-en-v1.5-384",
+  "cases": 169,
+  "cases_with_gold": 135,
+  "chunks": 129,
+  "dense_floor": 0.6,
+  "relevance_floor": 0.15,
+  "modes": {
+    "hybrid": {
+      "n": 135,
+      "recall@1": 0.637,
+      "recall@3": 0.881,
+      "recall@6": 0.956,
+      "mrr": 0.764,
+      "pool": 10,
+      "by_kind": {
+        "action": {
+          "n": 1,
+          "recall@1": 0.0,
+          "recall@3": 0.0,
+          "recall@6": 1.0,
+          "mrr": 0.25
+        },
+        "advice": {
+          "n": 1,
+          "recall@1": 1.0,
+          "recall@3": 1.0,
+          "recall@6": 1.0,
+          "mrr": 1.0
+        },
+        "denial": {
+          "n": 8,
+          "recall@1": 0.625,
+          "recall@3": 0.75,
+          "recall@6": 0.875,
+          "mrr": 0.713
+        },
+        "exact-string": {
+          "n": 6,
+          "recall@1": 0.667,
+          "recall@3": 0.833,
+          "recall@6": 1.0,
+          "mrr": 0.75
+        },
+        "factual": {
+          "n": 111,
+          "recall@1": 0.622,
+          "recall@3": 0.901,
+          "recall@6": 0.964,
+          "mrr": 0.763
+        },
+        "handoff": {
+          "n": 4,
+          "recall@1": 0.75,
+          "recall@3": 0.75,
+          "recall@6": 0.75,
+          "mrr": 0.75
+        },
+        "multi-part": {
+          "n": 4,
+          "recall@1": 1.0,
+          "recall@3": 1.0,
+          "recall@6": 1.0,
+          "mrr": 1.0
+        }
+      },
+      "misses": [
+        "client-01",
+        "client-06",
+        "denial-cardiff",
+        "life-06"
+      ],
+      "dense_calibration": {
+        "gold_chunk_cosine": {
+          "n": 131,
+          "min": 0.504,
+          "p10": 0.618,
+          "median": 0.735,
+          "p90": 0.834,
+          "max": 0.893
+        },
+        "best_cosine_without_gold": {
+          "n": 34,
+          "min": 0.447,
+          "p10": 0.525,
+          "median": 0.618,
+          "p90": 0.762,
+          "max": 0.811
+        }
+      }
+    },
+    "lexical": {
+      "n": 135,
+      "recall@1": 0.6,
+      "recall@3": 0.785,
+      "recall@6": 0.896,
+      "mrr": 0.71,
+      "pool": 10,
+      "by_kind": {
+        "action": {
+          "n": 1,
+          "recall@1": 0.0,
+          "recall@3": 0.0,
+          "recall@6": 1.0,
+          "mrr": 0.167
+        },
+        "advice": {
+          "n": 1,
+          "recall@1": 0.0,
+          "recall@3": 1.0,
+          "recall@6": 1.0,
+          "mrr": 0.333
+        },
+        "denial": {
+          "n": 8,
+          "recall@1": 0.5,
+          "recall@3": 0.75,
+          "recall@6": 0.75,
+          "mrr": 0.625
+        },
+        "exact-string": {
+          "n": 6,
+          "recall@1": 1.0,
+          "recall@3": 1.0,
+          "recall@6": 1.0,
+          "mrr": 1.0
+        },
+        "factual": {
+          "n": 111,
+          "recall@1": 0.595,
+          "recall@3": 0.793,
+          "recall@6": 0.91,
+          "mrr": 0.712
+        },
+        "handoff": {
+          "n": 4,
+          "recall@1": 0.25,
+          "recall@3": 0.25,
+          "recall@6": 0.5,
+          "mrr": 0.323
+        },
+        "multi-part": {
+          "n": 4,
+          "recall@1": 1.0,
+          "recall@3": 1.0,
+          "recall@6": 1.0,
+          "mrr": 1.0
+        }
+      },
+      "misses": [
+        "about-06",
+        "access-04",
+        "client-01",
+        "client-06",
+        "denial-cardiff",
+        "fees-13",
+        "invest-03",
+        "invest-06",
+        "life-02",
+        "life-06",
+        "security-06"
+      ]
+    },
+    "dense": {
+      "n": 135,
+      "recall@1": 0.726,
+      "recall@3": 0.867,
+      "recall@6": 0.933,
+      "mrr": 0.806,
+      "pool": 10,
+      "by_kind": {
+        "action": {
+          "n": 1,
+          "recall@1": 0.0,
+          "recall@3": 0.0,
+          "recall@6": 0.0,
+          "mrr": 0.125
+        },
+        "advice": {
+          "n": 1,
+          "recall@1": 1.0,
+          "recall@3": 1.0,
+          "recall@6": 1.0,
+          "mrr": 1.0
+        },
+        "denial": {
+          "n": 8,
+          "recall@1": 0.625,
+          "recall@3": 0.625,
+          "recall@6": 0.75,
+          "mrr": 0.666
+        },
+        "exact-string": {
+          "n": 6,
+          "recall@1": 0.667,
+          "recall@3": 0.667,
+          "recall@6": 0.833,
+          "mrr": 0.694
+        },
+        "factual": {
+          "n": 111,
+          "recall@1": 0.739,
+          "recall@3": 0.892,
+          "recall@6": 0.955,
+          "mrr": 0.822
+        },
+        "handoff": {
+          "n": 4,
+          "recall@1": 0.75,
+          "recall@3": 1.0,
+          "recall@6": 1.0,
+          "mrr": 0.875
+        },
+        "multi-part": {
+          "n": 4,
+          "recall@1": 0.75,
+          "recall@3": 1.0,
+          "recall@6": 1.0,
+          "mrr": 0.875
+        }
+      },
+      "misses": [
+        "denial-cardiff",
+        "exact-06",
+        "portal-05",
+        "portal-06",
+        "scope-06"
+      ],
+      "dense_calibration": {
+        "gold_chunk_cosine": {
+          "n": 130,
+          "min": 0.54,
+          "p10": 0.628,
+          "median": 0.736,
+          "p90": 0.835,
+          "max": 0.893
+        },
+        "best_cosine_without_gold": {
+          "n": 34,
+          "min": 0.447,
+          "p10": 0.525,
+          "median": 0.618,
+          "p90": 0.762,
+          "max": 0.811
+        }
+      }
+    }
+  },
+  "seconds": 3.9
+}
