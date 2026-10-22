@@ -48,14 +48,17 @@ class Settings:
     # Retrieval. Search is hybrid: BM25 and the vector index, fused by
     # reciprocal rank; "lexical" or "dense" runs one method alone (used to
     # compare them). A candidate must clear a floor on at least one side.
-    # The lexical floor is a share of the query's BM25 ceiling and is
-    # deliberately loose; the dense floor is a cosine similarity, set from
-    # measurement (off-topic questions peak at about 0.53, on-topic start at
-    # 0.68). Reranking does the real filtering: retrieve `candidates` widely,
-    # keep `top_k` after reranking.
+    # Both floors are noise gates, not relevance judgements: the lexical
+    # floor is a loose share of the query's BM25 ceiling, and the dense floor
+    # sits just below the lowest cosine any gold chunk scored on the labelled
+    # set (0.504; reports/retrieval.json), so the dense side never drops a
+    # chunk that answers a question. Cosine similarity measures topic, not
+    # answerability, so no floor can separate advice or out-of-scope
+    # questions from answerable ones. Reranking does the real filtering:
+    # retrieve `candidates` widely, keep `top_k` after reranking.
     retrieval_mode: str = "hybrid"
     relevance_floor: float = 0.15
-    dense_floor: float = 0.60
+    dense_floor: float = 0.50
     candidates: int = 6
     top_k: int = 3
 

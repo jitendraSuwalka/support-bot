@@ -92,7 +92,7 @@ user question
      │    ├─ BM25 over chunks, normalised to the query ceiling   (exact strings: numbers, references)
      │    ├─ dense search: local ONNX embeddings, Qdrant  (meaning: "pay into" finds "allowance")
      │    ├─ reciprocal rank fusion                        (agreement outranks either favourite)
-     │    ├─ relevance floors: lexical 0.15 or cosine 0.60 (the cosine floor is measured, not guessed)
+     │    ├─ relevance floors: lexical 0.15 or cosine 0.50 (noise gates, set from the labelled set)
      │    └─ LLM rerank of the top 6                       (reading beats counting)
      │
      ├─ answer, constrained by STATUS_VERBATIM fields
@@ -132,11 +132,17 @@ server — behind the same client API a Qdrant server speaks, so moving to one i
 a setting, not a rewrite. `python -m rag.index --query "..."` shows, for each
 result, where each method ranked it and with what score.
 
-The floors are deliberately loose; the LLM rerank is the precision stage. The
-dense floor of 0.60 is not a guess: against this corpus, deliberately
-off-topic questions (the weather, a pizza restaurant) peaked at a cosine of
-0.53, while on-topic chunks scored 0.68 and above. An opt-in test
-(`pytest -m model`) re-measures that margin with the real model.
+The floors are noise gates, not relevance judgements; the LLM rerank is the
+precision stage. The dense floor was first set at 0.60 from two off-topic
+probes (the weather, a pizza restaurant, which peaked at 0.53). Measuring it
+on the 169-case labelled set (`reports/retrieval.json`) showed something
+different: questions with *no* answer in the documents — advice, out of scope —
+score up to 0.81, because cosine similarity measures topic, not answerability,
+and "should I move my pension into equities?" is very like the pensions guide.
+Gold chunks score from 0.504 upwards. So the floor sits at 0.50, just below the
+lowest gold chunk, and makes no claim to filter unanswerable questions; the
+reranker and the escalation policy do that. An opt-in test (`pytest -m model`)
+checks that no gold chunk falls below the floor with the real model.
 
 ### The agent as a graph
 
@@ -421,10 +427,10 @@ one whose weaknesses are unknown.
   chunks is a demonstration, not coverage. Retrieval quality is downstream of
   content quality, always.
 - **The floors are loose by design; the reranker is the filter.** A single
-  shared word can lift an off-topic question over the lexical floor, and the
-  dense floor rests on two off-topic probes. Off-topic questions therefore
-  reach the reranker, which rejects them. The evaluation harness (next) is
-  what will tune both floors on a labelled set.
+  shared word lifts an off-topic question over the lexical floor, and the
+  labelled set showed that no cosine floor can separate advice or out-of-scope
+  questions from answerable ones. Such questions therefore reach the reranker,
+  which rejects them, and the policy escalates.
 - **Negation is handled by the reranker, not the index.** Neither BM25 nor a
   vector index can see that *"not branch opening hours"* is a denial.
   Reranking catches it in testing; if the rerank call fails, the fallback is
