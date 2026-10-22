@@ -231,6 +231,24 @@ def text_of(response) -> str:
     return "".join(block.text for block in response.content if block.type == "text")
 
 
+def record_usage(response, role: str) -> None:
+    """Log the tokens a model call used, so a turn's cost can be added up.
+
+    The scripted fake model used in tests has no usage; nothing is logged then.
+    """
+    usage = getattr(response, "usage", None)
+    if usage is None:
+        return
+    log(
+        "usage",
+        f"{role}: {usage.input_tokens} in, {usage.output_tokens} out",
+        role=role,
+        model=getattr(response, "model", None),
+        input_tokens=usage.input_tokens,
+        output_tokens=usage.output_tokens,
+    )
+
+
 def call_json(prompt, max_tokens=None, attempts=2):
     """Call the helper model and parse JSON, with one retry. None on failure."""
     for attempt in range(attempts):
@@ -241,6 +259,7 @@ def call_json(prompt, max_tokens=None, attempts=2):
                 output_config={"effort": SETTINGS.helper_effort},
                 messages=[{"role": "user", "content": prompt}],
             )
+            record_usage(response, "helper")
             payload = extract_json(text_of(response))
             if payload is None:
                 raise ValueError("no JSON in helper response")
@@ -787,7 +806,9 @@ def _main_call(messages, use_tools):
     }
     if use_tools:
         request["tools"] = tools
-    return client.messages.create(**request)
+    response = client.messages.create(**request)
+    record_usage(response, "main")
+    return response
 
 
 def rewrite(messages, problems):

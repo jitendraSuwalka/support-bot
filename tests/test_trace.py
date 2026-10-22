@@ -45,3 +45,20 @@ def test_each_turn_gets_its_own_trace(run_scenario):
     # The second turn only expired the first turn's volatile lookup; nothing
     # from turn one leaks into its trace.
     assert results[1].trace.kinds() == ["expired"]
+
+
+def test_token_usage_is_recorded_when_the_response_carries_it():
+    from types import SimpleNamespace
+
+    trace = agent.Trace()
+    token = agent._CURRENT_TRACE.set(trace)
+    try:
+        agent.record_usage(SimpleNamespace(content=[]), "main")  # the fake model: no usage
+        agent.record_usage(
+            SimpleNamespace(usage=SimpleNamespace(input_tokens=120, output_tokens=30), model="m"),
+            "helper",
+        )
+    finally:
+        agent._CURRENT_TRACE.reset(token)
+    [event] = trace.find("usage")
+    assert event.data == {"role": "helper", "model": "m", "input_tokens": 120, "output_tokens": 30}
