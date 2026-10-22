@@ -848,11 +848,25 @@ EVIDENCE_GUARD_NO_MATCH = (
 
 
 def run_agent(messages, state) -> AgentResult:
-    """Run one customer turn.
+    """Run one customer turn with whichever implementation the settings select.
 
-    `messages` is the conversation so far (the newest user message last);
-    `state` persists across turns because the escalation policy needs memory.
+    `messages` is the conversation so far (the newest user message last) and
+    is extended in place; `state` persists across turns because the
+    escalation policy needs memory.
+
+    Two implementations share every model call, tool and guard below and
+    differ only in how the steps are wired: ``run_loop_agent`` is the
+    hand-written loop; ``agent_graph.run_graph_agent`` is the same turn as a
+    LangGraph state graph. The scenario tests run both.
     """
+    if SETTINGS.agent_impl == "graph":
+        from agent_graph import run_graph_agent  # imports this module; bound late
+
+        return run_graph_agent(messages, state)
+    return run_loop_agent(messages, state)
+
+
+def run_loop_agent(messages, state) -> AgentResult:
     trace = Trace()
     token = _CURRENT_TRACE.set(trace)
     try:
@@ -861,16 +875,22 @@ def run_agent(messages, state) -> AgentResult:
         _CURRENT_TRACE.reset(token)
 
 
-def _run_turn(messages, state, trace) -> AgentResult:
+# --- the steps, shared by the loop and the graph ------------------------------
+
+
+def models_in_use() -> dict[str, str]:
+    return {"main": MAIN_MODEL, "helper": HELPER_MODEL}
+
+
+def begin_turn(messages) -> bool:
+    """Expire volatile results from earlier turns; say whether this one is a greeting.
+
+    A greeting needs no evidence. Deterministic list only: anything not on
+    it is treated as a real question and must be answered from a tool.
+    """
     wiped = expire_stale_results(messages)
     if wiped:
         log("expired", f"expired {wiped} old result(s)", count=wiped)
-
-    evidence_parts: list[str] = []
-    tools_used: list[str] = []
-    model_escalated = False
-    guard_retries = 0
-
     last_message = next(
         (
             m["content"]
@@ -879,55 +899,104 @@ def _run_turn(messages, state, trace) -> AgentResult:
         ),
         "",
     )
-    # A greeting needs no evidence. Deterministic list only: anything not on
-    # it is treated as a real question and must be answered from a tool.
-    is_greeting = is_pleasantry(last_message)
+    return is_pleasantry(last_message)
 
-    models = {"main": MAIN_MODEL, "helper": HELPER_MODEL}
 
-    for _step in range(MAX_STEPS):
-        response = _main_call(messages, use_tools=True)
-        messages.append({"role": "assistant", "content": response.content})
+def call_model(messages):
+    """One main-model call with tools; the reply is appended to the conversation."""
+    response = _main_call(messages, use_tools=True)
+    messages.append({"role": "assistant", "content": response.content})
+    return response
 
-        if response.stop_reason == "tool_use":
-            tool_results = []
-            for block in response.content:
-                if block.type != "tool_use":
-                    continue
-                log("tool", f"{block.name}({block.input})", name=block.name, input=block.input)
-                tools_used.append(block.name)
-                if block.name == "escalate_to_adviser":
-                    model_escalated = True
-                try:
-                    result = TOOL_FUNCTIONS[block.name](**block.input)
-                except Exception as error:
-                    result = f"Tool failed: {error}"
-                    log("tool_failed", f"{block.name} failed: {error}", name=block.name)
-                evidence_parts.append(f"{block.name} -> {result}")
-                tool_results.append(
-                    {"type": "tool_result", "tool_use_id": block.id, "content": result}
-                )
-            messages.append({"role": "user", "content": tool_results})
+
+def run_tool_calls(response, messages, evidence_parts, tools_used) -> bool:
+    """Execute every tool the model asked for; append the results; return
+    whether one of them was the escalation tool."""
+    escalated = False
+    tool_results = []
+    for block in response.content:
+        if block.type != "tool_use":
             continue
+        log("tool", f"{block.name}({block.input})", name=block.name, input=block.input)
+        tools_used.append(block.name)
+        if block.name == "escalate_to_adviser":
+            escalated = True
+        try:
+            result = TOOL_FUNCTIONS[block.name](**block.input)
+        except Exception as error:
+            result = f"Tool failed: {error}"
+            log("tool_failed", f"{block.name} failed: {error}", name=block.name)
+        evidence_parts.append(f"{block.name} -> {result}")
+        tool_results.append({"type": "tool_result", "tool_use_id": block.id, "content": result})
+    messages.append({"role": "user", "content": tool_results})
+    return escalated
 
-        answer = text_of(response)
 
-        # EVIDENCE GUARD: a real question answered without any tool call is an
-        # answer from memory. Tell the model once; if it still will not look
-        # the question up, the turn is unanswerable and the policy escalates.
-        if REQUIRE_EVIDENCE and not is_greeting and not evidence_parts:
-            if guard_retries == 0:
-                guard_retries = 1
-                log("evidence_guard", "answered without a tool — asking for a lookup")
-                messages.append({"role": "user", "content": EVIDENCE_GUARD_RETRY})
-                continue
-            log("evidence_guard_failed", "still no tool call — treating as unanswerable")
-            evidence_parts.append(EVIDENCE_GUARD_NO_MATCH)
+def evidence_guard(messages, evidence_parts, is_greeting, guard_retries) -> str:
+    """EVIDENCE GUARD: a real question answered without any tool call is an
+    answer from memory. Returns "pass", "retry" (the model has been told once
+    to look the question up) or "failed" (it still would not; the turn is
+    marked unanswerable so the policy escalates it)."""
+    if not REQUIRE_EVIDENCE or is_greeting or evidence_parts:
+        return "pass"
+    if guard_retries == 0:
+        log("evidence_guard", "answered without a tool — asking for a lookup")
+        messages.append({"role": "user", "content": EVIDENCE_GUARD_RETRY})
+        return "retry"
+    log("evidence_guard_failed", "still no tool call — treating as unanswerable")
+    evidence_parts.append(EVIDENCE_GUARD_NO_MATCH)
+    return "failed"
 
-        return _finish(
-            answer, messages, evidence_parts, tools_used, model_escalated, state, trace, models
-        )
 
+def citation_guard(answer, messages, evidence) -> tuple[str, list[str]]:
+    """Deterministic check first: it is certain, and it is cheap."""
+    notes: list[str] = []
+    if not CHECK_CITATIONS or not evidence:
+        return answer, notes
+    violations = check_citations(answer, evidence)
+    if not violations:
+        log("citations_clean", "citations: clean", after_rewrite=False)
+        return answer, notes
+    log("citation_violation", "CITATION VIOLATIONS (deterministic)", violations=violations)
+    answer = rewrite(messages, violations)
+    notes.append("rewritten after citation check")
+    remaining = check_citations(answer, evidence)
+    if remaining:
+        log("citations_remaining", "STILL UNSUPPORTED after rewrite", violations=remaining)
+        notes.append(f"WARNING: unverified detail remains ({len(remaining)})")
+    else:
+        log("citations_clean", "citations: clean after rewrite", after_rewrite=True)
+    return answer, notes
+
+
+def groundedness_check(answer, messages, evidence) -> tuple[str, list[str]]:
+    """Then the judgement-based check."""
+    notes: list[str] = []
+    if not VERIFY_ANSWERS or not evidence:
+        return answer, notes
+    verdict = verify_answer(answer, evidence)
+    if verdict["status"] == "unsupported":
+        log("unsupported", "UNSUPPORTED CLAIMS", claims=verdict["unsupported"])
+        answer = rewrite(messages, verdict["unsupported"])
+        notes.append("rewritten after fact-check")
+    elif verdict["status"] == "grounded":
+        log("verified", "verified: grounded")
+    else:
+        notes.append("WARNING: fact-check unavailable")
+    return answer, notes
+
+
+def escalation_policy(answer, messages, evidence_parts, model_escalated, state):
+    """Policy runs last, on the final wording, and cannot be overridden."""
+    notes: list[str] = []
+    answer, forced = enforce_escalation(answer, evidence_parts, model_escalated, state)
+    if forced:
+        answer = rewrite_after_escalation(messages)
+        notes.append("escalated by policy")
+    return answer, notes, forced
+
+
+def step_limit_result(evidence_parts, tools_used, trace) -> AgentResult:
     log("max_steps", f"gave up after {MAX_STEPS} steps")
     return AgentResult(
         answer=f"Sorry, I could not complete that. Please call {SWITCHBOARD}.",
@@ -936,49 +1005,48 @@ def _run_turn(messages, state, trace) -> AgentResult:
         trace=trace,
         escalated=False,
         tools_used=tools_used,
-        models=models,
+        models=models_in_use(),
     )
 
 
-def _finish(answer, messages, evidence_parts, tools_used, model_escalated, state, trace, models):
+# --- the loop -------------------------------------------------------------------
+
+
+def _run_turn(messages, state, trace) -> AgentResult:
+    is_greeting = begin_turn(messages)
+    evidence_parts: list[str] = []
+    tools_used: list[str] = []
+    model_escalated = False
+    guard_retries = 0
+
+    for _step in range(MAX_STEPS):
+        response = call_model(messages)
+
+        if response.stop_reason == "tool_use":
+            if run_tool_calls(response, messages, evidence_parts, tools_used):
+                model_escalated = True
+            continue
+
+        answer = text_of(response)
+        verdict = evidence_guard(messages, evidence_parts, is_greeting, guard_retries)
+        if verdict == "retry":
+            guard_retries = 1
+            continue
+
+        return _finish(answer, messages, evidence_parts, tools_used, model_escalated, state, trace)
+
+    return step_limit_result(evidence_parts, tools_used, trace)
+
+
+def _finish(answer, messages, evidence_parts, tools_used, model_escalated, state, trace):
     evidence = "\n\n".join(evidence_parts)
-    notes = []
-
-    # Deterministic check first: it is certain, and it is cheap.
-    if CHECK_CITATIONS and evidence:
-        violations = check_citations(answer, evidence)
-        if violations:
-            log("citation_violation", "CITATION VIOLATIONS (deterministic)", violations=violations)
-            answer = rewrite(messages, violations)
-            notes.append("rewritten after citation check")
-
-            remaining = check_citations(answer, evidence)
-            if remaining:
-                log("citations_remaining", "STILL UNSUPPORTED after rewrite", violations=remaining)
-                notes.append(f"WARNING: unverified detail remains ({len(remaining)})")
-            else:
-                log("citations_clean", "citations: clean after rewrite", after_rewrite=True)
-        else:
-            log("citations_clean", "citations: clean", after_rewrite=False)
-
-    # Then the judgement-based check.
-    if VERIFY_ANSWERS and evidence:
-        verdict = verify_answer(answer, evidence)
-        if verdict["status"] == "unsupported":
-            log("unsupported", "UNSUPPORTED CLAIMS", claims=verdict["unsupported"])
-            answer = rewrite(messages, verdict["unsupported"])
-            notes.append("rewritten after fact-check")
-        elif verdict["status"] == "grounded":
-            log("verified", "verified: grounded")
-        else:
-            notes.append("WARNING: fact-check unavailable")
-
-    # Policy runs last, on the final wording, and cannot be overridden.
-    answer, forced = enforce_escalation(answer, evidence_parts, model_escalated, state)
-    if forced:
-        answer = rewrite_after_escalation(messages)
-        notes.append("escalated by policy")
-
+    answer, notes = citation_guard(answer, messages, evidence)
+    answer, more = groundedness_check(answer, messages, evidence)
+    notes += more
+    answer, more, forced = escalation_policy(
+        answer, messages, evidence_parts, model_escalated, state
+    )
+    notes += more
     return AgentResult(
         answer=answer,
         notes=notes,
@@ -986,7 +1054,7 @@ def _finish(answer, messages, evidence_parts, tools_used, model_escalated, state
         trace=trace,
         escalated=model_escalated or forced,
         tools_used=tools_used,
-        models=models,
+        models=models_in_use(),
     )
 
 

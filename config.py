@@ -19,6 +19,7 @@ ENV_PREFIX = "SUPPORT_BOT_"
 EFFORT_LEVELS = ("low", "medium", "high", "xhigh", "max")
 EMBEDDERS = ("local", "hash")
 RETRIEVAL_MODES = ("hybrid", "lexical", "dense")
+AGENT_IMPLS = ("loop", "graph")
 
 
 @dataclass(frozen=True)
@@ -38,7 +39,10 @@ class Settings:
     main_max_tokens: int = 4096
     helper_max_tokens: int = 2048
 
-    # Agent loop.
+    # Agent loop. "loop" is the hand-written loop in agent.py; "graph" is the
+    # same turn as a LangGraph state graph (agent_graph.py). Both share every
+    # model call, tool and guard; the scenario tests run both.
+    agent_impl: str = "loop"
     max_steps: int = 8
 
     # Retrieval. Search is hybrid: BM25 and the vector index, fused by
@@ -103,6 +107,8 @@ class Settings:
             raise ValueError(f"retrieval_mode must be one of {RETRIEVAL_MODES}")
         if self.top_k > self.candidates:
             raise ValueError("top_k cannot exceed candidates")
+        if self.agent_impl not in AGENT_IMPLS:
+            raise ValueError(f"agent_impl must be one of {AGENT_IMPLS}")
         if self.embedder not in EMBEDDERS:
             raise ValueError(f"embedder must be one of {EMBEDDERS}")
         for name in ("embedding_model", "model_cache", "index_path"):
