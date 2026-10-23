@@ -330,6 +330,32 @@ tests or `.env` inside, the model and index present, Docker's health check
 passing, and no traceback in the logs. Dependabot proposes base-image
 updates, which CI then builds and smoke-tests before anyone merges them.
 
+### Releases
+
+A release is a tag. Pushing `v2.0.0` runs `.github/workflows/release.yml`,
+which publishes nothing until every step before it has passed:
+
+1. **The tag is held to the code.** `scripts/release_notes.py` refuses unless
+   the tag is `v` plus the version in `pyproject.toml`, the service reports
+   the same version at `/health`, and `CHANGELOG.md` has a dated entry for it
+   with nothing left under *Unreleased*. A test runs the same check on every
+   commit, so a mismatch is caught long before anyone tags.
+2. **The tagged commit is linted and tested** again, from the lockfile.
+3. **The image is built from it and smoke-tested**, with one extra check: that
+   `/health` reports the version being released.
+4. **The image is pushed** to the GitHub Container Registry as
+   `ghcr.io/jitendrasuwalka/support-bot:<version>` and `:latest`, labelled with
+   the commit it was built from.
+5. **The GitHub Release is created**, its notes taken from the changelog entry
+   and followed by the headline numbers rendered from the committed reports, so
+   the release page carries measured numbers, never typed ones.
+
+Only GitHub's own short-lived token is used: no secret is stored in the
+repository. **Run workflow** on the workflow's page in the Actions tab is a
+rehearsal: every step above for the version in `pyproject.toml`, except
+pushing the image and creating the release, with the notes it would publish
+shown on the run's page.
+
 ### One log line per turn
 
 Every turn the web interface serves is written as one JSON line to stderr
@@ -889,6 +915,7 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `scripts/container_smoke_test.sh` | Starts the image and checks the service in it, with no model call and no secret; run by CI |
 | `scripts/release_notes.py` | Holds a release tag to the code and the changelog, and writes the release notes with the measured headline |
 | `CHANGELOG.md` | Every release, newest first; the release notes are taken from it |
+| `.github/workflows/` | `ci.yml`: lint, tests and the container on every push; `release.yml`: a version tag published as an image and a release |
 | `requirements.txt` / `requirements.lock` | Direct dependencies / every resolved dependency |
 
 The intermediate build stages that show how each guard arose are preserved in the

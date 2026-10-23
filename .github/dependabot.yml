@@ -1,4 +1,4 @@
-# Keeps the GitHub Actions used by ci.yml and the Dockerfile's base image
+# Keeps the GitHub Actions used by the workflows and the Dockerfile's base image
 # current. Python dependencies are updated deliberately instead: edit the
 # pin, regenerate requirements.lock, and let CI prove the change (see "Updating dependencies" in the README).
 version: 2

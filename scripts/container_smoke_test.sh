@@ -2,6 +2,7 @@
 # Start the image and prove the service in it works, without calling a model.
 #
 #   scripts/container_smoke_test.sh support-bot:ci
+#   EXPECT_VERSION=2.0.0 scripts/container_smoke_test.sh IMAGE   # as the release does
 #
 # Runs in CI after `docker build`, and on any machine with Docker and curl.
 # The API key passed in is a placeholder: every check below is answered by the
@@ -49,6 +50,10 @@ done
 
 check "/health answers 200" test "$(status_of "$BASE/health")" = "200"
 check "/health reports the version" bash -c "curl -s '$BASE/health' | grep -q '\"version\"'"
+if [ -n "${EXPECT_VERSION:-}" ]; then
+    check "/health reports version $EXPECT_VERSION, the one being released" \
+        bash -c "curl -s '$BASE/health' | grep -q '\"version\":\"$EXPECT_VERSION\"'"
+fi
 check "/ready answers 200 (key set, index baked into the image)" \
     test "$(status_of "$BASE/ready")" = "200"
 check "/ready reports the index loaded" \
