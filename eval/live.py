@@ -92,6 +92,9 @@ class Observation:
     output_tokens: int
     error: str | None = None
     notes: list[str] = field(default_factory=list)
+    # The URLs and numbers the citation guard still could not find in the
+    # evidence when the turn ended, so a warning can be read without rerunning it.
+    unverified: list[str] = field(default_factory=list)
 
 
 # =========================================================
@@ -158,6 +161,11 @@ def observe(case: Case, result: agent.AgentResult, seconds: float) -> Observatio
         input_tokens=tokens_in,
         output_tokens=tokens_out,
         notes=list(result.notes),
+        unverified=[
+            violation
+            for event in result.trace.find("citations_remaining")
+            for violation in event.data.get("violations", [])
+        ],
     )
 
 

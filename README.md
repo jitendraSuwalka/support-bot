@@ -18,7 +18,7 @@ a hope.
 ```
 python app.py          # web interface
 python agent.py        # same agent, in the terminal
-pytest                 # 318 tests, under fifteen seconds, no API calls, no network
+pytest                 # 332 tests, under fifteen seconds, no API calls, no network
 ```
 
 > **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
@@ -115,7 +115,7 @@ user question
      │
      ├─ CHECK 0: evidence guard — deterministic           (no answering from memory)
      ├─ CHECK 1: citation guard — deterministic           (URLs and numbers)
-     ├─ CHECK 2: groundedness — independent LLM           (semantic drift)
+     ├─ CHECK 2: groundedness — independent LLM           (semantic drift; any rewrite meets CHECK 1 again)
      ├─ CHECK 3: escalation policy — deterministic        (clarify once, then escalate)
      │
      └─ answer + audit trail of raw evidence
@@ -501,7 +501,7 @@ Behaviour accuracy: the agent did what the label expects (answer, escalate, clar
 
 ## Testing strategy
 
-`tests/` — **318 tests, under fifteen seconds, no API calls, no network.** Run with `pytest`.
+`tests/` — **332 tests, under fifteen seconds, no API calls, no network.** Run with `pytest`.
 Eight further tests call the real API and run only on request: `pytest -m live`;
 two download and run the real embedding model: `pytest -m model`.
 
@@ -693,7 +693,7 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `rag/` | `corpus.py` chunker, `embeddings.py`, `store.py` (Qdrant), `lexical.py` (BM25), `retrieval.py` (fusion), `index.py` (CLI) |
 | `eval/` | `questions.yaml` (169 labelled cases), `dataset.py` validator, `retrieval.py` metrics and sweep, `live.py` end-to-end scorer, `report.py` README tables |
 | `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json` |
-| `tests/` | 318 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
+| `tests/` | 332 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `requirements.txt` / `requirements.lock` | Direct dependencies / every resolved dependency |
 

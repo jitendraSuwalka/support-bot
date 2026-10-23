@@ -1254,6 +1254,31 @@ def citation_guard(answer, messages, evidence) -> tuple[str, list[str]]:
     return answer, notes
 
 
+def recheck_citations(answer, evidence) -> list[str]:
+    """The deterministic check again, on text a fact-check rewrite produced.
+
+    The citation guard runs before the fact-checker, so a rewrite the
+    fact-checker forces was never itself checked for URLs and numbers. The
+    third evaluation run (reports/live.json, isa-05) ended with a warning
+    that two details were unverified, and the answer the customer saw had
+    been rewritten after that check, so nothing had looked at it. Every
+    rewrite now meets the same exact-match check as the first draft.
+    """
+    if not CHECK_CITATIONS:
+        return []
+    remaining = check_citations(answer, evidence)
+    if not remaining:
+        log("citations_clean", "citations: clean after fact-check rewrite", after_rewrite=True)
+        return []
+    log(
+        "citations_remaining",
+        "STILL UNSUPPORTED after fact-check rewrite",
+        violations=remaining,
+        after="factcheck",
+    )
+    return [f"WARNING: unverified detail after fact-check rewrite ({len(remaining)})"]
+
+
 def groundedness_check(answer, messages, evidence) -> tuple[str, list[str]]:
     """Then the judgement-based check."""
     notes: list[str] = []
@@ -1264,6 +1289,7 @@ def groundedness_check(answer, messages, evidence) -> tuple[str, list[str]]:
         log("unsupported", "UNSUPPORTED CLAIMS", claims=verdict["unsupported"])
         answer = rewrite(messages, verdict["unsupported"])
         notes.append("rewritten after fact-check")
+        notes += recheck_citations(answer, evidence)
     elif verdict["status"] == "grounded":
         log("verified", "verified: grounded")
     else:

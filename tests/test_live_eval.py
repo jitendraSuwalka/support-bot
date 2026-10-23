@@ -309,3 +309,23 @@ def test_rescore_applies_the_current_labels_to_the_recorded_rows(tmp_path):
     path.write_text(json.dumps(earlier), encoding="utf-8")
     assert live.main(["--rescore", str(path)]) == 0
     assert json.loads(path.read_text(encoding="utf-8"))["rows"][0]["expected"] == "answer"
+
+
+def test_the_unverified_details_are_recorded_with_the_row():
+    flagged = result(
+        "Call 0800 999 9999.",
+        tools=("search_knowledge_base",),
+        evidence=["search_knowledge_base -> [ISA] text"],
+        notes=["WARNING: unverified detail after fact-check rewrite (1)"],
+    )
+    flagged.trace.log(
+        "citations_remaining", "x", violations=["Number '0800 999 9999' does not appear"]
+    )
+    row = observe(case(), flagged, 1.0)
+    assert row.warning is True
+    assert row.unverified == ["Number '0800 999 9999' does not appear"]
+    assert observe(case(), result(), 1.0).unverified == []
+    # Reports written before the field existed still load and re-score.
+    old = asdict(row)
+    del old["unverified"]
+    assert Observation(**old).unverified == []

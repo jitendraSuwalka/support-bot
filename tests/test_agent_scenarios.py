@@ -450,3 +450,47 @@ def test_a_greeting_turn_offers_the_model_no_tools(run_scenario):
 def test_a_real_question_is_offered_the_tools(run_scenario):
     results, _, fake = run_scenario(STATUS_SCRIPT, ["Is FW-1001 done?"])
     assert [t["name"] for t in fake.calls[0]["tools"]] == list(agent.TOOL_FUNCTIONS)
+
+
+# --- a fact-check rewrite meets the citation guard too -----------------------------
+# Third run, isa-05: a warning that two details were unverified, on an answer
+# rewritten after the citation check had run. Nothing had checked the rewrite.
+
+FACTCHECK_HELPER = {
+    "rerank": '{"relevant": [0]}',
+    "verify": '{"grounded": false, "unsupported": ["added reassurance"]}',
+}
+
+
+def test_a_number_a_fact_check_rewrite_invents_is_caught(run_scenario):
+    results, _, _ = run_scenario(
+        script=[
+            tool_reply("search_knowledge_base", {"query": "ISA allowance"}),
+            text_reply("There is an annual ISA allowance, and we are always happy to help."),
+            text_reply("There is an annual ISA allowance. Call 0800 999 9999 to discuss it."),
+        ],
+        user_messages=["What is the ISA allowance?"],
+        helper=FACTCHECK_HELPER,
+    )
+    result = results[0]
+    assert "rewritten after fact-check" in result.notes
+    assert "WARNING: unverified detail after fact-check rewrite (1)" in result.notes
+    [remaining] = result.trace.find("citations_remaining")
+    assert remaining.data["after"] == "factcheck"
+    assert "0800 999 9999" in remaining.data["violations"][0]
+
+
+def test_a_clean_fact_check_rewrite_is_recorded_as_checked(run_scenario):
+    results, _, _ = run_scenario(
+        script=[
+            tool_reply("search_knowledge_base", {"query": "ISA allowance"}),
+            text_reply("There is an annual ISA allowance, and we are always happy to help."),
+            text_reply("There is an annual ISA allowance."),
+        ],
+        user_messages=["What is the ISA allowance?"],
+        helper=FACTCHECK_HELPER,
+    )
+    result = results[0]
+    assert not any(note.startswith("WARNING") for note in result.notes)
+    clean = result.trace.find("citations_clean")
+    assert [event.data["after_rewrite"] for event in clean] == [False, True]
