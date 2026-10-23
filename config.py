@@ -100,6 +100,16 @@ class Settings:
     turn_log_path: str = ""
     log_content: bool = False
 
+    # The HTTP API (api.py). Conversations are held in memory by the server,
+    # keyed by an id the server issues; one idle for session_ttl_minutes is
+    # dropped, the oldest goes first when max_sessions is reached, and one
+    # that reaches max_turns must be restarted. A message longer than
+    # max_message_chars is refused before any model is called.
+    max_message_chars: int = 2000
+    session_ttl_minutes: int = 30
+    max_sessions: int = 1000
+    max_turns: int = 50
+
     @classmethod
     def from_env(cls, env: dict[str, str] | None = None) -> Settings:
         """Build settings from SUPPORT_BOT_* variables, validating each one."""
@@ -125,6 +135,10 @@ class Settings:
             "candidates",
             "top_k",
             "rrf_k",
+            "max_message_chars",
+            "session_ttl_minutes",
+            "max_sessions",
+            "max_turns",
         ):
             if getattr(self, name) < 1:
                 raise ValueError(f"{name} must be at least 1")

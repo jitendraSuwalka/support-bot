@@ -17,8 +17,9 @@ a hope.
 
 ```
 python app.py          # web interface
+uvicorn api:app        # the same agent as an HTTP service; docs at /docs
 python agent.py        # same agent, in the terminal
-pytest                 # 360 tests, under fifteen seconds, no API calls, no network
+pytest                 # 385 tests, under fifteen seconds, no API calls, no network
 ```
 
 > **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
@@ -227,6 +228,54 @@ graph TD;
 The model is still called through the Anthropic SDK directly, because the
 guards need the raw response blocks and the request needs the effort setting;
 a chat-model wrapper would hide the first and lag the second.
+
+### The HTTP service
+
+`api.py` serves the same agent over HTTP with FastAPI. `uvicorn api:app` starts
+it; `/docs` is interactive OpenAPI documentation generated from the code.
+
+| Endpoint | Does |
+|---|---|
+| `POST /chat` | One customer turn. Omit `session_id` to start a conversation; send the one you were given to continue it |
+| `DELETE /sessions/{id}` | Ends a conversation and drops what the server held for it |
+| `GET /health` | The process is up (liveness) |
+| `GET /ready` | It can answer: the API key is set and the document index is loaded (readiness, 503 if not) |
+
+```json
+POST /chat  {"message": "How much can I pay into an ISA this tax year?"}
+
+200 {"session_id": "5d0c5ae6…", "request_id": "c855d840…", "turn": 1,
+     "answer": "You can pay up to £20,000 into ISAs in the 2026/27 tax year…",
+     "behaviour": "answer", "escalated": false,
+     "sources": [{"title": "ISAs: a guide for clients", "section": "The allowance",
+                  "url": "https://www.fernhillwealth.example/guides/isas/"}],
+     "warnings": [], "latency_ms": 8016, "cost": {"usd": 0.0146, …}}
+```
+
+A client gets the outcome as data — the behaviour, whether a person was
+brought in, the sections the answer rests on, any guard warning, the cost —
+so a front end can show a hand-off banner or the sources without parsing the
+answer. The choices that make it a service rather than a demo:
+
+- **The server issues conversation ids** (128 random bits) and refuses an
+  unknown or expired one with a 404, instead of starting a conversation under
+  an id the client picked: one customer cannot continue another's by
+  guessing.
+- **Limits are settings.** A message over `max_message_chars` is refused before
+  any model is called; a conversation idle for `session_ttl_minutes` is
+  dropped; the least recently used goes first beyond `max_sessions`; one of
+  `max_turns` must be restarted (409).
+- **One turn at a time per conversation.** A turn extends the conversation it
+  reads, so two requests for one conversation are answered in order; a test
+  proves the lock, and fails without it.
+- **A failure leaks nothing.** An exception inside the agent is a 502 with a
+  request id to quote and none of the exception's text; the message is taken
+  back off the conversation so the customer can retry; the log line has the
+  exception type.
+- **Every response carries `X-Request-ID`**, the client's own if it sent a
+  well-formed one, and the same id is in the turn's log line.
+- **No new dependencies.** FastAPI and uvicorn were already in the lockfile
+  through Gradio; pinning them added nothing.
 
 ### One log line per turn
 
@@ -532,7 +581,7 @@ Behaviour accuracy: the agent did what the label expects (answer, escalate, clar
 
 ## Testing strategy
 
-`tests/` — **360 tests, under fifteen seconds, no API calls, no network.** Run with `pytest`.
+`tests/` — **385 tests, under fifteen seconds, no API calls, no network.** Run with `pytest`.
 Eight further tests call the real API and run only on request: `pytest -m live`;
 two download and run the real embedding model: `pytest -m model`.
 
@@ -547,6 +596,7 @@ well-behaved model would never take.
 | Unit tests | Chunking, embeddings, vector-store sync, BM25, rank fusion, citation guard, JSON extraction, expiry, policy state machine, rerank failure modes | free |
 | Agent scenarios | Full turns against the fake model and an in-memory index of the real corpus, on **both** implementations: verbatim quoting, citation rewrites, forced escalation, greeting handling, crashed tools, a decline that runs nothing else, clarify once then escalate, a refused lookup | free |
 | Evaluation harness | The label validator against the corpus, retrieval metrics and the sweep with the hash embedder, the live scorer with an injectable runner, the README tables against the committed reports | free |
+| Service and logs | The HTTP API in-process (sessions, limits, refusals, a failing turn, one turn at a time), the turn log's fields and privacy, the cost model | free |
 | Live tests (`-m live`) | Eight real questions through the real API, including a fact found by meaning and one found by exact string | opt-in |
 | Model tests (`-m model`) | The real embedding model: meaning beats wording; the dense floor's margin | opt-in |
 
@@ -663,8 +713,14 @@ one whose weaknesses are unknown.
 - **Greetings are a list.** It grew by the pleasantries customers attach, not
   by a classifier; a greeting it does not know is treated as a question, and
   the model's best move is then to ask what the customer needs.
-- **Single-user, in-memory, no persistence.** No session store, no concurrency,
-  no rate limiting. Not production infrastructure.
+- **Conversations live in one process's memory.** A restart forgets them and a
+  second worker would not share them; a deployment with more than one
+  process needs a shared session store (Redis, a database) behind the same
+  `SessionStore` interface.
+- **No authentication or rate limiting in the service.** Both belong in front
+  of it — an API gateway or a reverse proxy — and the service assumes one
+  is there. The per-message and per-conversation limits bound the cost of
+  any single caller, but they are not a rate limit.
 
 ---
 
@@ -703,6 +759,7 @@ Then:
 
 ```bash
 python app.py                   # web interface at http://127.0.0.1:7860
+uvicorn api:app --port 8000     # HTTP service; interactive docs at http://127.0.0.1:8000/docs
 python agent.py                 # same agent, in the terminal
 python -m rag.index -q "ISA"    # inspect retrieval: both methods' ranks and scores
 pip install -r requirements-dev.txt
@@ -731,8 +788,9 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `rag/` | `corpus.py` chunker, `embeddings.py`, `store.py` (Qdrant), `lexical.py` (BM25), `retrieval.py` (fusion), `index.py` (CLI) |
 | `eval/` | `questions.yaml` (169 labelled cases), `dataset.py` validator, `retrieval.py` metrics and sweep, `live.py` end-to-end scorer, `report.py` README tables |
 | `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json` |
-| `tests/` | 360 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
+| `tests/` | 385 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
+| `api.py` | FastAPI service — `/chat`, `/sessions/{id}`, `/health`, `/ready`, OpenAPI docs at `/docs` |
 | `requirements.txt` / `requirements.lock` | Direct dependencies / every resolved dependency |
 
 The intermediate build stages that show how each guard arose are preserved in the
@@ -765,8 +823,7 @@ working tree because nothing runs or tests them.
    tokens on every call — tokens per case rose from 6,335 to 8,040 between
    the two runs — and they are identical from call to call, which is what
    prompt caching is for.
-3. **Serve it properly**: a FastAPI endpoint beside the Gradio interface,
-   structured logs with cost and latency per answer, a Docker image built in CI.
+3. **A container**: a Docker image built and smoke-tested in CI.
 4. **Persist the audit trail**, so escalation rates, `NO_MATCH` rates and
    rewrite frequency become monitorable metrics rather than terminal output.
 5. **A cross-encoder reranker**, measured on the same labelled set against the
