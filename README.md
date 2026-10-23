@@ -15,11 +15,22 @@ looping when it cannot help. This project treats those as engineering
 requirements with tests attached, rather than as instructions in a prompt and
 a hope.
 
+Measured on a labelled set of customer questions, with every number below
+rendered from the reports in `reports/` ([Evaluation](#evaluation)):
+
+<!-- headline:start -->
+- **98.8%** of 169 labelled customer questions handled as the label says — answered, escalated, clarified or declined (the first measurement: 88.8%).
+- **96.2%** of escalations were wanted, and **96.2%** of the questions that needed a person reached one.
+- **97.0%** of answerable questions have the passage that answers them among the six retrieved (hybrid BM25 and vector search).
+- **$0.0064** an answer with prompt caching, **58%** less than without.
+<!-- headline:end -->
+
 ```
-python app.py          # web interface
-uvicorn api:app        # the same agent as an HTTP service; docs at /docs
-python agent.py        # same agent, in the terminal
-pytest                 # 403 tests, under fifteen seconds, no API calls, no network
+python app.py                  # web interface
+uvicorn api:app                # the same agent as an HTTP service; docs at /docs
+docker build -t support-bot .  # the service as a container (CI builds and tests it)
+python agent.py                # same agent, in the terminal
+pytest                         # 406 tests, under twenty seconds, no API calls, no network
 ```
 
 > **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
@@ -660,7 +671,7 @@ Caching cut the cost of an answer by 58%, from $0.0154 to $0.0064.
 
 ## Testing strategy
 
-`tests/` — **403 tests, under fifteen seconds, no API calls, no network.** Run with `pytest`.
+`tests/` — **406 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
 Eight further tests call the real API and run only on request: `pytest -m live`;
 two download and run the real embedding model: `pytest -m model`.
 
@@ -868,7 +879,7 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `rag/` | `corpus.py` chunker, `embeddings.py`, `store.py` (Qdrant), `lexical.py` (BM25), `retrieval.py` (fusion), `index.py` (CLI) |
 | `eval/` | `questions.yaml` (169 labelled cases), `dataset.py` validator, `retrieval.py` metrics and sweep, `live.py` end-to-end scorer, `report.py` README tables |
 | `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json` |
-| `tests/` | 403 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
+| `tests/` | 406 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `api.py` | FastAPI service — `/chat`, `/sessions/{id}`, `/health`, `/ready`, OpenAPI docs at `/docs` |
 | `Dockerfile` / `.dockerignore` | The service as a container: model and index baked in, non-root, health-checked, allow-listed contents |

@@ -165,3 +165,42 @@ def test_without_both_runs_there_is_no_saving_claimed(tmp_path):
     text = report.caching_table(report.load_caching(tmp_path))
     assert "| on |" in text and "cut the cost" not in text
     assert report.load_caching(tmp_path / "nowhere") == {}
+
+
+def test_the_headline_states_the_numbers_a_reader_sees_first():
+    runs = {
+        "baseline": live("2026-10-22T19:07:44Z", 0.888),
+        "current": live("2026-10-24T10:00:00Z", 0.988),
+    }
+    caching = {"off": caching_run(0.0154, 1, 0, 9.4), "on": caching_run(0.0064, 1, 0, 9.0)}
+    lines = report.headline(RETRIEVAL, runs, caching).splitlines()
+    assert lines[0].startswith("- **98.8%** of 169 labelled")
+    assert "(the first measurement: 88.8%)" in lines[0]
+    assert lines[1] == (
+        "- **60.0%** of escalations were wanted, and **95.0%** of the questions that needed "
+        "a person reached one."
+    )
+    assert "**100.0%** of answerable questions" in lines[2]
+    assert lines[3] == "- **$0.0064** an answer with prompt caching, **58%** less than without."
+    assert report.headline(None, {}, {}) == "_No reports yet._"
+
+
+def test_the_readme_carries_the_headline_rendered_from_the_committed_reports():
+    text = Path(report.README).read_text(encoding="utf-8")
+    block = report.readme_block(text, report.HEADLINE_START, report.HEADLINE_END)
+    assert block == report.current_headline()
+
+
+def test_write_updates_both_blocks_even_when_they_start_empty(tmp_path):
+    (tmp_path / "retrieval.json").write_text(json.dumps(RETRIEVAL), encoding="utf-8")
+    readme = tmp_path / "README.md"
+    readme.write_text(
+        "<!-- headline:start -->\n<!-- headline:end -->\n\n"
+        "<!-- eval:start -->\nold\n<!-- eval:end -->\n",
+        encoding="utf-8",
+    )
+    assert report.main(["--reports", str(tmp_path), "--readme", str(readme), "--write"]) == 0
+    text = readme.read_text(encoding="utf-8")
+    assert "of answerable questions" in text.split("<!-- headline:end -->")[0]
+    assert "| hybrid |" in text.split("<!-- eval:start -->")[1]
+    assert report.readme_block("a\n<!-- eval:start -->\n<!-- eval:end -->\n") == ""
