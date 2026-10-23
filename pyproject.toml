@@ -1,6 +1,6 @@
 [project]
 name = "support-bot"
-version = "2.0.0.dev0"
+version = "2.0.0"
 description = "Grounded customer-support agent for a fictional UK wealth-management firm: retrieval, deterministic guards, independent fact-checking and policy-enforced escalation."
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
@@ -31,7 +31,7 @@ filterwarnings = [
 ]
 
 [tool.coverage.run]
-source = ["agent", "agent_graph", "api", "config", "app", "observability", "pricing", "rag", "eval"]
+source = ["agent", "agent_graph", "api", "config", "app", "observability", "pricing", "rag", "eval", "scripts"]
 
 [tool.coverage.report]
 show_missing = true

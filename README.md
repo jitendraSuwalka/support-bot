@@ -30,7 +30,7 @@ python app.py                  # web interface
 uvicorn api:app                # the same agent as an HTTP service; docs at /docs
 docker build -t support-bot .  # the service as a container (CI builds and tests it)
 python agent.py                # same agent, in the terminal
-pytest                         # 406 tests, under twenty seconds, no API calls, no network
+pytest                         # 421 tests, under twenty seconds, no API calls, no network
 ```
 
 > **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
@@ -673,7 +673,7 @@ Caching cut the cost of an answer by 58%, from $0.0154 to $0.0064.
 
 ## Testing strategy
 
-`tests/` — **406 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
+`tests/` — **421 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
 Eight further tests call the real API and run only on request: `pytest -m live`;
 two download and run the real embedding model: `pytest -m model`.
 
@@ -689,6 +689,7 @@ well-behaved model would never take.
 | Agent scenarios | Full turns against the fake model and an in-memory index of the real corpus, on **both** implementations: verbatim quoting, citation rewrites, forced escalation, greeting handling, crashed tools, a decline that runs nothing else, clarify once then escalate, a refused lookup | free |
 | Evaluation harness | The label validator against the corpus, retrieval metrics and the sweep with the hash embedder, the live scorer with an injectable runner, the README tables against the committed reports | free |
 | Service and logs | The HTTP API in-process (sessions, limits, refusals, a failing turn, one turn at a time), the turn log's fields and privacy, the cost model | free |
+| Release | The version agreeing across `pyproject.toml`, the service and the changelog; every refusal the release check makes; the notes carrying the measured headline | free |
 | Live tests (`-m live`) | Eight real questions through the real API, including a fact found by meaning and one found by exact string | opt-in |
 | Model tests (`-m model`) | The real embedding model: meaning beats wording; the dense floor's margin | opt-in |
 
@@ -881,11 +882,13 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `rag/` | `corpus.py` chunker, `embeddings.py`, `store.py` (Qdrant), `lexical.py` (BM25), `retrieval.py` (fusion), `index.py` (CLI) |
 | `eval/` | `questions.yaml` (169 labelled cases), `dataset.py` validator, `retrieval.py` metrics and sweep, `live.py` end-to-end scorer, `report.py` README tables |
 | `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json` |
-| `tests/` | 406 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
+| `tests/` | 421 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `api.py` | FastAPI service — `/chat`, `/sessions/{id}`, `/health`, `/ready`, OpenAPI docs at `/docs` |
 | `Dockerfile` / `.dockerignore` | The service as a container: model and index baked in, non-root, health-checked, allow-listed contents |
 | `scripts/container_smoke_test.sh` | Starts the image and checks the service in it, with no model call and no secret; run by CI |
+| `scripts/release_notes.py` | Holds a release tag to the code and the changelog, and writes the release notes with the measured headline |
+| `CHANGELOG.md` | Every release, newest first; the release notes are taken from it |
 | `requirements.txt` / `requirements.lock` | Direct dependencies / every resolved dependency |
 
 The intermediate build stages that show how each guard arose are preserved in the
