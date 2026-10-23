@@ -19,7 +19,7 @@ a hope.
 python app.py          # web interface
 uvicorn api:app        # the same agent as an HTTP service; docs at /docs
 python agent.py        # same agent, in the terminal
-pytest                 # 392 tests, under fifteen seconds, no API calls, no network
+pytest                 # 399 tests, under fifteen seconds, no API calls, no network
 ```
 
 > **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
@@ -532,6 +532,25 @@ question about how a service, fee or process works. Rule 13 adds the
 principle: answer the part the documents cover, say plainly what they do not.
 Prompt text, so the evaluation measures it rather than a test proving it.
 
+### 14. A customer who could not be told their own age
+
+**Symptom.** In both caching runs, *"I'm 70. Does the new cash ISA cap apply to
+me?"* ended with a warning: the answer said *"you told me you are 70"*, and the
+citation guard flagged 70 as a number not in the evidence.
+
+**Cause.** The guard checked numbers against the evidence only. And looking
+for where the customer's words could come from exposed a second fault: the
+agent's own instructions to the model — *rewrite this, these numbers were
+unsupported* — went in the user role as plain strings, exactly like the
+customer's messages, so they were counted as customer turns in the log, and
+would have counted as things the customer said.
+
+**Fix.** The agent's instructions are now content blocks, so a plain string
+in the user role is by construction the customer's. Numbers the customer
+wrote may be repeated back; URLs they wrote may not, because repeating a link
+a customer pasted lends it the firm's authority. A test proves an instruction
+that names an unsupported number does not make it the customer's.
+
 ---
 
 ## Evaluation
@@ -602,7 +621,7 @@ Caching cut the cost of an answer by 58%, from $0.0154 to $0.0064.
 
 ## Testing strategy
 
-`tests/` — **392 tests, under fifteen seconds, no API calls, no network.** Run with `pytest`.
+`tests/` — **399 tests, under fifteen seconds, no API calls, no network.** Run with `pytest`.
 Eight further tests call the real API and run only on request: `pytest -m live`;
 two download and run the real embedding model: `pytest -m model`.
 
@@ -809,7 +828,7 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `rag/` | `corpus.py` chunker, `embeddings.py`, `store.py` (Qdrant), `lexical.py` (BM25), `retrieval.py` (fusion), `index.py` (CLI) |
 | `eval/` | `questions.yaml` (169 labelled cases), `dataset.py` validator, `retrieval.py` metrics and sweep, `live.py` end-to-end scorer, `report.py` README tables |
 | `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json` |
-| `tests/` | 392 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
+| `tests/` | 399 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `api.py` | FastAPI service — `/chat`, `/sessions/{id}`, `/health`, `/ready`, OpenAPI docs at `/docs` |
 | `requirements.txt` / `requirements.lock` | Direct dependencies / every resolved dependency |

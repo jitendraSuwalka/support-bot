@@ -161,7 +161,7 @@ def test_an_answer_from_memory_is_sent_back_for_a_lookup(run_scenario):
     assert results[0].tools_used == ["search_knowledge_base"]
     assert results[0].escalated is False
     # The retry instruction was inserted as a user turn before the model tried again.
-    assert any(m.get("content") == agent.EVIDENCE_GUARD_RETRY for m in fake.calls[1]["messages"])
+    assert agent.instruction(agent.EVIDENCE_GUARD_RETRY) in fake.calls[1]["messages"]
 
 
 def test_two_answers_from_memory_are_escalated_not_delivered(run_scenario):
@@ -570,3 +570,46 @@ def test_caching_can_be_switched_off_to_measure_it(run_scenario, monkeypatch):
     _, _, fake = run_scenario(STATUS_SCRIPT, ["Is FW-1001 done?"])
     for call in fake.calls:
         assert "cache_control" not in call and "cache_control" not in call["system"][0]
+
+
+# --- the agent's own instructions are never the customer's words ---------------------
+
+
+def test_a_rewrite_instruction_does_not_make_its_number_the_customers(run_scenario):
+    # The citation guard tells the model which number was unsupported. If that
+    # instruction counted as something the customer said, the same number in
+    # the rewrite would then pass. It must still be caught.
+    results, _, fake = run_scenario(
+        script=[
+            tool_reply("search_knowledge_base", {"query": "ISA allowance"}),
+            text_reply("Call 0800 999 9999 about the ISA allowance."),
+            text_reply("Call 0800 999 9999 about the ISA allowance."),
+        ],
+        user_messages=["What is the ISA allowance?"],
+        helper={"rerank": '{"relevant": [0]}'},
+    )
+    assert "WARNING: unverified detail remains (1)" in results[0].notes
+    instructions = [
+        m
+        for m in fake.calls[-1]["messages"]
+        if m["role"] == "user" and isinstance(m["content"], list)
+    ]
+    assert any("0800 999 9999" in str(m["content"]) for m in instructions)  # it was named...
+    assert agent.customer_messages(fake.calls[-1]["messages"]) == ["What is the ISA allowance?"]
+
+
+def test_a_number_from_an_earlier_customer_message_counts_as_theirs(run_scenario):
+    results, _, _ = run_scenario(
+        script=[
+            tool_reply("search_knowledge_base", {"query": "ISAs for retired clients"}),
+            text_reply("Our ISA guide covers who can pay in."),
+            tool_reply("search_knowledge_base", {"query": "cash ISA cap"}, call_id="t2"),
+            text_reply("You said you are 70; the guide's cap applies under 65."),
+        ],
+        user_messages=[
+            "I'm 70 and retired. Tell me about ISAs.",
+            "Does the cash ISA cap apply to me?",
+        ],
+        helper={"rerank": '{"relevant": [0]}'},
+    )
+    assert "rewritten after citation check" not in results[1].notes

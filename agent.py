@@ -405,8 +405,13 @@ def number_tokens(text):
     return {normalise_number(match) for match in NUMBER_PATTERN.findall(text)} - {""}
 
 
-def check_citations(answer, evidence):
+def check_citations(answer, evidence, customer_text=""):
     """Require every URL and number in the answer to appear in the evidence.
+
+    A number the customer wrote is theirs to have repeated back — "you told me
+    you are 70" — so numbers in ``customer_text`` are allowed too. URLs are
+    not: an answer that repeats a link the customer pasted would lend it the
+    firm's authority, which is how a phishing link gets laundered.
 
     This is the only guarantee in the whole system that cannot be talked out
     of. The LLM verifier passed 'fernhillwealth.example/offices' because it
@@ -438,7 +443,7 @@ def check_citations(answer, evidence):
         else:
             violations.append(f"URL '{raw}' does not appear in the evidence at all.")
 
-    evidence_numbers = number_tokens(evidence)
+    evidence_numbers = number_tokens(evidence) | number_tokens(customer_text)
     for raw in NUMBER_PATTERN.findall(answer):
         digits = normalise_number(raw)
         if not digits or digits in NUMBER_ALLOWLIST:
@@ -1128,19 +1133,39 @@ def _main_call(messages, use_tools):
     return response
 
 
+def instruction(text):
+    """A message from the agent to the model, sent in the user role.
+
+    Written as a list of content blocks, never as a plain string: a plain
+    string in the user role is, by construction, something the customer
+    typed. That is what lets the code tell the customer's words from its own
+    instructions — for counting turns, for the case references the customer
+    gave, and for the numbers the citation guard lets the customer have
+    repeated back. An instruction naming an unsupported number must not make
+    that number the customer's.
+    """
+    return {"role": "user", "content": [{"type": "text", "text": text}]}
+
+
+def customer_messages(messages) -> list[str]:
+    """What the customer wrote in this conversation, oldest first."""
+    return [
+        m["content"]
+        for m in messages
+        if m.get("role") == "user" and isinstance(m.get("content"), str)
+    ]
+
+
 def rewrite(messages, problems):
     """Send the answer back to be rewritten strictly from evidence."""
     messages.append(
-        {
-            "role": "user",
-            "content": (
-                "Your previous answer had these problems: "
-                + "; ".join(problems)
-                + ". Rewrite it using only what the tool results actually say. Remove "
-                "every added detail. Copy URLs and numbers exactly or omit them "
-                "entirely. Do not call any tools."
-            ),
-        }
+        instruction(
+            "Your previous answer had these problems: "
+            + "; ".join(problems)
+            + ". Rewrite it using only what the tool results actually say. Remove "
+            "every added detail. Copy URLs and numbers exactly or omit them "
+            "entirely. Do not call any tools."
+        )
     )
     response = _main_call(messages, use_tools=False)
     messages.append({"role": "assistant", "content": response.content})
@@ -1155,19 +1180,16 @@ def rewrite_after_escalation(messages):
     needs to give.
     """
     messages.append(
-        {
-            "role": "user",
-            "content": (
-                "This query has now been escalated to a human adviser automatically, "
-                "because the knowledge base could not answer it. Rewrite your last "
-                "message as one short, coherent reply that: says plainly you do not "
-                "have the information; states that it HAS BEEN passed to a qualified "
-                "adviser who will be in touch; gives the switchboard number "
-                f"{SWITCHBOARD}. Do not offer to escalate, since it has already "
-                "happened, and do not ask the customer any question. Do not call "
-                "any tools."
-            ),
-        }
+        instruction(
+            "This query has now been escalated to a human adviser automatically, "
+            "because the knowledge base could not answer it. Rewrite your last "
+            "message as one short, coherent reply that: says plainly you do not "
+            "have the information; states that it HAS BEEN passed to a qualified "
+            "adviser who will be in touch; gives the switchboard number "
+            f"{SWITCHBOARD}. Do not offer to escalate, since it has already "
+            "happened, and do not ask the customer any question. Do not call "
+            "any tools."
+        )
     )
     response = _main_call(messages, use_tools=False)
     messages.append({"role": "assistant", "content": response.content})
@@ -1332,7 +1354,7 @@ def evidence_guard(messages, evidence_parts, is_greeting, guard_retries) -> str:
         return "pass"
     if guard_retries == 0:
         log("evidence_guard", "answered without a tool — asking for a lookup")
-        messages.append({"role": "user", "content": EVIDENCE_GUARD_RETRY})
+        messages.append(instruction(EVIDENCE_GUARD_RETRY))
         return "retry"
     log("evidence_guard_failed", "still no tool call — treating as unanswerable")
     evidence_parts.append(EVIDENCE_GUARD_NO_MATCH)
@@ -1344,14 +1366,15 @@ def citation_guard(answer, messages, evidence) -> tuple[str, list[str]]:
     notes: list[str] = []
     if not CHECK_CITATIONS or not evidence:
         return answer, notes
-    violations = check_citations(answer, evidence)
+    customer_text = "\n".join(customer_messages(messages))
+    violations = check_citations(answer, evidence, customer_text)
     if not violations:
         log("citations_clean", "citations: clean", after_rewrite=False)
         return answer, notes
     log("citation_violation", "CITATION VIOLATIONS (deterministic)", violations=violations)
     answer = rewrite(messages, violations)
     notes.append("rewritten after citation check")
-    remaining = check_citations(answer, evidence)
+    remaining = check_citations(answer, evidence, customer_text)
     if remaining:
         log("citations_remaining", "STILL UNSUPPORTED after rewrite", violations=remaining)
         notes.append(f"WARNING: unverified detail remains ({len(remaining)})")
@@ -1360,7 +1383,7 @@ def citation_guard(answer, messages, evidence) -> tuple[str, list[str]]:
     return answer, notes
 
 
-def recheck_citations(answer, evidence) -> list[str]:
+def recheck_citations(answer, evidence, customer_text="") -> list[str]:
     """The deterministic check again, on text a fact-check rewrite produced.
 
     The citation guard runs before the fact-checker, so a rewrite the
@@ -1372,7 +1395,7 @@ def recheck_citations(answer, evidence) -> list[str]:
     """
     if not CHECK_CITATIONS:
         return []
-    remaining = check_citations(answer, evidence)
+    remaining = check_citations(answer, evidence, customer_text)
     if not remaining:
         log("citations_clean", "citations: clean after fact-check rewrite", after_rewrite=True)
         return []
@@ -1395,7 +1418,7 @@ def groundedness_check(answer, messages, evidence) -> tuple[str, list[str]]:
         log("unsupported", "UNSUPPORTED CLAIMS", claims=verdict["unsupported"])
         answer = rewrite(messages, verdict["unsupported"])
         notes.append("rewritten after fact-check")
-        notes += recheck_citations(answer, evidence)
+        notes += recheck_citations(answer, evidence, "\n".join(customer_messages(messages)))
     elif verdict["status"] == "grounded":
         log("verified", "verified: grounded")
     else:

@@ -261,3 +261,27 @@ def test_the_app_logs_each_turn_under_one_session_id(monkeypatch, captured):
     assert (first["turn"], second["turn"]) == (1, 2)
     # Reset gives a new state, so the next conversation is a new session.
     assert "session_id" not in app.reset()[2]
+
+
+def test_a_rewrite_in_an_earlier_turn_does_not_inflate_the_turn_count(monkeypatch, captured):
+    # The citation guard's instruction is sent in the user role; before it was
+    # written as content blocks it was counted as a customer turn.
+    monkeypatch.setattr(
+        agent,
+        "client",
+        FakeClient(
+            [
+                tool_reply("look_up_client_query", {"reference": "FW-1001"}),
+                text_reply("Status: received. Call 0800 999 9999."),
+                text_reply(f'Status for FW-1001: "{STATUS}"'),
+                tool_reply("look_up_client_query", {"reference": "FW-1001"}, call_id="t2"),
+                text_reply(f'Status for FW-1001: "{STATUS}"'),
+            ]
+        ),
+    )
+    messages, state = [{"role": "user", "content": QUESTION}], {"unclear_turns": 0}
+    first, _ = observability.run_logged_turn(messages, state, session_id="s")
+    assert "rewritten after citation check" in first.notes
+    messages.append({"role": "user", "content": "And FW-1001 again?"})
+    observability.run_logged_turn(messages, state, session_id="s")
+    assert [line["turn"] for line in lines(captured)] == [1, 2]
