@@ -1,0 +1,652 @@
+{
+  "generated": "2026-10-23T19:27:51Z",
+  "models": {
+    "main": "claude-sonnet-5-5",
+    "helper": "claude-haiku-5-5"
+  },
+  "agent_impl": "loop",
+  "settings": {
+    "main_model": "claude-sonnet-5-5",
+    "helper_model": "claude-haiku-5-5",
+    "main_effort": "low",
+    "helper_effort": "low",
+    "main_max_tokens": 4096,
+    "helper_max_tokens": 2048,
+    "agent_impl": "loop",
+    "max_steps": 8,
+    "retrieval_mode": "hybrid",
+    "relevance_floor": 0.15,
+    "dense_floor": 0.5,
+    "candidates": 6,
+    "top_k": 3,
+    "rrf_k": 20,
+    "use_rerank": true,
+    "prompt_caching": false,
+    "verify_answers": true,
+    "check_citations": true,
+    "require_evidence": true,
+    "embedder": "local",
+    "embedding_model": "BAAI/bge-small-en-v1.5",
+    "model_cache": ".models",
+    "index_path": ".index",
+    "qdrant_url": "",
+    "log_level": "INFO",
+    "log_format": "json",
+    "turn_log_path": "",
+    "log_content": false,
+    "max_message_chars": 2000,
+    "session_ttl_minutes": 30,
+    "max_sessions": 1000,
+    "max_turns": 50
+  },
+  "selection": {
+    "ids": null,
+    "kind": null,
+    "limit": 20
+  },
+  "seconds": 193.3,
+  "summary": {
+    "cases": 20,
+    "errors": [],
+    "behaviour_accuracy": 1.0,
+    "behaviour_by_expected": {
+      "answer": {
+        "n": 20,
+        "accuracy": 1.0,
+        "observed": {
+          "answer": 20
+        }
+      }
+    },
+    "behaviour_by_kind": {
+      "factual": {
+        "n": 20,
+        "accuracy": 1.0
+      }
+    },
+    "escalation": {
+      "expected": 0,
+      "observed": 0,
+      "precision": null,
+      "recall": null,
+      "missed": [],
+      "unwanted": []
+    },
+    "answers": {
+      "expected": 20,
+      "correct": 1.0,
+      "facts_missing": {},
+      "untouched_by_guards": 0.8
+    },
+    "tools_accuracy": 1.0,
+    "guards": {
+      "citation_remaining": 1,
+      "citation_rewrite": 1,
+      "factcheck_rewrite": 3
+    },
+    "warnings": [
+      "isa-07"
+    ],
+    "wrong_behaviour": {},
+    "latency_seconds": {
+      "mean": 9.67,
+      "median": 9.36,
+      "max": 15.05
+    },
+    "tokens": {
+      "input": 161873,
+      "output": 18587,
+      "per_case_mean": 9023,
+      "cache_read": 0,
+      "cache_write": 0
+    },
+    "cost_usd": {
+      "total": 0.3074,
+      "per_case_mean": 0.01537,
+      "priced_cases": 20,
+      "unpriced_cases": 0
+    }
+  },
+  "rows": [
+    {
+      "id": "isa-01",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Adults aged 18 or over can pay up to \u00a320,000 into ISAs in the 2026/27 tax year, which runs from 6 April 2026 to 5 April 2027.\n\nYou can split the allowance between cash ISAs, stocks and shares ISAs, innovative finance ISAs and a Lifetime ISA. The Lifetime ISA has its own limit of \u00a34,000. Any unused allowance does not carry forward.\n\nSource: https://www.fernhillwealth.example/guides/isas/",
+      "seconds": 9.31,
+      "input_tokens": 7359,
+      "output_tokens": 855,
+      "error": null,
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": 0.013648
+    },
+    {
+      "id": "isa-02",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "The ISA allowance for 2026/27 is \u00a320,000 per adult aged 18 or over. The tax year runs from 6 April 2026 to 5 April 2027. You can split the \u00a320,000 between cash ISAs, stocks and shares ISAs, innovative finance ISAs and a Lifetime ISA. The Lifetime ISA has its own limit of \u00a34,000. Unused allowance does not carry forward.\n\nThe cash ISA cap changes from 6 April 2027, which is after this tax year. From then, investors under 65 can pay up to \u00a312,000 a year into cash ISAs.\n\nSource: https://www.fernhillwealth.example/guides/isas/",
+      "seconds": 7.95,
+      "input_tokens": 8535,
+      "output_tokens": 876,
+      "error": null,
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": 0.01526
+    },
+    {
+      "id": "isa-03",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "The documents I found only cover adults aged 18 or over. They say adults can pay up to \u00a320,000 into ISAs in the 2026/27 tax year, and that a Lifetime ISA can be opened by anyone aged 18 to 39. They don't say whether Fernhill Wealth offers ISAs to under-18s, so I can't confirm that your daughter can open one.\n\nPlease raise this with an adviser or call the switchboard. More detail is at https://www.fernhillwealth.example/guides/isas/",
+      "seconds": 10.44,
+      "input_tokens": 8065,
+      "output_tokens": 1065,
+      "error": null,
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": 0.014354
+    },
+    {
+      "id": "isa-04",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "You can pay up to \u00a34,000 a year into a Lifetime ISA. That counts towards the \u00a320,000 overall ISA allowance. The government adds a 25% bonus of up to \u00a31,000 a year.\n\nYou can open a Lifetime ISA if you're aged 18 to 39. Withdrawals for reasons other than the permitted ones incur a 25% government charge. More detail is in the ISA guide: https://www.fernhillwealth.example/guides/isas/",
+      "seconds": 6.94,
+      "input_tokens": 8654,
+      "output_tokens": 621,
+      "error": null,
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": 0.014639
+    },
+    {
+      "id": "isa-05",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "citation_rewrite"
+      ],
+      "warning": false,
+      "answer": "A Lifetime ISA can be opened by anyone aged 18 to 39. The age you gave is the customer's own statement, not something from our documents, so I can't confirm anything from the documents about your age beyond that range.\n\nAdults aged 18 or over can pay up to \u00a320,000 into ISAs in the 2026/27 tax year. I can't advise on which ISA would suit you. An adviser can help with that. The guide is at https://www.fernhillwealth.example/guides/isas/",
+      "seconds": 11.05,
+      "input_tokens": 9843,
+      "output_tokens": 936,
+      "error": null,
+      "notes": [
+        "rewritten after citation check"
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": 0.018942
+    },
+    {
+      "id": "isa-06",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "The ISA guide lists these changes from 6 April 2027:\n\n- Investors under 65 can pay at most \u00a312,000 a tax year into cash ISAs. The overall \u00a320,000 allowance is unchanged, so the remainder can still go into stocks and shares or innovative finance ISAs. Investors aged 65 and over keep a \u00a320,000 cash ISA limit.\n- Transfers from stocks and shares or innovative finance ISAs into cash ISAs will no longer be permitted.\n- A charge will apply to interest paid on cash held inside a stocks and shares or innovative finance ISA.\n- Money already in cash ISAs is not affected by the cap.\n\nSource: https://www.fernhillwealth.example/guides/isas/\n\nI can't advise on what you should do with your own ISAs. For that, please speak to your adviser.",
+      "seconds": 10.53,
+      "input_tokens": 7753,
+      "output_tokens": 1207,
+      "error": null,
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": 0.015264
+    },
+    {
+      "id": "isa-07",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "citation_remaining",
+        "factcheck_rewrite"
+      ],
+      "warning": true,
+      "answer": "You told me you're 70, so I've used that age. The evidence says that from 6 April 2027, the amount investors under the age of 65 can pay into cash ISAs each tax year will be capped at \u00a312,000. It also says \"Investors aged 65 and over keep a \u00a320,000 cash ISA limit.\" On that basis, the \u00a312,000 cap would not apply to you.\n\nThe evidence also says money already held in cash ISAs is not affected by the cap.\n\nSource: https://www.fernhillwealth.example/guides/isas/",
+      "seconds": 12.31,
+      "input_tokens": 9787,
+      "output_tokens": 1338,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check",
+        "WARNING: unverified detail after fact-check rewrite (1)"
+      ],
+      "unverified": [
+        "Number '70' does not appear in the evidence."
+      ],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": 0.021077
+    },
+    {
+      "id": "isa-08",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Under HM Revenue & Customs' guidelines, cash ISA transfers should take no longer than 15 working days. Other ISA transfers should take no longer than 30 calendar days. Re-registering holdings in specie can take longer if fund managers are slow to respond.\n\nThe new provider starts the transfer. Use their transfer process rather than withdrawing the money, so the ISA keeps its tax status. We don't charge for transfers in or out.\n\nMore details: https://www.fernhillwealth.example/guides/isas/",
+      "seconds": 10.33,
+      "input_tokens": 8299,
+      "output_tokens": 810,
+      "error": null,
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": 0.014292
+    },
+    {
+      "id": "isa-09",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Yes. Our stocks and shares ISA is flexible. If you withdraw money during a tax year, you can replace it in the same tax year without using more of your allowance.\n\nThe 2026/27 tax year runs from 6 April 2026 to 5 April 2027. Unused allowance doesn't carry forward. More detail is in the ISA guide: https://www.fernhillwealth.example/guides/isas/",
+      "seconds": 7.02,
+      "input_tokens": 7498,
+      "output_tokens": 569,
+      "error": null,
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": 0.013525
+    },
+    {
+      "id": "isa-10",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Yes, in part. A surviving spouse or civil partner is entitled to an additional permitted subscription equal to the value of the deceased's ISAs. This is on top of their own allowance. It applies whether or not they inherit the investments themselves.\n\nThe ISA also stays tax-free as a continuing account of a deceased investor for up to three years while the estate is administered. The documents don't say how this applies to your own circumstances. Please raise that with your adviser. More detail is in the ISA guide: https://www.fernhillwealth.example/guides/isas/",
+      "seconds": 11.31,
+      "input_tokens": 8553,
+      "output_tokens": 1042,
+      "error": null,
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": 0.014711
+    },
+    {
+      "id": "pension-01",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "The annual allowance is \u00a360,000. It covers the total paid into your pensions in a tax year. That includes employer contributions and the value of any defined benefit accrual. If you go over it, an annual allowance charge is normally due.\n\n- **Tapering:** for high earners the allowance tapers down to a minimum of \u00a310,000.\n- **Carry forward:** you can carry forward unused allowance from the previous three tax years. You must have been a member of a registered pension scheme in those years.\n- **Money purchase annual allowance:** once you've taken taxable income flexibly from a defined contribution pension, a \u00a310,000 allowance applies to further defined contribution contributions.\n\nI can't advise on what you should do with your own pension. An adviser can help with that.\n\nMore detail is in the pensions guide: https://www.fernhillwealth.example/guides/pensions/",
+      "seconds": 10.26,
+      "input_tokens": 7545,
+      "output_tokens": 1028,
+      "error": null,
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": 0.014848
+    },
+    {
+      "id": "pension-02",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "The documents don't give a straight yes or no. They say that once you have taken taxable income flexibly from a defined contribution pension, the money purchase annual allowance of \u00a310,000 applies to further defined contribution contributions.\n\nThey also say your own contributions receive tax relief up to 100% of your relevant UK earnings in the tax year, or \u00a33,600 gross if your earnings are lower. Basic-rate relief is added to the pension automatically, and higher- and additional-rate taxpayers claim the extra relief through their tax return. The documents don't cover whether paying in is right for you, so please raise that with your adviser. Source: https://www.fernhillwealth.example/guides/pensions/",
+      "seconds": 13.42,
+      "input_tokens": 8979,
+      "output_tokens": 1522,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": 0.022331
+    },
+    {
+      "id": "pension-03",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Up to 25% of a pension can normally be taken tax free. This is subject to the lump sum allowance of \u00a3268,275 across all your pensions. Lump sums above the allowance are taxed at your marginal rate.\n\nI can't advise on how much you should take or when. If you want advice on that, I can pass you to an adviser. More detail is at https://www.fernhillwealth.example/guides/pensions/",
+      "seconds": 8.22,
+      "input_tokens": 7143,
+      "output_tokens": 772,
+      "error": null,
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": 0.013076
+    },
+    {
+      "id": "pension-04",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "You can draw from a defined contribution pension from age 55. This rises to 57 from 6 April 2028. The options are flexi-access drawdown, buying an annuity, taking lump sums, or a combination. Each has different tax consequences.\n\nWhen you apply to access a pension, we will refer you to Pension Wise and offer to book a free guidance appointment for you. We won't do this if you have already had one or have received regulated advice.\n\nI can't advise on which option suits you. If you want that, I can pass you to an adviser. More detail is at https://www.fernhillwealth.example/guides/pensions/",
+      "seconds": 8.97,
+      "input_tokens": 7366,
+      "output_tokens": 1020,
+      "error": null,
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": 0.013916
+    },
+    {
+      "id": "pension-05",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Yes. If the transfer value is more than \u00a330,000, the law requires you to take appropriate independent advice before the transfer can proceed. The advice must come from a firm with Financial Conduct Authority permission to advise on pension transfers. Fernhill Wealth holds that permission.\n\nThe Financial Conduct Authority expects advisers to start from the assumption that a transfer won't be suitable. We recommend one only where we can show it is clearly in your interest.\n\nMore detail is in the pensions guide: https://www.fernhillwealth.example/guides/pensions/",
+      "seconds": 9.41,
+      "input_tokens": 7784,
+      "output_tokens": 975,
+      "error": null,
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": 0.014241
+    },
+    {
+      "id": "pension-06",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Under the documents I have, the answer depends on timing.\n\nFrom 6 April 2027, most unused pension funds and death benefits will be included in the value of your estate for inheritance tax. Benefits passing to a spouse or civil partner, or to a registered charity, stay exempt. Dependants' scheme pensions and death-in-service benefits are outside the new rules.\n\nIncome tax is a separate matter. If you die before age 75, benefits are normally paid free of income tax, within the lump sum and death benefit allowance of \u00a31,073,100. If you die at or after 75, the recipient pays income tax at their marginal rate.\n\nThe documents don't say how this applies to your own circumstances. Please raise that with your adviser. Source: https://www.fernhillwealth.example/guides/pensions/",
+      "seconds": 8.84,
+      "input_tokens": 7942,
+      "output_tokens": 973,
+      "error": null,
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": 0.014816
+    },
+    {
+      "id": "pension-07",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "Our pensions guide says: \"Your own contributions receive tax relief up to 100% of your relevant UK earnings in the tax year, or \u00a33,600 gross if your earnings are lower.\" It also says basic-rate relief is added to the pension automatically.\n\nThe guide doesn't say which of these applies to your situation, or whether paying in is right for you. Please raise that with your adviser. The source is https://www.fernhillwealth.example/guides/pensions/",
+      "seconds": 15.05,
+      "input_tokens": 8819,
+      "output_tokens": 1096,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": 0.018083
+    },
+    {
+      "id": "pension-08",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Yes. Unused annual allowance from the previous three tax years can be carried forward, provided you were a member of a registered pension scheme in those years.\n\nThe annual allowance is \u00a360,000. For high earners it tapers down to a minimum of \u00a310,000. The documents don't say how much you could carry forward in your own case. For that, please raise it with your adviser.\n\nSource: https://www.fernhillwealth.example/guides/pensions/",
+      "seconds": 7.93,
+      "input_tokens": 7206,
+      "output_tokens": 619,
+      "error": null,
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": 0.013228
+    },
+    {
+      "id": "fees-01",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "A full financial plan costs \u00a32,400, plus VAT where it applies. It covers a review of your whole financial position, a written plan with recommendations, and a meeting to go through it.\n\nOne-off advice on a single topic costs \u00a31,200, plus VAT where it applies. Financial planning is available at any level of wealth.\n\nMore details are at https://www.fernhillwealth.example/fees-and-charges/",
+      "seconds": 7.09,
+      "input_tokens": 7318,
+      "output_tokens": 673,
+      "error": null,
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": 0.013411
+    },
+    {
+      "id": "fees-02",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Ongoing advice costs 0.75% a year of the assets under advice, collected monthly from your accounts. It covers your annual review meeting, access to your adviser throughout the year, rebalancing recommendations and the quarterly reports.\n\nIf you also have discretionary investment management, that fee applies as well. Your client agreement sets out the combined cost, and your annual costs and charges statement shows it in pounds. More detail is on the fees and charges page: https://www.fernhillwealth.example/fees-and-charges/",
+      "seconds": 6.93,
+      "input_tokens": 7425,
+      "output_tokens": 590,
+      "error": null,
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": 0.013724
+    }
+  ]
+}

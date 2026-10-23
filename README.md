@@ -587,6 +587,15 @@ End to end: every case through the real agent (`claude-sonnet-5-5` answering, `c
 | current | 2026-10-23 | 169 | 98.8% | 99.2% | 96.2% | 96.2% | 76.3% | 8.6 s | 8,221 |
 
 Behaviour accuracy: the agent did what the label expects (answer, escalate, clarify, decline, greeting). Answers correct: answerable questions answered with every required fact. Escalation precision: escalations that were wanted; recall: wanted escalations that happened. Untouched: answers that passed the citation guard and the fact-check without a rewrite. Every failure is listed by id in the report.
+
+Prompt caching, measured: the same cases through the real agent with caching off, then on (`SUPPORT_BOT_PROMPT_CACHING`, `python -m eval.live --limit … --out …`).
+
+| Prompt caching | Cases | Cost per answer | Uncached input tokens per answer | Cache reads per answer | Median latency | Behaviour accuracy |
+|---|---:|---:|---:|---:|---:|---:|
+| off | 20 | $0.0154 | 8,094 | 0 | 9.4 s | 100.0% |
+| on | 20 | $0.0064 | 2,177 | 5,134 | 9.0 s | 100.0% |
+
+Caching cut the cost of an answer by 58%, from $0.0154 to $0.0064.
 <!-- eval:end -->
 
 ---
