@@ -19,7 +19,7 @@ a hope.
 python app.py          # web interface
 uvicorn api:app        # the same agent as an HTTP service; docs at /docs
 python agent.py        # same agent, in the terminal
-pytest                 # 385 tests, under fifteen seconds, no API calls, no network
+pytest                 # 389 tests, under fifteen seconds, no API calls, no network
 ```
 
 > **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
@@ -301,6 +301,17 @@ records the text for a deployment that has decided it may. A turn with a
 `WARNING` note is logged at warning level, a turn that fails at error level
 with the exception's type, so alerting needs no parsing.
 
+**Prompt caching.** The tool definitions and the system prompt, about 2,500
+tokens, are identical on every main-model call of every conversation, and a
+turn makes two or three such calls. The system prompt carries a cache
+breakpoint, which caches the tools with it (the API caches in the order
+tools, system, messages), and automatic caching adds a second breakpoint that
+moves to the end of the conversation, so the later calls in a turn read the
+conversation so far from the cache. A cached read is priced at a twentieth of
+fresh input; what it saved on the labelled set is measured in
+[Evaluation](#evaluation). `SUPPORT_BOT_PROMPT_CACHING=false` switches it off,
+which exists to make that measurement.
+
 Cost comes from `pricing.py`: the Claude API's per-million-token prices for
 the two models, with the page and the date they were read, applied to every
 call's input, cache and output tokens. A model the table does not know makes
@@ -581,7 +592,7 @@ Behaviour accuracy: the agent did what the label expects (answer, escalate, clar
 
 ## Testing strategy
 
-`tests/` — **385 tests, under fifteen seconds, no API calls, no network.** Run with `pytest`.
+`tests/` — **389 tests, under fifteen seconds, no API calls, no network.** Run with `pytest`.
 Eight further tests call the real API and run only on request: `pytest -m live`;
 two download and run the real embedding model: `pytest -m model`.
 
@@ -788,7 +799,7 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `rag/` | `corpus.py` chunker, `embeddings.py`, `store.py` (Qdrant), `lexical.py` (BM25), `retrieval.py` (fusion), `index.py` (CLI) |
 | `eval/` | `questions.yaml` (169 labelled cases), `dataset.py` validator, `retrieval.py` metrics and sweep, `live.py` end-to-end scorer, `report.py` README tables |
 | `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json` |
-| `tests/` | 385 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
+| `tests/` | 389 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `api.py` | FastAPI service — `/chat`, `/sessions/{id}`, `/health`, `/ready`, OpenAPI docs at `/docs` |
 | `requirements.txt` / `requirements.lock` | Direct dependencies / every resolved dependency |

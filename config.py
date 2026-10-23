@@ -73,6 +73,11 @@ class Settings:
     # costs several model calls, which is right for a regulated firm and wrong
     # for most products, so the trade-off is explicit rather than baked in.
     use_rerank: bool = True
+    # Prompt caching. The system prompt and the five tool definitions, about
+    # 2,500 tokens, are the same on every main-model call — two or three a
+    # turn, in every conversation — and a cached read costs a twentieth of
+    # fresh input. Off only to measure what it saves (reports/caching-*.json).
+    prompt_caching: bool = True
     verify_answers: bool = True
     check_citations: bool = True
     require_evidence: bool = True

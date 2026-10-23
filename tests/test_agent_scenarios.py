@@ -550,3 +550,23 @@ def test_a_turn_lists_the_sections_its_evidence_came_from(run_scenario):
 def test_a_turn_with_no_search_has_no_sources(run_scenario):
     results, _, _ = run_scenario(STATUS_SCRIPT, ["Is FW-1001 done?"])
     assert results[0].sources() == []
+
+
+# --- prompt caching --------------------------------------------------------------
+
+
+def test_every_main_model_call_marks_the_stable_prefix_for_caching(run_scenario):
+    _, _, fake = run_scenario(STATUS_SCRIPT, ["Is FW-1001 done?"])
+    assert fake.calls, "no main-model call was made"
+    for call in fake.calls:
+        [block] = call["system"]
+        assert block["text"] == agent.SYSTEM_PROMPT
+        assert block["cache_control"] == {"type": "ephemeral"}  # tools + system, shared by everyone
+        assert call["cache_control"] == {"type": "ephemeral"}  # the conversation so far
+
+
+def test_caching_can_be_switched_off_to_measure_it(run_scenario, monkeypatch):
+    monkeypatch.setattr(agent, "SETTINGS", agent.Settings(prompt_caching=False))
+    _, _, fake = run_scenario(STATUS_SCRIPT, ["Is FW-1001 done?"])
+    for call in fake.calls:
+        assert "cache_control" not in call and "cache_control" not in call["system"][0]

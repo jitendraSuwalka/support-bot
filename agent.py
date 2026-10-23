@@ -1092,16 +1092,37 @@ def enforce_escalation(answer, evidence_parts, model_escalated, state, ended=Non
 # =========================================================
 
 
+def system_blocks(caching: bool) -> list[dict]:
+    """The system prompt as a content block, marked for caching when asked.
+
+    The API caches a prompt's prefix in the order tools, system, messages,
+    so a breakpoint at the end of the system prompt caches the tool
+    definitions and the system prompt together: the part that is identical
+    on every main-model call of every conversation. That breakpoint is what
+    lets one customer's turn reuse what another's wrote.
+    """
+    block: dict = {"type": "text", "text": SYSTEM_PROMPT}
+    if caching:
+        block["cache_control"] = {"type": "ephemeral"}
+    return [block]
+
+
 def _main_call(messages, use_tools):
     request = {
         "model": MAIN_MODEL,
         "max_tokens": SETTINGS.main_max_tokens,
         "output_config": {"effort": SETTINGS.main_effort},
-        "system": SYSTEM_PROMPT,
+        "system": system_blocks(SETTINGS.prompt_caching),
         "messages": messages,
     }
     if use_tools:
         request["tools"] = tools
+    if SETTINGS.prompt_caching:
+        # Automatic caching as well: a second breakpoint that moves to the end
+        # of the conversation, so the calls within one turn (answer, tool
+        # results, a rewrite) read the conversation so far from the cache
+        # instead of paying for it again. Two of the four breakpoints allowed.
+        request["cache_control"] = {"type": "ephemeral"}
     response = client.messages.create(**request)
     record_usage(response, "main")
     return response
