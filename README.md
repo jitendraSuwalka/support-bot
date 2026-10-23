@@ -317,6 +317,8 @@ guarantees, and the smoke test checks:
   `requirements.txt` at the lockfile's exact versions; the test tools stay out.
 - **Docker knows whether it is healthy.** A `HEALTHCHECK` calls `/health`, and
   `docker ps` shows the result.
+- **It is 637 MB** as CI builds it — the slim Python base, the dependencies
+  (ONNX Runtime and Gradio the largest) and the 67 MB embedding model.
 - **Its logs are one format.** JSON lines on stderr — turns, requests and the
   service's own events — with uvicorn's plain-text access log switched off;
   only uvicorn's few start-up lines remain plain text.
@@ -909,19 +911,20 @@ working tree because nothing runs or tests them.
 
 ## What I would do next
 
-1. **Measure the fact-checker.** It rewrote 18–23% of answers across the two
-   runs; a labelled sample of those rewrites would say how many were needed,
-   and whether the check is worth its call.
-2. **Cache the prompt.** The behaviour rules and five tool descriptions cost
-   tokens on every call — tokens per case rose from 6,335 to 8,040 between
-   the two runs — and they are identical from call to call, which is what
-   prompt caching is for.
-3. **A smaller image.** The container carries Gradio because the web
-   interface and the service share `requirements.txt`; splitting the
-   service's dependencies out would shrink it, at the cost of a second list
-   to keep in step.
-4. **Persist the audit trail**, so escalation rates, `NO_MATCH` rates and
-   rewrite frequency become monitorable metrics rather than terminal output.
+1. **Measure the fact-checker.** It rewrites about a fifth of answers; a
+   labelled sample of those rewrites would say how many were needed, and
+   whether the check is worth its call.
+2. **Turn the log into monitoring.** Every turn and request is already a JSON
+   line with its behaviour, guards, latency and cost; shipped to a log store,
+   escalation rate, rewrite rate and cost per answer become dashboards and
+   alerts rather than lines in a terminal.
+3. **A shared session store and a gateway**, for more than one process:
+   conversations in Redis behind the existing `SessionStore` interface, and
+   authentication and rate limiting in front of the service.
+4. **A smaller image.** The image is 637 MB as CI builds it, and carries
+   Gradio because the web interface and the service share `requirements.txt`;
+   splitting the service's dependencies out would shrink it, at the cost of a
+   second list to keep in step.
 5. **A cross-encoder reranker**, measured on the same labelled set against the
    LLM rerank it would replace: cheaper per call, and the harness already says
    whether it is better.
