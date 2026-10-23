@@ -705,15 +705,17 @@ tools = [
             "advice, or any question about what the customer should do with their "
             "own money; a complaint the customer is raising now; a customer telling "
             "us of a death, a divorce or a serious illness, in financial difficulty, "
-            "or acting under a power of attorney now; a report of fraud or of a "
-            "payment the customer believes was a scam; an instruction to buy, sell, "
-            "move or withdraw money; and anything returning NO_MATCH that one "
-            "clarifying question cannot resolve."
+            "or acting under a power of attorney now; a customer who has paid money "
+            "to someone they now believe was a scammer, or whose money is missing; "
+            "an instruction to buy, sell, move or withdraw money; and a question no "
+            "part of which the documents cover, once one clarifying question could "
+            "not resolve it."
             "\n\nDo NOT use it for a question about how a service, fee or process "
             "works: how to register a power of attorney, what can be done after a "
             "final response to a complaint, whether one-off advice is offered and "
-            "what it costs, whether an account can be kept abroad. Those are "
-            "answered from the documents."
+            "what it costs, whether an account can be kept abroad. Nor for a "
+            "suspicious call, email or text the customer did not act on: the "
+            "security pages say what to do, and that is the answer."
         ),
         "input_schema": {
             "type": "object",
@@ -807,10 +809,12 @@ CONDUCT RULES:
 13. Escalate what a person must act on (the escalate_to_adviser list). A
    question about how something works — a service, a fee, a process,
    including complaints, powers of attorney and one-off advice — is answered
-   from the documents even when it touches an advice topic. Answer the part
-   the documents cover and say plainly what they do not. Do not escalate
-   because one detail is unconfirmed; tell the customer to raise it with
-   their adviser.
+   from the documents even when it touches an advice topic. When the
+   documents answer the question in part, answer that part and say plainly
+   what they do not cover; do not escalate because one detail is
+   unconfirmed, tell the customer to raise it with their adviser. When no
+   part of the question is covered, escalate (rule 6): related material is
+   not an answer.
 14. A client query reference must come from the customer, in full (FW-XXXX).
    Never guess, complete or suggest one; ask for it.
 """
