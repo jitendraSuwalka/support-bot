@@ -39,22 +39,21 @@
   "summary": {
     "cases": 169,
     "errors": [],
-    "behaviour_accuracy": 0.97,
+    "behaviour_accuracy": 0.976,
     "behaviour_by_expected": {
       "answer": {
-        "n": 132,
-        "accuracy": 0.977,
+        "n": 131,
+        "accuracy": 0.985,
         "observed": {
           "answer": 129,
-          "escalate": 2,
-          "clarify": 1
+          "escalate": 2
         }
       },
       "clarify": {
-        "n": 4,
+        "n": 5,
         "accuracy": 1.0,
         "observed": {
-          "clarify": 4
+          "clarify": 5
         }
       },
       "decline": {
@@ -92,7 +91,7 @@
       },
       "ambiguous": {
         "n": 4,
-        "accuracy": 0.75
+        "accuracy": 1.0
       },
       "denial": {
         "n": 8,
@@ -141,20 +140,16 @@
       ]
     },
     "answers": {
-      "expected": 132,
-      "correct": 0.97,
+      "expected": 131,
+      "correct": 0.977,
       "facts_missing": {
-        "ambiguous-03": [
-          "20,000",
-          "60,000"
-        ],
         "exact-06": [
           "Manchester"
         ]
       },
       "untouched_by_guards": 0.762
     },
-    "tools_accuracy": 0.959,
+    "tools_accuracy": 0.964,
     "guards": {
       "citation_rewrite": 5,
       "factcheck_rewrite": 39,
@@ -165,7 +160,6 @@
     "wrong_behaviour": {
       "security-01": "expected answer, observed escalate",
       "denial-cardiff": "expected answer, observed escalate",
-      "ambiguous-03": "expected answer, observed clarify",
       "greeting-02": "expected greeting, observed decline",
       "scope-10": "expected escalate, observed answer"
     },
@@ -3143,15 +3137,12 @@
     {
       "id": "ambiguous-03",
       "kind": "ambiguous",
-      "expected": "answer",
+      "expected": "clarify",
       "observed": "clarify",
-      "behaviour_ok": false,
-      "facts_ok": false,
-      "missing_facts": [
-        "20,000",
-        "60,000"
-      ],
-      "tools_ok": false,
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
       "tools_used": [
         "ask_for_clarification"
       ],
@@ -4132,5 +4123,6 @@
       "error": null,
       "notes": []
     }
-  ]
+  ],
+  "rescored": "2026-10-22T21:31:00Z"
 }

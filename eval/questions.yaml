@@ -30,11 +30,13 @@
 # reviewed by an independent compliance-style reviewer on 22 October 2026 and
 # corrected: seven labels, eight over-strict must_contain strings, seven gold
 # sections, nine rewordings, and 40 questions added. Reviewed again on
-# 23 October 2026 against the baseline run (reports/live-baseline.json): four
+# 23 October 2026 against the baseline run (reports/live-baseline.json): three
 # labels corrected where the agent's behaviour was the better one on reflection
-# (security-06, life-07 and action-01 to escalate; ambiguous-03 to answer), each
-# with its reason beside it, and the tools of the clarify and decline cases set
-# to the tools those behaviours now are. Every other failure stood.
+# (security-06, life-07 and action-01 to escalate), each with its reason beside
+# it, and the tools of the clarify and decline cases set to the tools those
+# behaviours now are. A fourth (ambiguous-03 to answer) was reverted after the
+# second run showed it contradicting the rule the agent is given. Every other
+# failure stood.
 
 # --- factual: answerable from the documents ------------------------------------
 
@@ -1078,16 +1080,17 @@
   tools: [ask_for_clarification]
 
 - id: ambiguous-03
-  # One word, but the two allowances customers of a wealth firm mean are both in
-  # the documents with their figures. The baseline agent gave both and asked
-  # which; that is better service than a question alone, and the label was
-  # corrected to say so.
+  # One word. The baseline agent gave both allowances with their figures and
+  # asked which, and the label was changed to answer to match; the second run
+  # asked "which allowance do you mean, ISA or pension?" as rule 11 tells it to
+  # for a single word. The label and the rule disagreed, and the rule is the
+  # policy: a one-word message gets one question back. Label restored.
   question: allowance
   kind: ambiguous
-  expected: answer
-  gold: [isa-guide/The allowance, pensions-guide/Annual allowance]
-  must_contain: ["20,000", "60,000"]
-  tools: [search_knowledge_base]
+  expected: clarify
+  gold: []
+  must_contain: []
+  tools: [ask_for_clarification]
 
 # --- greetings: no tools --------------------------------------------------------------
 

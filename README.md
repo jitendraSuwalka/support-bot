@@ -463,17 +463,20 @@ harnesses score the agent against it:
 The numbers below are rendered from the reports in `reports/` by
 `python -m eval.report`, and a test fails if the README and the reports
 disagree. The baseline is the first end-to-end run. Reading its 22 failures
-one by one, four labels were wrong on reflection and the agent was right — a
+one by one, three labels were wrong on reflection and the agent was right — a
 customer who has just paid a scammer needs a person on the case, not only the
 fraud number; a customer disclosing financial difficulty is handed to their
 adviser; an instruction to sell £10,000 wants action, not a description of the
-process; and for the one-word *allowance*, both allowances with their figures
-is better service than a question back. Each correction carries its reason in
-`eval/questions.yaml`, and the baseline is re-scored against the corrected
-labels (`python -m eval.live --rescore`), so every row below is measured
+process. A fourth, the one-word *allowance*, was changed to *answer* because
+the baseline had given both allowances with their figures, and changed back
+when the second run asked *which allowance, ISA or pension?* exactly as the
+rule it is given says a one-word message should: the label and the rule
+disagreed, and the rule is the policy. Each change carries its reason in
+`eval/questions.yaml`, and every run is re-scored against the labels as they
+now stand (`python -m eval.live --rescore`), so the rows below are measured
 against one set of labels and the improvement is not the relabelling. The
-other eighteen failures stood, and failure modes 10–13 above are what they
-turned out to be.
+other eighteen baseline failures stood, and failure modes 10–13 above are what
+they turned out to be.
 
 <!-- eval:start -->
 Retrieval alone, before expansion and reranking: the 136 cases with gold sections of 169, 129 chunks, embedder `BAAI/bge-small-en-v1.5-384`, fusion k = 20, dense floor 0.5 (`python -m eval.retrieval`, 2026-10-22).
@@ -488,8 +491,8 @@ End to end: every case through the real agent (`claude-sonnet-5-5` answering, `c
 
 | Run | Date | Cases | Behaviour accuracy | Answers correct | Escalation precision | Escalation recall | Untouched by guards | Median latency | Tokens per case |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| baseline | 2026-10-22 | 169 | 89.3% | 91.7% | 65.8% | 96.2% | 74.4% | 9.1 s | 6,335 |
-| current | 2026-10-22 | 169 | 97.0% | 97.0% | 92.6% | 96.2% | 76.2% | 8.4 s | 8,040 |
+| baseline | 2026-10-22 | 169 | 88.8% | 91.6% | 65.8% | 96.2% | 74.4% | 9.1 s | 6,335 |
+| current | 2026-10-22 | 169 | 97.6% | 97.7% | 92.6% | 96.2% | 76.2% | 8.4 s | 8,040 |
 
 Behaviour accuracy: the agent did what the label expects (answer, escalate, clarify, decline, greeting). Answers correct: answerable questions answered with every required fact. Escalation precision: escalations that were wanted; recall: wanted escalations that happened. Untouched: answers that passed the citation guard and the fact-check without a rewrite. Every failure is listed by id in the report.
 <!-- eval:end -->
@@ -595,7 +598,12 @@ one whose weaknesses are unknown.
   This is why every hard guarantee lives in Python and why the audit trail exists.
 - **Retrieval quality is bounded by the corpus.** Eighteen documents in 129
   chunks is a demonstration, not coverage. Retrieval quality is downstream of
-  content quality, always.
+  content quality, always: *"Do you have a branch in Cardiff?"* was answered
+  correctly in one run and escalated in the next, because *branch* appears
+  nowhere in the corpus, Cardiff is not an office, and the one chunk that
+  lists all six offices is reached only when query expansion happens to add
+  *office*. A contact page whose introduction named its offices would remove
+  the dependence; that is a content fix, not a retrieval one.
 - **The floors are loose by design; the reranker is the filter.** A single
   shared word lifts an off-topic question over the lexical floor, and the
   labelled set showed that no cosine floor can separate advice or out-of-scope
@@ -609,8 +617,9 @@ one whose weaknesses are unknown.
   app, the tests and `python -m rag.index` cannot share `.index/` at once.
 - **The fact-checker is itself a model.** It can be wrong in both directions.
   It is a second opinion, not a proof — which is why the deterministic guard
-  runs first and independently. The baseline run had it rewrite 18% of
-  answers; how many of those rewrites were needed is not yet measured.
+  runs first and independently. It rewrote 18% of the baseline's answers
+  and 23% of the second run's; how many of those rewrites were needed is not
+  yet measured.
 - **Declining and clarifying are the model's judgement.** The code guarantees
   what happens once it decides — the turn ends, nothing else runs, the second
   clarification escalates — not that it decides. A model that searches instead
@@ -711,14 +720,18 @@ working tree because nothing runs or tests them.
 
 ## What I would do next
 
-1. **Measure the fact-checker.** It rewrote 18% of baseline answers; a labelled
-   sample of those rewrites would say how many were needed, and whether the
-   check is worth its call.
-2. **Serve it properly**: a FastAPI endpoint beside the Gradio interface,
+1. **Measure the fact-checker.** It rewrote 18–23% of answers across the two
+   runs; a labelled sample of those rewrites would say how many were needed,
+   and whether the check is worth its call.
+2. **Cache the prompt.** The behaviour rules and five tool descriptions cost
+   tokens on every call — tokens per case rose from 6,335 to 8,040 between
+   the two runs — and they are identical from call to call, which is what
+   prompt caching is for.
+3. **Serve it properly**: a FastAPI endpoint beside the Gradio interface,
    structured logs with cost and latency per answer, a Docker image built in CI.
-3. **Persist the audit trail**, so escalation rates, `NO_MATCH` rates and
+4. **Persist the audit trail**, so escalation rates, `NO_MATCH` rates and
    rewrite frequency become monitorable metrics rather than terminal output.
-4. **A cross-encoder reranker**, measured on the same labelled set against the
+5. **A cross-encoder reranker**, measured on the same labelled set against the
    LLM rerank it would replace: cheaper per call, and the harness already says
    whether it is better.
 
