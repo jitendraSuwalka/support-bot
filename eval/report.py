@@ -8,7 +8,9 @@ Reads reports/retrieval.json (python -m eval.retrieval) and the end-to-end
 runs reports/live-baseline.json and reports/live.json (python -m eval.live),
 and renders two tables: retrieval recall and MRR per search mode, and the
 end-to-end behaviour, escalation, correctness, guard, latency and token
-figures per run, baseline first. The README carries the block between
+figures per run, baseline first. If reports/caching-off.json and
+reports/caching-on.json exist (the same cases with prompt caching off and
+on), a third table compares their cost, tokens and latency. The README carries the block between
 ``<!-- eval:start -->`` and ``<!-- eval:end -->``, and a test asserts that it
 is exactly what this module renders from the reports in the repository, so a
 number in the README can be measured and regenerated, never typed.
@@ -28,6 +30,8 @@ START = "<!-- eval:start -->"
 END = "<!-- eval:end -->"
 LIVE_RUNS = (("baseline", "live-baseline.json"), ("current", "live.json"))
 RETRIEVAL = "retrieval.json"
+# The same cases run with prompt caching off and on (Step 4.3).
+CACHING_RUNS = (("off", "caching-off.json"), ("on", "caching-on.json"))
 
 
 def load_reports(directory: Path = REPORTS) -> tuple[dict | None, dict[str, dict]]:
@@ -42,6 +46,49 @@ def load_reports(directory: Path = REPORTS) -> tuple[dict | None, dict[str, dict
         if path.exists():
             runs[label] = json.loads(path.read_text(encoding="utf-8"))
     return retrieval, runs
+
+
+def load_caching(directory: Path = REPORTS) -> dict[str, dict]:
+    """The prompt-caching comparison runs that exist, off first."""
+    runs = {}
+    for label, name in CACHING_RUNS:
+        path = directory / name
+        if path.exists():
+            runs[label] = json.loads(path.read_text(encoding="utf-8"))
+    return runs
+
+
+def caching_table(runs: dict[str, dict]) -> str:
+    """Cost, tokens and latency with prompt caching off and on, on the same cases."""
+    lines = [
+        "Prompt caching, measured: the same cases through the real agent with caching off, "
+        "then on (`SUPPORT_BOT_PROMPT_CACHING`, `python -m eval.live --limit … --out …`).",
+        "",
+        "| Prompt caching | Cases | Cost per answer | Uncached input tokens per answer | "
+        "Cache reads per answer | Median latency | Behaviour accuracy |",
+        "|---|---:|---:|---:|---:|---:|---:|",
+    ]
+    per_case = {}
+    for label, report in runs.items():
+        s = report["summary"]
+        n = s["cases"] or 1
+        cost = (s.get("cost_usd") or {}).get("per_case_mean")
+        per_case[label] = cost
+        lines.append(
+            f"| {label} | {s['cases']} | "
+            + (f"${cost:.4f}" if cost is not None else "unpriced")
+            + f" | {round(s['tokens']['input'] / n):,} | "
+            f"{round(s['tokens'].get('cache_read', 0) / n):,} | "
+            f"{s['latency_seconds']['median']:.1f} s | {_pct(s['behaviour_accuracy'])} |"
+        )
+    off, on = per_case.get("off"), per_case.get("on")
+    if off and on is not None:
+        lines += [
+            "",
+            f"Caching cut the cost of an answer by {100 * (1 - on / off):.0f}%, "
+            f"from ${off:.4f} to ${on:.4f}.",
+        ]
+    return "\n".join(lines)
 
 
 def _pct(value: float) -> str:
@@ -99,19 +146,23 @@ def live_table(runs: dict[str, dict]) -> str:
     return "\n".join(lines)
 
 
-def render(retrieval: dict | None, runs: dict[str, dict]) -> str:
+def render(
+    retrieval: dict | None, runs: dict[str, dict], caching: dict[str, dict] | None = None
+) -> str:
     parts = []
     if retrieval:
         parts.append(retrieval_table(retrieval))
     if runs:
         parts.append(live_table(runs))
+    if caching:
+        parts.append(caching_table(caching))
     if not parts:
         return "_No reports yet: run `python -m eval.retrieval` and `python -m eval.live`._"
     return "\n\n".join(parts)
 
 
 def current_block(directory: Path = REPORTS) -> str:
-    return render(*load_reports(directory))
+    return render(*load_reports(directory), load_caching(directory))
 
 
 def readme_block(text: str) -> str:

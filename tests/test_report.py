@@ -128,3 +128,40 @@ def test_the_readme_carries_the_numbers_rendered_from_the_committed_reports():
     reports in the repository render to, so a number can only be measured."""
     text = Path(report.README).read_text(encoding="utf-8")
     assert report.readme_block(text) == report.current_block()
+
+
+def caching_run(per_case, tokens_in, cache_read, median):
+    return {
+        "summary": {
+            "cases": 20,
+            "behaviour_accuracy": 1.0,
+            "tokens": {"input": tokens_in, "cache_read": cache_read},
+            "latency_seconds": {"median": median},
+            "cost_usd": {"per_case_mean": per_case},
+        }
+    }
+
+
+def test_the_caching_table_compares_the_same_cases_off_and_on(tmp_path):
+    (tmp_path / "caching-off.json").write_text(
+        json.dumps(caching_run(0.0150, 166_000, 0, 9.2)), encoding="utf-8"
+    )
+    (tmp_path / "caching-on.json").write_text(
+        json.dumps(caching_run(0.0060, 40_000, 120_000, 8.1)), encoding="utf-8"
+    )
+    runs = report.load_caching(tmp_path)
+    assert list(runs) == ["off", "on"]
+    text = report.caching_table(runs)
+    assert "| off | 20 | $0.0150 | 8,300 | 0 | 9.2 s | 100.0% |" in text
+    assert "| on | 20 | $0.0060 | 2,000 | 6,000 | 8.1 s | 100.0% |" in text
+    assert "cut the cost of an answer by 60%, from $0.0150 to $0.0060" in text
+    assert "Prompt caching, measured" in report.render(None, {}, runs)
+
+
+def test_without_both_runs_there_is_no_saving_claimed(tmp_path):
+    (tmp_path / "caching-on.json").write_text(
+        json.dumps(caching_run(0.006, 40_000, 120_000, 8.1)), encoding="utf-8"
+    )
+    text = report.caching_table(report.load_caching(tmp_path))
+    assert "| on |" in text and "cut the cost" not in text
+    assert report.load_caching(tmp_path / "nowhere") == {}
