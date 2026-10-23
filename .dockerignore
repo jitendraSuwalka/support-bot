@@ -1,0 +1,16 @@
+# Only what the image needs reaches the build: an allow-list, so a new file
+# (a .env with a key in it, a local index, a virtual environment) can never be
+# copied into an image by accident.
+*
+!requirements.txt
+!requirements.lock
+!agent.py
+!agent_graph.py
+!api.py
+!app.py
+!config.py
+!observability.py
+!pricing.py
+!rag/
+!corpus/
+**/__pycache__

@@ -281,6 +281,42 @@ answer. The choices that make it a service rather than a demo:
   and the request id — except liveness probes, so refusals show up in the
   same stream as turns, and a turn's line and its request's line share an id.
 
+### The container
+
+```bash
+docker build -t support-bot .
+docker run -p 8000:8000 -e ANTHROPIC_API_KEY=sk-ant-... support-bot
+```
+
+The `Dockerfile` builds the HTTP service into an image, and CI builds that
+image and runs `scripts/container_smoke_test.sh` against it on every push, so
+nobody needs Docker installed to know the container works. What the image
+guarantees, and the smoke test checks:
+
+- **It is ready when it starts.** The embedding model is downloaded and the
+  document index built at *build* time, then `HF_HUB_OFFLINE=1` is set: a
+  container never reaches out to the model hub, its only outbound calls are
+  to the Anthropic API, and `/ready` is green from the first second.
+- **It runs as an unprivileged user** (uid 10001), and nothing in it needs
+  root once built.
+- **Only what it needs goes in.** `.dockerignore` is an allow-list — the
+  service's modules, `rag/`, `corpus/` and the requirements — so a `.env`
+  with a key in it, a local index, the tests or the git history can never be
+  copied into an image by accident. Runtime dependencies come from
+  `requirements.txt` at the lockfile's exact versions; the test tools stay out.
+- **Docker knows whether it is healthy.** A `HEALTHCHECK` calls `/health`, and
+  `docker ps` shows the result.
+- **Its logs are one format.** JSON lines on stderr — turns, requests and the
+  service's own events — with uvicorn's plain-text access log switched off;
+  only uvicorn's few start-up lines remain plain text.
+
+The smoke test needs no secret and calls no model: health, readiness, the
+redirect and the docs, an empty message refused with 422, an unknown
+conversation with 404, a request id on every response, a non-root user, no
+tests or `.env` inside, the model and index present, Docker's health check
+passing, and no traceback in the logs. Dependabot proposes base-image
+updates, which CI then builds and smoke-tests before anyone merges them.
+
 ### One log line per turn
 
 Every turn the web interface serves is written as one JSON line to stderr
@@ -803,6 +839,7 @@ Then:
 ```bash
 python app.py                   # web interface at http://127.0.0.1:7860
 uvicorn api:app --port 8000     # HTTP service; interactive docs at http://127.0.0.1:8000/docs
+docker build -t support-bot .   # the same service as a container (CI does this on every push)
 python agent.py                 # same agent, in the terminal
 python -m rag.index -q "ISA"    # inspect retrieval: both methods' ranks and scores
 pip install -r requirements-dev.txt
@@ -834,6 +871,8 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `tests/` | 403 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `api.py` | FastAPI service — `/chat`, `/sessions/{id}`, `/health`, `/ready`, OpenAPI docs at `/docs` |
+| `Dockerfile` / `.dockerignore` | The service as a container: model and index baked in, non-root, health-checked, allow-listed contents |
+| `scripts/container_smoke_test.sh` | Starts the image and checks the service in it, with no model call and no secret; run by CI |
 | `requirements.txt` / `requirements.lock` | Direct dependencies / every resolved dependency |
 
 The intermediate build stages that show how each guard arose are preserved in the
@@ -866,7 +905,10 @@ working tree because nothing runs or tests them.
    tokens on every call — tokens per case rose from 6,335 to 8,040 between
    the two runs — and they are identical from call to call, which is what
    prompt caching is for.
-3. **A container**: a Docker image built and smoke-tested in CI.
+3. **A smaller image.** The container carries Gradio because the web
+   interface and the service share `requirements.txt`; splitting the
+   service's dependencies out would shrink it, at the cost of a second list
+   to keep in step.
 4. **Persist the audit trail**, so escalation rates, `NO_MATCH` rates and
    rewrite frequency become monitorable metrics rather than terminal output.
 5. **A cross-encoder reranker**, measured on the same labelled set against the
