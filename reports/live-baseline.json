@@ -1,0 +1,4180 @@
+{
+  "generated": "2026-10-22T19:07:44Z",
+  "models": {
+    "main": "claude-sonnet-5-5",
+    "helper": "claude-haiku-5-5"
+  },
+  "agent_impl": "loop",
+  "settings": {
+    "main_model": "claude-sonnet-5-5",
+    "helper_model": "claude-haiku-5-5",
+    "main_effort": "low",
+    "helper_effort": "low",
+    "main_max_tokens": 4096,
+    "helper_max_tokens": 2048,
+    "agent_impl": "loop",
+    "max_steps": 8,
+    "retrieval_mode": "hybrid",
+    "relevance_floor": 0.15,
+    "dense_floor": 0.5,
+    "candidates": 6,
+    "top_k": 3,
+    "use_rerank": true,
+    "verify_answers": true,
+    "check_citations": true,
+    "require_evidence": true,
+    "embedder": "local",
+    "embedding_model": "BAAI/bge-small-en-v1.5",
+    "model_cache": ".models",
+    "index_path": ".index",
+    "qdrant_url": ""
+  },
+  "selection": {
+    "ids": null,
+    "kind": null,
+    "limit": null
+  },
+  "seconds": 1644.2,
+  "summary": {
+    "cases": 169,
+    "errors": [],
+    "behaviour_accuracy": 0.888,
+    "behaviour_by_expected": {
+      "answer": {
+        "n": 131,
+        "accuracy": 0.939,
+        "observed": {
+          "answer": 123,
+          "escalate": 8
+        }
+      },
+      "clarify": {
+        "n": 5,
+        "accuracy": 0.0,
+        "observed": {
+          "escalate": 2,
+          "answer": 3
+        }
+      },
+      "decline": {
+        "n": 4,
+        "accuracy": 0.0,
+        "observed": {
+          "escalate": 2,
+          "answer": 2
+        }
+      },
+      "escalate": {
+        "n": 26,
+        "accuracy": 0.962,
+        "observed": {
+          "escalate": 25,
+          "answer": 1
+        }
+      },
+      "greeting": {
+        "n": 3,
+        "accuracy": 0.667,
+        "observed": {
+          "greeting": 2,
+          "escalate": 1
+        }
+      }
+    },
+    "behaviour_by_kind": {
+      "action": {
+        "n": 1,
+        "accuracy": 1.0
+      },
+      "advice": {
+        "n": 12,
+        "accuracy": 1.0
+      },
+      "ambiguous": {
+        "n": 4,
+        "accuracy": 0.0
+      },
+      "denial": {
+        "n": 8,
+        "accuracy": 0.875
+      },
+      "exact-string": {
+        "n": 6,
+        "accuracy": 1.0
+      },
+      "factual": {
+        "n": 109,
+        "accuracy": 0.936
+      },
+      "greeting": {
+        "n": 3,
+        "accuracy": 0.667
+      },
+      "handoff": {
+        "n": 6,
+        "accuracy": 1.0
+      },
+      "multi-part": {
+        "n": 4,
+        "accuracy": 1.0
+      },
+      "out-of-scope": {
+        "n": 10,
+        "accuracy": 0.6
+      },
+      "status": {
+        "n": 6,
+        "accuracy": 0.667
+      }
+    },
+    "escalation": {
+      "expected": 26,
+      "observed": 38,
+      "precision": 0.658,
+      "recall": 0.962,
+      "missed": [
+        "policy-01"
+      ],
+      "unwanted": [
+        "isa-03",
+        "complaints-03",
+        "planning-03",
+        "access-03",
+        "life-04",
+        "status-05",
+        "scope-03",
+        "scope-04",
+        "scope-06",
+        "ambiguous-02",
+        "fees-13",
+        "client-06",
+        "greeting-03"
+      ]
+    },
+    "answers": {
+      "expected": 131,
+      "correct": 0.916,
+      "facts_missing": {
+        "isa-03": [
+          "18 or over"
+        ],
+        "complaints-03": [
+          "six months"
+        ],
+        "portal-02": [
+          "0117 496 0233"
+        ],
+        "portal-07": [
+          "0117 496 0233"
+        ],
+        "exact-06": [
+          "Manchester"
+        ]
+      },
+      "untouched_by_guards": 0.744
+    },
+    "tools_accuracy": 0.929,
+    "guards": {
+      "citation_remaining": 1,
+      "citation_rewrite": 15,
+      "evidence_failed": 1,
+      "evidence_retry": 3,
+      "factcheck_rewrite": 30,
+      "policy_escalation": 2,
+      "rerank_rejected_all": 7
+    },
+    "warnings": [
+      "life-04"
+    ],
+    "wrong_behaviour": {
+      "isa-03": "expected answer, observed escalate",
+      "complaints-03": "expected answer, observed escalate",
+      "planning-03": "expected answer, observed escalate",
+      "access-03": "expected answer, observed escalate",
+      "life-04": "expected answer, observed escalate",
+      "status-05": "expected clarify, observed escalate",
+      "scope-03": "expected decline, observed escalate",
+      "scope-04": "expected decline, observed escalate",
+      "scope-06": "expected answer, observed escalate",
+      "ambiguous-01": "expected clarify, observed answer",
+      "ambiguous-02": "expected clarify, observed escalate",
+      "ambiguous-03": "expected clarify, observed answer",
+      "fees-13": "expected answer, observed escalate",
+      "client-06": "expected answer, observed escalate",
+      "decline-01": "expected decline, observed answer",
+      "decline-02": "expected decline, observed answer",
+      "status-06": "expected clarify, observed answer",
+      "greeting-03": "expected greeting, observed escalate",
+      "policy-01": "expected escalate, observed answer"
+    },
+    "latency_seconds": {
+      "mean": 9.73,
+      "median": 9.06,
+      "max": 27.26
+    },
+    "tokens": {
+      "input": 936138,
+      "output": 134549,
+      "per_case_mean": 6335
+    }
+  },
+  "rows": [
+    {
+      "id": "isa-01",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "In the 2026/27 tax year, which runs from 6 April 2026 to 5 April 2027, adults aged 18 or over can pay up to \u00a320,000 into ISAs.\n\nYou can split that between cash ISAs, stocks and shares ISAs, innovative finance ISAs and a Lifetime ISA. The Lifetime ISA has its own limit of \u00a34,000. Any unused allowance does not carry forward.\n\nFrom 6 April 2027, investors under 65 will be capped at \u00a312,000 a year for cash ISAs. The overall \u00a320,000 allowance stays the same.\n\nMore detail is in the ISA guide: https://www.fernhillwealth.example/guides/isas/\n\nI can't advise on how you should split your allowance. I can pass you to an adviser if you'd like that.",
+      "seconds": 9.91,
+      "input_tokens": 5506,
+      "output_tokens": 864,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "isa-02",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "The ISA allowance for 2026/27 is \u00a320,000. The tax year runs from 6 April 2026 to 5 April 2027. You must be 18 or over to use it.\n\nYou can split the allowance between cash ISAs, stocks and shares ISAs, innovative finance ISAs and a Lifetime ISA. The Lifetime ISA has its own limit of \u00a34,000. Any unused allowance does not carry forward.\n\nFrom 6 April 2027, investors under 65 will be capped at \u00a312,000 a year in cash ISAs. The overall \u00a320,000 allowance stays the same.\n\nMore detail is at https://www.fernhillwealth.example/guides/isas/",
+      "seconds": 7.51,
+      "input_tokens": 5393,
+      "output_tokens": 779,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "isa-03",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "escalate",
+      "behaviour_ok": false,
+      "facts_ok": false,
+      "missing_facts": [
+        "18 or over"
+      ],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base",
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [],
+      "warning": false,
+      "answer": "I've logged your question with an adviser, who will contact you. You can also phone the switchboard on 0117 496 0100.",
+      "seconds": 13.47,
+      "input_tokens": 7806,
+      "output_tokens": 1123,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "isa-04",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "You can pay up to \u00a34,000 a year into a Lifetime ISA. That counts towards the \u00a320,000 overall ISA allowance. The government adds a 25% bonus, up to \u00a31,000 a year.\n\nYou can open one if you're aged 18 to 39. Withdrawals for any reason other than the permitted ones incur a 25% government charge. The permitted reasons are:\n- Buying a first home costing \u00a3450,000 or less, once the account has been open for at least 12 months.\n- Withdrawing from age 60.\n- Being terminally ill with less than 12 months to live.\n\nMore detail is in the ISA guide: https://www.fernhillwealth.example/guides/isas/",
+      "seconds": 8.68,
+      "input_tokens": 5703,
+      "output_tokens": 832,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "isa-05",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "citation_rewrite"
+      ],
+      "warning": false,
+      "answer": "A Lifetime ISA can be opened by anyone aged 18 to 39. I can't tell you which other product might suit you, because that would be advice. I can escalate this to an adviser if you'd like.\n\nYou can read more at https://www.fernhillwealth.example/guides/isas/",
+      "seconds": 10.36,
+      "input_tokens": 6906,
+      "output_tokens": 632,
+      "error": null,
+      "notes": [
+        "rewritten after citation check"
+      ]
+    },
+    {
+      "id": "isa-06",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "The changes take effect from 6 April 2027:\n\n- Investors under 65 can pay a maximum of \u00a312,000 into cash ISAs each tax year. The overall \u00a320,000 ISA allowance is unchanged, so the remainder can go into stocks and shares or innovative finance ISAs. Investors aged 65 and over keep a \u00a320,000 cash ISA limit.\n- Transfers from stocks and shares or innovative finance ISAs into cash ISAs will no longer be permitted.\n- A charge will apply to interest paid on cash held inside a stocks and shares or innovative finance ISA.\n- Money already in cash ISAs is not affected by the cap.\n\nSource: https://www.fernhillwealth.example/guides/isas/\n\nI can't say how this affects your own situation. For that, I can pass you to an adviser.",
+      "seconds": 11.46,
+      "input_tokens": 5341,
+      "output_tokens": 1304,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "isa-07",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "citation_rewrite"
+      ],
+      "warning": false,
+      "answer": "The evidence says that investors under the age of 65 will have their cash ISA payments capped at \u00a312,000 each tax year. It also says that investors aged 65 and over keep a \u00a320,000 cash ISA limit. These changes are listed under \"Changes from 6 April 2027\".\n\nI can't tell you your own position beyond that. If you want advice on what to do, I can escalate your question.\n\nSource: https://www.fernhillwealth.example/guides/isas/",
+      "seconds": 13.22,
+      "input_tokens": 6424,
+      "output_tokens": 1288,
+      "error": null,
+      "notes": [
+        "rewritten after citation check"
+      ]
+    },
+    {
+      "id": "isa-08",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Under HM Revenue & Customs' guidelines, transfers between cash ISAs should take no longer than 15 working days. Other ISA transfers should take no longer than 30 calendar days. Re-registering holdings in specie can take longer if fund managers are slow to respond.\n\nThe receiving provider starts the transfer. Use their transfer process rather than withdrawing the money, or the ISA may lose its tax status. We don't charge for transfers in or out.\n\nMore detail is in the ISA guide: https://www.fernhillwealth.example/guides/isas/",
+      "seconds": 7.4,
+      "input_tokens": 5849,
+      "output_tokens": 735,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "isa-09",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "citation_rewrite"
+      ],
+      "warning": false,
+      "answer": "Yes. The ISA guide says: \"money withdrawn during a tax year can be replaced in the same tax year without using more of your allowance.\" This applies to our stocks and shares ISA, which it describes as flexible.\n\nThe source is https://www.fernhillwealth.example/guides/isas/",
+      "seconds": 8.44,
+      "input_tokens": 5680,
+      "output_tokens": 606,
+      "error": null,
+      "notes": [
+        "rewritten after citation check"
+      ]
+    },
+    {
+      "id": "isa-10",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Yes, in effect. A surviving spouse or civil partner is entitled to an additional permitted subscription equal to the value of the deceased's ISAs. This is on top of their own allowance. It applies whether or not they inherit the investments themselves.\n\nThe ISA also stays tax-free as a continuing account of a deceased investor for up to three years while the estate is administered.\n\nI can't advise on your own circumstances. If you'd like that, I can pass you to an adviser.",
+      "seconds": 8.5,
+      "input_tokens": 6010,
+      "output_tokens": 719,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "pension-01",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "The pension annual allowance is \u00a360,000. If the total paid into your pensions in a tax year goes over it, an annual allowance charge is normally due. The total includes employer contributions and the value of any defined benefit accrual.\n\n- **Tapering:** For high earners, the allowance tapers down to a minimum of \u00a310,000.\n- **Carry forward:** You can carry forward unused allowance from the previous three tax years. This only applies if you were a member of a registered pension scheme in those years.\n- **Money purchase annual allowance:** Once you've taken taxable income flexibly from a defined contribution pension, a \u00a310,000 money purchase annual allowance applies to further defined contribution contributions.\n\nMore detail is in the pensions guide: https://www.fernhillwealth.example/guides/pensions/\n\nI can't say how this applies to your own situation. I can pass you to an adviser if you'd like that.",
+      "seconds": 8.21,
+      "input_tokens": 5665,
+      "output_tokens": 749,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "pension-02",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "The information I found doesn't say directly whether you can still pay in. It says that once you have taken taxable income flexibly from a defined contribution pension, the money purchase annual allowance of \u00a310,000 applies to further defined contribution contributions.\n\nIt also says your own contributions receive tax relief up to 100% of your relevant UK earnings in the tax year, or \u00a33,600 gross if your earnings are lower. Basic-rate relief is added to the pension automatically. Higher- and additional-rate taxpayers claim the extra relief through their tax return. The source is the pensions guide: https://www.fernhillwealth.example/guides/pensions/\n\nI don't know how this applies to your situation, so I'm escalating it to an adviser.",
+      "seconds": 13.53,
+      "input_tokens": 6448,
+      "output_tokens": 1546,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "pension-03",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Up to 25% of a pension can normally be taken tax free. This is subject to the lump sum allowance of \u00a3268,275 across all your pensions. Lump sums above the allowance are taxed at your marginal rate.\n\nSource: https://www.fernhillwealth.example/guides/pensions/\n\nI can't tell you how much you could take in your own case. That needs a qualified adviser. Would you like me to pass your question to one?",
+      "seconds": 8.79,
+      "input_tokens": 4749,
+      "output_tokens": 823,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "pension-04",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "For a defined contribution pension, you can start drawing from age 55. This rises to 57 from 6 April 2028. You can use flexi-access drawdown, buy an annuity, take lump sums, or combine these. Each has different tax consequences.\n\nWhen you apply to access a pension, we will refer you to Pension Wise and offer to book a free guidance appointment. We won't do this if you've already had one or have received regulated advice. This is general information, not personal advice. More detail is on our pensions guide: https://www.fernhillwealth.example/guides/pensions/",
+      "seconds": 8.13,
+      "input_tokens": 5627,
+      "output_tokens": 684,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "pension-05",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Yes. If the transfer value is more than \u00a330,000, the law requires you to take appropriate independent advice before the transfer can proceed. The advice must come from a firm with Financial Conduct Authority permission to advise on pension transfers. Fernhill Wealth holds that permission.\n\nThe Financial Conduct Authority expects advisers to start from the assumption that a transfer will not be suitable. Fernhill recommends one only where it can show the transfer is clearly in your interest.\n\nI can't advise on your own situation. If you'd like advice on a specific transfer, I can pass you to an adviser.\n\nSource: https://www.fernhillwealth.example/guides/pensions/",
+      "seconds": 8.61,
+      "input_tokens": 5658,
+      "output_tokens": 928,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "pension-06",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "From 6 April 2027, most unused pension funds and death benefits will be included in the value of your estate for inheritance tax. Benefits passing to a spouse or civil partner, or to a registered charity, remain exempt. Dependants' scheme pensions and death-in-service benefits are outside the new rules.\n\nIf you die before age 75, benefits are normally paid free of income tax, within the lump sum and death benefit allowance of \u00a31,073,100. If you die at or after 75, the recipient pays income tax at their marginal rate.\n\nI don't know how this applies to your own circumstances, and I can't give financial advice. I can escalate your question to an adviser if you'd like.\n\nSource: https://www.fernhillwealth.example/guides/pensions/",
+      "seconds": 19.89,
+      "input_tokens": 6949,
+      "output_tokens": 1394,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "pension-07",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "Here is a corrected version, using only what the tool result says.\n\nThe pensions guide says your own contributions receive tax relief up to 100% of your relevant UK earnings in the tax year, or \u00a33,600 gross if your earnings are lower. It also says basic-rate relief is added to the pension automatically. The guide doesn't specifically address someone with no earnings, so I can't confirm how it applies to you.\n\nI can pass your question to an adviser who can confirm this. Source: https://www.fernhillwealth.example/guides/pensions/",
+      "seconds": 12.09,
+      "input_tokens": 5902,
+      "output_tokens": 1070,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "pension-08",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Yes, in general. Unused annual allowance from the previous three tax years can be carried forward, provided you were a member of a registered pension scheme in those years.\n\nThe annual allowance is \u00a360,000. For high earners it tapers down to a minimum of \u00a310,000. I can't say how much you could carry forward, because that depends on your own circumstances. I can pass you to an adviser if you'd like that worked out. More detail is at https://www.fernhillwealth.example/guides/pensions/",
+      "seconds": 9.02,
+      "input_tokens": 4925,
+      "output_tokens": 767,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "fees-01",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Fernhill Wealth charges these fees for initial financial planning:\n\n- **Full financial plan:** \u00a32,400, plus VAT where it applies. It covers a review of your whole financial position, a written plan with recommendations, and a meeting to go through it.\n- **One-off advice on a single topic:** \u00a31,200, plus VAT where it applies. One example is how to use allowances before the end of the tax year.\n\nFernhill is paid by fees agreed in advance, not by commission. The fees are confirmed in writing in your client agreement before any work begins. You can see the full fee schedule at https://www.fernhillwealth.example/fees-and-charges/",
+      "seconds": 9.11,
+      "input_tokens": 5013,
+      "output_tokens": 860,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "fees-02",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Ongoing advice is charged at 0.75% a year of the assets under advice, collected monthly from your accounts. It covers your annual review meeting, access to your adviser throughout the year, rebalancing recommendations and the quarterly reports.\n\nIf you also have discretionary investment management, that fee applies as well. Your client agreement sets out the combined cost. More detail is on the fees and charges page: https://www.fernhillwealth.example/fees-and-charges/",
+      "seconds": 9.06,
+      "input_tokens": 4969,
+      "output_tokens": 837,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "fees-03",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "citation_rewrite"
+      ],
+      "warning": false,
+      "answer": "Fernhill Wealth's discretionary management fee is tiered and subject to VAT:\n\n- 0.60% a year on the first \u00a31,000,000.\n- 0.45% a year on the portion between \u00a31,000,000 and \u00a33,000,000.\n- 0.30% a year on the portion above \u00a33,000,000.\n\nI have not given a pound total for a \u00a32m portfolio, because the figures I looked up do not include one. Where we provide both ongoing advice and discretionary management, both fees apply. Your client agreement sets out the combined cost. Custody costs 0.15% a year. Details are on the Fees and charges page: https://www.fernhillwealth.example/fees-and-charges/",
+      "seconds": 14.48,
+      "input_tokens": 6617,
+      "output_tokens": 1321,
+      "error": null,
+      "notes": [
+        "rewritten after citation check"
+      ]
+    },
+    {
+      "id": "fees-04",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "It depends on the account type.\n\n- **Model portfolios:** There are no dealing charges. That includes when holdings are sold to pay a withdrawal or to close an account.\n- **Advisory accounts:** Individual share trades cost \u00a312.50 each.\n\nCustody of your assets by our custodian costs 0.15% a year. More details are at https://www.fernhillwealth.example/fees-and-charges/",
+      "seconds": 11.1,
+      "input_tokens": 5711,
+      "output_tokens": 1196,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "fees-05",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "It depends on the service:\n\n- Advice that leads to us arranging a product or investment for you is exempt from VAT.\n- Stand-alone advice is subject to VAT at the standard rate.\n- Discretionary investment management is also subject to VAT at the standard rate.\n\nYour client agreement states which of your fees carry VAT. More detail is on the Fees and charges page: https://www.fernhillwealth.example/fees-and-charges/",
+      "seconds": 8.74,
+      "input_tokens": 5288,
+      "output_tokens": 612,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "fees-06",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "No. Fernhill Wealth is paid by fees agreed with you in advance, and we do not receive commission from product providers. The fees are confirmed in writing in your client agreement and services and costs disclosure before any work starts.\n\nYou can see the standard rates on our Fees and Charges page: https://www.fernhillwealth.example/fees-and-charges/",
+      "seconds": 7.26,
+      "input_tokens": 4953,
+      "output_tokens": 589,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "fees-07",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Our discretionary investment management service is designed for portfolios of \u00a3250,000 or more. Financial planning is available at any level of wealth.\n\nSource: https://www.fernhillwealth.example/fees-and-charges/",
+      "seconds": 7.33,
+      "input_tokens": 4557,
+      "output_tokens": 301,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "fees-08",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "No, there's no charge to close your account or transfer to another provider. You can do either at any time.\n\nThere are also no dealing charges on our model portfolios, including when holdings are sold to close an account. Individual share trades on advisory accounts cost \u00a312.50 each. I can't tell from this whether that applies to your account.\n\nMore details: https://www.fernhillwealth.example/client-support/closing-or-transferring/",
+      "seconds": 8.43,
+      "input_tokens": 4676,
+      "output_tokens": 784,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "fees-09",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "The funds we invest in have their own charges. The fund managers set these, and they're deducted within the fund. Across our model portfolios, the average ongoing fund charge was 0.21% a year at 30 June 2026.\n\nEach April we send every client a statement. It shows all the charges paid in the previous year in pounds, including our fees, custody, dealing and fund charges. It also shows the effect they have had on the return of your portfolio. More detail is at https://www.fernhillwealth.example/fees-and-charges/",
+      "seconds": 7.64,
+      "input_tokens": 4796,
+      "output_tokens": 677,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "complaints-01",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "You can complain by letter, telephone, email or in person. You can raise it with anyone in the firm. The Client Resolution team can be reached:\n\n- Email: complaints@fernhillwealth.example\n- Telephone: 0117 496 0355, 09:00 to 17:30 on working days\n- Post: Client Resolution, Fernhill Wealth, Fernhill House, 22 Harbourside Walk, Bristol, BS1 5XY\n\nMaking a complaint is free and won't affect the service you receive. If someone is complaining for you, we need your written permission before we can discuss your affairs with them.\n\nAfter you complain, we write to you in one of two ways. If we resolve it within three working days, we send a summary resolution letter. Otherwise, we acknowledge it in writing within five working days and tell you who is handling it. More details are at https://www.fernhillwealth.example/complaints/",
+      "seconds": 9.73,
+      "input_tokens": 5799,
+      "output_tokens": 835,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "complaints-02",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "The complaints process has these timeframes:\n\n- If we can resolve your complaint within three working days, we confirm that in a summary resolution letter.\n- Otherwise, we acknowledge your complaint in writing within five working days and tell you who is handling it.\n- If we can't finish investigating within eight weeks of receiving your complaint, we write to explain the delay. That letter says when we expect to respond and explains your right to go to the Financial Ombudsman Service without waiting.\n\nIf you're unhappy with our final response, or if eight weeks pass without one, you can refer the matter to the Financial Ombudsman Service free of charge. You must do so within six months of the date of our final response. More detail is at https://www.fernhillwealth.example/complaints/\n\nIf you want to raise a complaint now, I can pass it to an adviser.",
+      "seconds": 9.97,
+      "input_tokens": 5607,
+      "output_tokens": 1082,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "complaints-03",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "escalate",
+      "behaviour_ok": false,
+      "facts_ok": false,
+      "missing_facts": [
+        "six months"
+      ],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base",
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [],
+      "warning": false,
+      "answer": "I'm sorry you're unhappy with the response. I've passed your complaint to a qualified adviser, who will contact you. You can also call the switchboard on 0117 496 0100.\n\nYou can also contact the Client Resolution team directly:\n- Email: complaints@fernhillwealth.example\n- Telephone: 0117 496 0355, 09:00 to 17:30 on working days\n- Post: Client Resolution, Fernhill Wealth, Fernhill House, 22 Harbourside Walk, Bristol, BS1 5XY\n\nMaking a complaint is free and won't affect the service you receive. When we send a final response letter, it comes with the Financial Ombudsman Service's leaflet.",
+      "seconds": 8.87,
+      "input_tokens": 7998,
+      "output_tokens": 760,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "complaints-04",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "The Financial Ombudsman Service's telephone numbers are 0800 023 4567 and 0300 123 9123.\n\nIts website is www.financial-ombudsman.org.uk.",
+      "seconds": 5.48,
+      "input_tokens": 5025,
+      "output_tokens": 303,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "complaints-05",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "citation_rewrite"
+      ],
+      "warning": false,
+      "answer": "The Ombudsman can normally consider a complaint made within six years of the event, or within three years of when you became aware, or ought reasonably to have become aware, that you had cause to complain, whichever is later. If you are unsure whether a complaint is in time, contact us anyway.\n\nThe source page is:\nhttps://www.fernhillwealth.example/complaints/",
+      "seconds": 12.4,
+      "input_tokens": 5897,
+      "output_tokens": 814,
+      "error": null,
+      "notes": [
+        "rewritten after citation check"
+      ]
+    },
+    {
+      "id": "contact-01",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Yes, we have a Manchester office at Suite 3, Peterloo Buildings, 41 Mosley Street, Manchester, M2 3ZX. The telephone number is 0161 496 0170, and the nearest tram stop is St Peter's Square.\n\nOffices are open 09:00 to 17:30, Monday to Friday, and are closed at weekends and on bank holidays. Visits are by appointment so that the right adviser is available for you.\n\nMore details are at https://www.fernhillwealth.example/contact-us/",
+      "seconds": 7.88,
+      "input_tokens": 4935,
+      "output_tokens": 803,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "contact-02",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Our head office is in Bristol: Fernhill House, 22 Harbourside Walk, Bristol, BS1 5XY. The telephone number is 0117 496 0100. It's a short walk from Temple Meads station. The nearest car park is Harbourside Multi-Storey.\n\nMore details are at https://www.fernhillwealth.example/contact-us/",
+      "seconds": 7.66,
+      "input_tokens": 4963,
+      "output_tokens": 381,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "contact-03",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "The nearest stations to our London office are Moorgate and Bank. The office is at Fourth Floor, 18 Moorgate Court, London, EC2R 6ZX. You can phone it on 020 7946 0150.\n\nMore details are at https://www.fernhillwealth.example/contact-us/",
+      "seconds": 6.38,
+      "input_tokens": 4318,
+      "output_tokens": 365,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "contact-04",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "The main switchboard (0117 496 0100) is open 08:30 to 18:00, Monday to Friday. It is closed on bank holidays.\n\nMore details are on the contact us page: https://www.fernhillwealth.example/contact-us/",
+      "seconds": 6.21,
+      "input_tokens": 5055,
+      "output_tokens": 428,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "contact-05",
+      "kind": "denial",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "No. Our offices are closed at weekends, so you can't visit on a Sunday. They're open 09:00 to 17:30, Monday to Friday, and closed on bank holidays. Visits are by appointment so that the right adviser is available for you.\n\nMore details are on our Contact us page: https://www.fernhillwealth.example/contact-us/",
+      "seconds": 7.97,
+      "input_tokens": 4642,
+      "output_tokens": 750,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "contact-06",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Yes. The new client enquiry line is 0808 157 0450. It's free from UK landlines and mobiles. It's open 09:00 to 17:30 on working days unless stated otherwise.\n\nYou can also book a free introductory appointment by calling that number or using the Book an Appointment page.",
+      "seconds": 7.01,
+      "input_tokens": 5484,
+      "output_tokens": 486,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "contact-07",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Please address post to: Fernhill Wealth, Fernhill House, 22 Harbourside Walk, Bristol, BS1 5XY. Mark the envelope for the attention of your adviser or the relevant team.\n\nMore details are at https://www.fernhillwealth.example/contact-us/",
+      "seconds": 7.6,
+      "input_tokens": 4620,
+      "output_tokens": 449,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "contact-08",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Yes. Fernhill Wealth has an office in Edinburgh. The firm has six offices across England and Scotland. The others are in Bristol (head office), London, Manchester, Leeds and Birmingham.\n\nI don't have an address or phone number for the Edinburgh office. Source: https://www.fernhillwealth.example/about-us/",
+      "seconds": 7.59,
+      "input_tokens": 4571,
+      "output_tokens": 430,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "portal-01",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Use the \"Forgotten password\" link on the login page. A reset link is emailed to the address we hold, and it is valid for 30 minutes.\n\nFive incorrect attempts lock the account for 30 minutes. If you are still locked out after that, call the portal access helpline on 0117 496 0233, 09:00 to 17:30 on working days.\n\nMore detail is at https://www.fernhillwealth.example/client-support/portal/",
+      "seconds": 6.67,
+      "input_tokens": 5099,
+      "output_tokens": 508,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "portal-02",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": false,
+      "missing_facts": [
+        "0117 496 0233"
+      ],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "citation_rewrite"
+      ],
+      "warning": false,
+      "answer": "I've removed the helpline number, its opening hours and the web address. They came from my earlier lookup, but I haven't re-checked them this turn, so I can't confirm them here.\n\nFive incorrect attempts lock the account for 30 minutes. If you're still locked out after that, contact the portal access helpline. If you've forgotten your password, use the Forgotten password link on the login page. If you've changed your phone number, the helpline can re-register your device and will ask you to confirm your identity.\n\nFor the helpline's contact details, see the \"Using the client portal\" page in the Fernhill client support section. I can look them up again if you'd like.",
+      "seconds": 15.96,
+      "input_tokens": 6206,
+      "output_tokens": 1326,
+      "error": null,
+      "notes": [
+        "rewritten after citation check"
+      ]
+    },
+    {
+      "id": "portal-03",
+      "kind": "denial",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "No. Two-step verification can't be switched off. You log in with your email address, your password and a six-digit code. The code comes from your authenticator app or is sent by text message.\n\nMore details are on the client portal support page: https://www.fernhillwealth.example/client-support/portal/",
+      "seconds": 8.32,
+      "input_tokens": 4490,
+      "output_tokens": 682,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "portal-04",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "You can see transactions for the last seven years in the client portal.\n\nMore information is here: https://www.fernhillwealth.example/client-support/portal/",
+      "seconds": 7.73,
+      "input_tokens": 4529,
+      "output_tokens": 288,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "portal-05",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Secure messages to and from your adviser get \"a reply within two working days\", according to our client portal information.\n\nMore detail is on the client portal page: https://www.fernhillwealth.example/client-support/portal/",
+      "seconds": 6.91,
+      "input_tokens": 4719,
+      "output_tokens": 337,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "admin-01",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "You can change your address in the client portal under My Details, or by sending a secure message.\n\nMore information is at https://www.fernhillwealth.example/client-support/",
+      "seconds": 7.2,
+      "input_tokens": 4536,
+      "output_tokens": 332,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "admin-02",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "A change of name needs one of the following: a certified copy of the marriage or civil partnership certificate, a deed poll, or the final order of divorce or dissolution (called a decree absolute for divorces completed before April 2022) together with your birth certificate.\n\nThe evidence doesn't say how to submit these documents, or whether a name change can be sent by secure message. It only says that changes of address, telephone number or email can be made in the client portal under My Details, or by secure message. For how to submit them, I'd suggest contacting the team directly. More information is at https://www.fernhillwealth.example/client-support/",
+      "seconds": 11.88,
+      "input_tokens": 5693,
+      "output_tokens": 1047,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "admin-03",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "For a general investment account or ISA:\n\n- **Cash already available:** we pay within five working days of your instruction.\n- **Holdings need selling first:** sales normally settle within two working days of dealing. We then pay within five working days of settlement.\n\nPension withdrawals depend on your age and the type of pension, and tax may be payable. The Pensions page explains the options.\n\nIf you'd like advice on what to withdraw, I can pass you to an adviser.",
+      "seconds": 7.2,
+      "input_tokens": 5379,
+      "output_tokens": 495,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "admin-04",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Valuation reports are issued quarterly. They're published to the client portal within 15 working days of the end of March, June, September and December.\n\nYou can also ask your adviser's team for a valuation as at any date. It is normally available within two working days.",
+      "seconds": 6.93,
+      "input_tokens": 5210,
+      "output_tokens": 450,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "admin-05",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "citation_rewrite"
+      ],
+      "warning": false,
+      "answer": "To change the bank account we pay withdrawals to, a signed instruction and a recent statement for the new account showing your name are needed. We confirm the change with you by telephone on the number we hold before it takes effect. Withdrawals are paid only to a bank account in your name that we have verified in this way.\n\nI don't know how to submit these documents, so I can escalate this to a colleague who can tell you. The source for this answer is:\n\nhttps://www.fernhillwealth.example/client-support/",
+      "seconds": 13.75,
+      "input_tokens": 6220,
+      "output_tokens": 1184,
+      "error": null,
+      "notes": [
+        "rewritten after citation check"
+      ]
+    },
+    {
+      "id": "admin-06",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Yes. All documents are published to the portal, but you can have paper copies sent by post at no extra charge. To set this up, ask your adviser's team.\n\nMore details are at https://www.fernhillwealth.example/client-support/",
+      "seconds": 6.68,
+      "input_tokens": 4591,
+      "output_tokens": 434,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "cash-01",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Yes. Interest is paid on cash balances at the rates shown on the portal. We keep a margin of 0.25% a year between the rate we receive and the rate we pay. Your client agreement discloses this margin.\n\nInterest on cash outside an ISA or pension is taxable. It is reported on your annual consolidated tax certificate. From 6 April 2027, a charge will also apply to interest paid on cash held inside a stocks and shares ISA. The ISA guide explains this.\n\nMore detail: https://www.fernhillwealth.example/client-support/cash-and-dealing/",
+      "seconds": 9.76,
+      "input_tokens": 5322,
+      "output_tokens": 1048,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "cash-02",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "Regular income is paid on the 25th of the month to your verified bank account.\n\nYou can take a regular income from a general investment account or ISA monthly, quarterly or annually. Income can come from the natural income of the portfolio, from selling holdings, or both; your adviser will discuss which approach suits you.\n\nSource: https://www.fernhillwealth.example/client-support/cash-and-dealing/",
+      "seconds": 10.02,
+      "input_tokens": 5527,
+      "output_tokens": 951,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "cash-03",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "The smallest regular contribution you can set up by direct debit is \u00a3250 a month. Contributions are invested in line with your agreed portfolio on the next dealing day after receipt.\n\nSource: https://www.fernhillwealth.example/client-support/cash-and-dealing/",
+      "seconds": 5.98,
+      "input_tokens": 4496,
+      "output_tokens": 409,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "cash-04",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Fund sales are placed at the fund's next valuation point and settle within four working days. Money from a sale can be paid out once settlement has taken place.\n\nIf you also want to withdraw the money, the withdrawal rules for a general investment account or ISA say that sales normally settle within two working days of dealing. They also say we pay within five working days of settlement. The documents give two different settlement times, so I can't give you an exact date. I also can't see your own trade. If you need a firm date, I can pass this to an adviser.",
+      "seconds": 9.62,
+      "input_tokens": 5668,
+      "output_tokens": 1082,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "tax-01",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "The annual exempt amount for capital gains tax is \u00a33,000. It applies to gains on investments sold in a general investment account.\n\nGains above that amount on shares and funds are taxed at 18% or 24%, depending on your total taxable income. Losses can be set against gains in the same year. They can also be carried forward if you report them to HMRC.\n\nIncome and gains within an ISA or pension are free of UK income tax and capital gains tax.\n\nSource: https://www.fernhillwealth.example/guides/tax/\n\nIf you want advice on your own situation, I can pass you to an adviser.",
+      "seconds": 9.01,
+      "input_tokens": 5369,
+      "output_tokens": 895,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "tax-02",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Outside an ISA, dividends are tax-free up to the dividend allowance of \u00a3500 a year. Above that, they're taxed at:\n- 10.75% for basic-rate taxpayers\n- 35.75% for higher-rate taxpayers\n- 39.35% for additional-rate taxpayers\n\nThis is general information for the 2026/27 tax year, not personal advice. Source: https://www.fernhillwealth.example/guides/tax/\n\nIf you want to know how this applies to your own situation, I can pass you to an adviser.",
+      "seconds": 9.28,
+      "input_tokens": 4821,
+      "output_tokens": 746,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "tax-03",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Fernhill publishes the consolidated tax certificate to the client portal by the end of May each year. It shows dividends, interest and tax deducted for the tax year.\n\nIf you want details about your own certificate, I can pass your question to an adviser.\n\nSource: https://www.fernhillwealth.example/guides/tax/",
+      "seconds": 7.6,
+      "input_tokens": 5329,
+      "output_tokens": 559,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "tax-04",
+      "kind": "denial",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "No, we don't complete tax returns. We do provide documents you can use to fill one in:\n\n- A consolidated tax certificate, published to the portal by the end of May each year. It shows dividends, interest and tax deducted for the tax year.\n- A capital gains report. It shows realised gains and losses and the figures needed for the capital gains pages of a tax return.\n\nIf you need an accountant, your adviser can introduce you to one. More detail is at https://www.fernhillwealth.example/guides/tax/",
+      "seconds": 9.68,
+      "input_tokens": 4654,
+      "output_tokens": 807,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "tax-05",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base",
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "A Bed and ISA means selling holdings in a general investment account and buying them back within an ISA. It uses your ISA allowance and may realise a capital gain.\n\nThere is no dealing charge for a Bed and ISA on our model portfolios. I don't have information on costs for anything outside the model portfolios. I also can't say whether it suits your circumstances, so your adviser is the right person to ask. More detail is at https://www.fernhillwealth.example/guides/tax/",
+      "seconds": 12.19,
+      "input_tokens": 6659,
+      "output_tokens": 1059,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "transfer-01",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Pension transfers typically take four to eight weeks. The receiving scheme carries out the checks required by the pension transfer regulations. It may require you to take guidance from MoneyHelper if those checks raise an amber flag.\n\nThe receiving provider starts the transfer. Once we receive their request, we keep you informed through the portal at each stage.\n\nMore detail: https://www.fernhillwealth.example/client-support/closing-or-transferring/",
+      "seconds": 7.86,
+      "input_tokens": 5177,
+      "output_tokens": 835,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "transfer-02",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "The new provider starts the transfer. Once we receive their request, the transfer goes ahead.\n\nTo keep the ISA's tax status, make the transfer through the new provider's transfer process. Don't withdraw the money yourself. We don't charge for transfers in or out.\n\nUnder HM Revenue & Customs' guidelines, transfers between cash ISAs should take no longer than 15 working days. Other ISA transfers should take no longer than 30 calendar days. Re-registering holdings in specie can take longer if fund managers are slow to respond.",
+      "seconds": 10.2,
+      "input_tokens": 5717,
+      "output_tokens": 693,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "transfer-03",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Yes. Your documents stay available in the portal for seven years after the account closes. You can ask for paper copies at any time, and there's no charge for them.\n\nYou can arrange paper copies by asking your adviser's team. More detail is at https://www.fernhillwealth.example/client-support/closing-or-transferring/",
+      "seconds": 7.44,
+      "input_tokens": 4575,
+      "output_tokens": 427,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "invest-01",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "**Discretionary:** You agree an investment mandate and risk level with us. Our investment managers then make the day-to-day decisions within that mandate.\n\n**Advisory:** We recommend changes, and you decide whether to make each one.\n\nWhich one suits you depends on how involved you want to be in individual decisions. Your adviser will discuss both with you, and the choice is recorded in your suitability report. For corporate actions such as rights issues, takeovers or fund mergers, we handle them for you under a discretionary mandate. Under an advisory mandate, we write to you with the options.\n\nMore detail is at https://www.fernhillwealth.example/services/investment-management/\n\nIf you want to know which service is right for you, I can pass you to an adviser.",
+      "seconds": 8.17,
+      "input_tokens": 5536,
+      "output_tokens": 724,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "invest-02",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Portfolios are managed to one of seven risk profiles. Profile 1 is the lowest risk, mainly cash and short-dated bonds. Profile 7 is the highest risk, almost entirely equities.\n\nYou agree your profile with your adviser. You do this through a questionnaire and a conversation about your capacity for loss. It is reviewed at every annual review. I can't advise on which profile suits you. If you'd like that advice, I can pass you to an adviser.\n\nSource: https://www.fernhillwealth.example/services/investment-management/",
+      "seconds": 9.78,
+      "input_tokens": 4606,
+      "output_tokens": 662,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "invest-03",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "For a discretionary portfolio, the information I found says: \"we tell you by the end of the working day on which it happens, as the rules require.\" This applies if its value falls by 10% or more since the start of a quarterly reporting period.\n\nThe quarterly valuation report is published to the client portal within 15 working days of each quarter end. Your investment manager is available to discuss any report. I don't have information on how this applies to other portfolio types, so I'm unable to confirm that. Source: https://www.fernhillwealth.example/services/investment-management/",
+      "seconds": 14.52,
+      "input_tokens": 5991,
+      "output_tokens": 1307,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "invest-04",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "The knowledge base says your investments are held by our independent custodian through its nominee company. Legal title is registered in the nominee's name, and you remain the beneficial owner.\n\nIt also says your holdings are identified to you in the custodian's records. They are kept separate from the firm's and the custodian's own assets under the Financial Conduct Authority's client assets rules.\n\nSource: https://www.fernhillwealth.example/services/investment-management/",
+      "seconds": 11.1,
+      "input_tokens": 6077,
+      "output_tokens": 1016,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "invest-05",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "Yes. Each risk profile is available in a version that excludes companies deriving more than 10% of revenue from tobacco, controversial weapons or thermal coal, and that applies our published responsible investment policy when selecting funds. Fees are the same as for the standard portfolios. These portfolios do not carry a sustainability label under the FCA's Sustainability Disclosure Requirements.\n\nThe Responsible Investment Policy is \"available on request and on the website\". I don't have a web address for the policy itself. I can't advise on whether this option suits you, so I can escalate that to an adviser if you'd like.",
+      "seconds": 12.02,
+      "input_tokens": 5866,
+      "output_tokens": 1041,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "about-01",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Yes. Fernhill Wealth is covered by the Financial Services Compensation Scheme (FSCS).\n\n- **Investment business:** If we were unable to meet our obligations, eligible clients could claim up to \u00a385,000 per person.\n- **Cash:** Cash held with our deposit-taking partner banks is protected up to \u00a3120,000 per person, per banking licence. Brands within the same banking group may share one licence.\n\nOur documents say details are on the FSCS website. Source: https://www.fernhillwealth.example/about-us/",
+      "seconds": 7.94,
+      "input_tokens": 5389,
+      "output_tokens": 591,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "about-02",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Cash held with our deposit-taking partner banks is protected up to \u00a3120,000 per person, per banking licence. Brands within the same banking group may share one licence.\n\nSeparately, the FSCS covers eligible clients for up to \u00a385,000 per person for investment business if Fernhill Wealth couldn't meet its obligations.\n\nThe documents say further details are on the FSCS website, but they don't give its address. Source: https://www.fernhillwealth.example/about-us/\n\nI can't say how this applies to your own money. If you'd like that looked at, I can pass you to an adviser.",
+      "seconds": 10.0,
+      "input_tokens": 4964,
+      "output_tokens": 862,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "about-03",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "We have six offices across England and Scotland. They are in Bristol (head office), London, Manchester, Edinburgh, Leeds and Birmingham.\n\nAdvisers at every office are also available for telephone and video meetings. More details are at https://www.fernhillwealth.example/contact-us/",
+      "seconds": 7.32,
+      "input_tokens": 4895,
+      "output_tokens": 534,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "about-04",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Yes. Fernhill Wealth is a trading name of Fernhill Wealth Limited, which is authorised and regulated by the Financial Conduct Authority. You can check our authorisation on the Financial Services Register at register.fca.org.uk.\n\nFernhill Wealth Limited is registered in England and Wales. Its registered office is Fernhill House, 22 Harbourside Walk, Bristol, BS1 5XY.",
+      "seconds": 6.73,
+      "input_tokens": 5911,
+      "output_tokens": 444,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "about-05",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Fernhill Wealth gives independent advice. The firm considers products from across the whole market and isn't restricted to any provider's range.\n\nYou can read more on the financial planning service page: https://www.fernhillwealth.example/services/financial-planning/",
+      "seconds": 6.97,
+      "input_tokens": 4396,
+      "output_tokens": 556,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "planning-01",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "The first meeting is a free introductory appointment. It lasts about 45 minutes, carries no charge and no obligation, and can take place at any of our six offices, by telephone or by video call. At it, we explain how we work, what our services cost, and whether we think we can help. You do not need to bring anything.\n\nIf we both decide to go ahead, we send a client agreement setting out the agreed work and fees before anything is charged. To book, use the Book an Appointment page or call the new client enquiry line on 0808 157 0450.\n\nFor a planning meeting, it helps to have recent statements for any pensions, investments, mortgages and insurance policies, and an idea of your income and regular outgoings. I can't tell you from the information I have whether that applies to the introductory meeting beyond the point above that you don't need to bring anything.",
+      "seconds": 11.66,
+      "input_tokens": 7206,
+      "output_tokens": 1429,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "planning-02",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "The written plan is usually presented at a second meeting, about three to four weeks after the discovery meeting. That is the usual timing, not a guarantee.\n\nSource: https://www.fernhillwealth.example/services/financial-planning/",
+      "seconds": 6.17,
+      "input_tokens": 4610,
+      "output_tokens": 401,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "planning-03",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "escalate",
+      "behaviour_ok": false,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base",
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [],
+      "warning": false,
+      "answer": "Yes. Fernhill Wealth offers one-off advice on a single topic, such as whether to consolidate pensions. It follows the same process as full advice on a smaller scale, and the advice is confirmed in a suitability report. More details are on the financial planning page: https://www.fernhillwealth.example/services/financial-planning/\n\nI can't advise on your own pensions myself, so I've passed your request to a qualified adviser, who will contact you. You can also ring the switchboard on 0117 496 0100. If any of your pensions are defined benefit (final salary) schemes with a transfer value over \u00a330,000, the law requires you to take independent advice before a transfer can go ahead.",
+      "seconds": 9.59,
+      "input_tokens": 5872,
+      "output_tokens": 972,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "appt-01",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base",
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "You can book through the Book an Appointment page (https://www.fernhillwealth.example/book-an-appointment/). You can also call the new client enquiry line on 0808 157 0450.\n\nThe introductory meeting costs nothing and carries no obligation. It lasts about 45 minutes. You can have it at any of our six offices, by telephone or by video call. You don't need to bring anything.",
+      "seconds": 12.27,
+      "input_tokens": 7074,
+      "output_tokens": 1123,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "appt-02",
+      "kind": "denial",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "All offices are open 09:00 to 17:30, Monday to Friday. Offices are closed at weekends and on bank holidays.\n\nI don't have any information about your call back request or why 10am was chosen, so I can't say what it means for opening times. For details of your request, I can escalate this to the team. More information is on the Contact us and our offices page: https://www.fernhillwealth.example/contact-us/",
+      "seconds": 12.86,
+      "input_tokens": 5447,
+      "output_tokens": 1007,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "appt-03",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "For a planning meeting, it helps to have:\n\n- Recent statements for any pensions, investments, mortgages and insurance policies.\n- An idea of your income and regular outgoings.\n\nPlease never bring or send passwords or PINs. You don't need to bring anything to an introductory meeting.\n\nMore details are at https://www.fernhillwealth.example/book-an-appointment/",
+      "seconds": 6.88,
+      "input_tokens": 5121,
+      "output_tokens": 511,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "client-01",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "We normally verify your identity electronically from your name, date of birth and address. If that isn't possible, we ask for a passport or driving licence, plus a recent utility bill or bank statement.\n\nFor larger sums, we also ask for evidence of where the money came from. Examples are a completion statement, a sale agreement or a statement from your previous provider.\n\n- **Joint accounts:** each holder needs identity checks.\n- **Trusts:** we need the trust deed and identity checks for each trustee.\n- **Charities:** we need the governing document and details of the trustees or directors.\n\nMore detail is on the becoming a client page: https://www.fernhillwealth.example/becoming-a-client/",
+      "seconds": 10.11,
+      "input_tokens": 5196,
+      "output_tokens": 966,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "client-02",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Once we have your signed client agreement and the identity documents we need, accounts are usually open within five working days. Transfers in from other providers then follow the timescales on the Closing or Transferring page.\n\nMore detail is at https://www.fernhillwealth.example/becoming-a-client/",
+      "seconds": 5.9,
+      "input_tokens": 4663,
+      "output_tokens": 268,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "client-03",
+      "kind": "denial",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "One correction: you told me you are a US citizen, so the evidence does apply to what you've said. Here is a tighter version.\n\nOur information says: \"We are unable to act for persons who are US citizens or US tax residents.\"\n\nI found nothing about exceptions, so I can't say whether any exist. For anything beyond this, you can call the new client enquiry line on 0808 157 0450.",
+      "seconds": 15.98,
+      "input_tokens": 6806,
+      "output_tokens": 1415,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "client-04",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "If your adviser leaves the firm, we introduce you to a new adviser from the same office and your service, fees and investments continue unchanged.\n\nSource: https://www.fernhillwealth.example/becoming-a-client/",
+      "seconds": 9.51,
+      "input_tokens": 5223,
+      "output_tokens": 803,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "security-01",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "Don't give them the code. Fernhill Wealth will never ask you, by phone, email, text or in person, for your full password, your two-step verification codes, your PIN, or your full card details. Anyone who does is not from Fernhill Wealth.\n\nIf someone asks for these while claiming to be from Fernhill, end the conversation and call the switchboard on 0117 496 0100. Use a number you have looked up yourself. Genuine staff will understand and will be happy to wait.\n\nI don't have information on what to do if you have already shared a code.",
+      "seconds": 12.41,
+      "input_tokens": 6805,
+      "output_tokens": 1455,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "security-02",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "You can report fraud to the police through Report Fraud, the national fraud reporting service. Use reportfraud.police.uk or call 0300 123 2040. If you live in Scotland, report to Police Scotland on 101.\n\nIf the fraud involves your Fernhill Wealth account, call the switchboard immediately on 0117 496 0100 and ask for the Fraud and Security team.",
+      "seconds": 6.83,
+      "input_tokens": 5231,
+      "output_tokens": 626,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "security-03",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "We keep client records for seven years after the relationship ends, or longer where regulation requires.\n\nYou can ask for a copy of your data, have inaccurate data corrected, or in some circumstances have it deleted. Send requests to the Data Protection Officer at dpo@fernhillwealth.example, or by post to Fernhill House, 22 Harbourside Walk, Bristol, BS1 5XY.",
+      "seconds": 10.32,
+      "input_tokens": 5587,
+      "output_tokens": 969,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "security-04",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "You have the right to a copy of the personal data we hold about you. We respond to such requests within one month. For complex requests, the law allows an extension of up to two further months, and we will tell you if we need one.\n\nSend your request to the Data Protection Officer at dpo@fernhillwealth.example. You can also post it to Fernhill House, 22 Harbourside Walk, Bristol, BS1 5XY.",
+      "seconds": 9.11,
+      "input_tokens": 5492,
+      "output_tokens": 466,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "security-05",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Yes, calls to and from the firm may be recorded. The recordings are made for regulatory purposes and to help resolve any dispute about an instruction. They are kept for at least five years.\n\nSource: https://www.fernhillwealth.example/security/",
+      "seconds": 5.73,
+      "input_tokens": 4367,
+      "output_tokens": 288,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "access-01",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Yes. Fernhill Wealth provides reports, letters and guides in large print. They're also available in braille, as audio and as accessible PDF.\n\nTo ask for large print, tell your adviser or call the switchboard on 0117 496 0100. There is no charge. Your format preference is recorded, so you won't need to ask again.\n\nMore details are on the accessibility page: https://www.fernhillwealth.example/accessibility/",
+      "seconds": 7.82,
+      "input_tokens": 4466,
+      "output_tokens": 700,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "access-02",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Yes. Video calls with a British Sign Language interpreter can be arranged with one week's notice.\n\nIf visiting an office is difficult, meetings can also be held at your home or by video. You can ask for a particular time of day, a slower pace, or a trusted person to join. If you use Relay UK to phone us, dial 18001 before the number.\n\nMore information is on this page: https://www.fernhillwealth.example/accessibility/",
+      "seconds": 7.26,
+      "input_tokens": 4766,
+      "output_tokens": 613,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "access-03",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "escalate",
+      "behaviour_ok": false,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base",
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [],
+      "warning": false,
+      "answer": "I've passed your request to an adviser, who will contact you. You can also phone the switchboard on 0117 496 0100.",
+      "seconds": 25.96,
+      "input_tokens": 7351,
+      "output_tokens": 607,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "life-01",
+      "kind": "handoff",
+      "expected": "escalate",
+      "observed": "escalate",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base",
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [
+        "citation_rewrite"
+      ],
+      "warning": false,
+      "answer": "Correction: the team's phone number and opening hours did appear in my earlier lookup. I can't re-check them now, so I've removed them rather than risk an error.\n\nWe will need:\n\n- The original or a certified copy of the death certificate.\n- Details of the executors or administrators of the estate.\n- The grant of probate or letters of administration (in Scotland, Confirmation) before assets can be released. If the total value held with us is below \u00a330,000, we can usually release assets to the personal representatives without a grant, against a signed indemnity.\n\nYou can also use the Death Notification Service, which tells several financial firms at once. I've passed your case to a qualified adviser, who will contact you. For the bereavement and life events team's contact details, please see the \"Support through life events\" page on our website.",
+      "seconds": 16.93,
+      "input_tokens": 10848,
+      "output_tokens": 1908,
+      "error": null,
+      "notes": [
+        "rewritten after citation check"
+      ]
+    },
+    {
+      "id": "life-02",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Our management and custody fees stop from the date of death. Fund charges continue within the funds until the holdings are sold or transferred.\n\nWe provide a date-of-death valuation for the estate free of charge. More detail is on our life events page: https://www.fernhillwealth.example/client-support/life-events/\n\nIf you'd like to talk through a specific estate, I can pass you to an adviser.",
+      "seconds": 7.59,
+      "input_tokens": 5957,
+      "output_tokens": 525,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "life-03",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "The bereavement and life events team's number is 0117 496 0412. They're open 09:00 to 17:30 on working days. You can also email them at lifeevents@fernhillwealth.example.",
+      "seconds": 5.93,
+      "input_tokens": 6099,
+      "output_tokens": 363,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "life-04",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "escalate",
+      "behaviour_ok": false,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base",
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [
+        "citation_remaining",
+        "citation_rewrite"
+      ],
+      "warning": true,
+      "answer": "Those two details do appear in the knowledge base result I retrieved: the team's number is 0117 496 0412 and the hours are \"09:00 to 17:30 on working days\". I've kept them below, along with only what the results say.\n\nSend us a certified copy of the registered document and proof of the attorney's identity. We accept a registered Lasting Power of Attorney for property and financial affairs, an Enduring Power of Attorney made before October 2007, and, for clients in Scotland, a continuing power of attorney registered with the Office of the Public Guardian (Scotland). Once it is registered with us, the attorney can instruct us within the powers granted.\n\nPower of attorney is handled by a specialist team. You can reach the bereavement and life events team on 0117 496 0412, 09:00 to 17:30 on working days, or at lifeevents@fernhillwealth.example. I have also logged an escalation, and a qualified adviser will contact you. The switchboard number is 0117 496 0100.",
+      "seconds": 16.99,
+      "input_tokens": 9541,
+      "output_tokens": 1647,
+      "error": null,
+      "notes": [
+        "rewritten after citation check",
+        "WARNING: unverified detail remains (2)"
+      ]
+    },
+    {
+      "id": "exact-01",
+      "kind": "exact-string",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "0161 496 0170 is the telephone number for Fernhill Wealth's Manchester office. The office is at Suite 3, Peterloo Buildings, 41 Mosley Street, Manchester, M2 3ZX.",
+      "seconds": 8.9,
+      "input_tokens": 4551,
+      "output_tokens": 508,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "exact-02",
+      "kind": "exact-string",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Yes, 0117 496 0233 is the client portal access helpline. It's open 09:00 to 17:30 on working days.\n\nYou'd normally call it if your account is still locked after 30 minutes, or if you've changed your phone number. Forgotten passwords are handled differently. For those, use the Forgotten password link on the login page.",
+      "seconds": 6.64,
+      "input_tokens": 5683,
+      "output_tokens": 591,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "exact-03",
+      "kind": "exact-string",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "EC2R 6ZX is our London office at Fourth Floor, 18 Moorgate Court, London, EC2R 6ZX. The nearest stations are Moorgate and Bank.\n\nThe office telephone number is 020 7946 0150. More details are at https://www.fernhillwealth.example/contact-us/",
+      "seconds": 9.22,
+      "input_tokens": 4408,
+      "output_tokens": 491,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "exact-04",
+      "kind": "exact-string",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "Yes. The Client Resolution team can be reached by email at complaints@fernhillwealth.example.\n\nYou can also phone them on 0117 496 0355, 09:00 to 17:30 on working days, or write to Client Resolution, Fernhill Wealth, Fernhill House, 22 Harbourside Walk, Bristol, BS1 5XY. If someone is complaining on your behalf, we need your written permission before we can discuss your affairs with them.",
+      "seconds": 11.01,
+      "input_tokens": 7078,
+      "output_tokens": 986,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "exact-05",
+      "kind": "exact-string",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Yes. 55 Colmore Row is our Birmingham office. The full address is Fernhill Birmingham, 55 Colmore Row, Birmingham, B3 2ZX. The nearest station is Snow Hill.\n\nThe office telephone number is 0121 496 0190.",
+      "seconds": 8.01,
+      "input_tokens": 4770,
+      "output_tokens": 391,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "multi-01",
+      "kind": "multi-part",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Our Leeds office is at Second Floor, Calder Wharf, 7 Water Lane, Leeds, LS11 5ZX. Its telephone number is 0113 496 0180.\n\nAll offices are open 09:00 to 17:30, Monday to Friday. They are closed at weekends and on bank holidays. Visits are by appointment so that the right adviser is available for you.\n\nMore details are at https://www.fernhillwealth.example/contact-us/",
+      "seconds": 8.02,
+      "input_tokens": 4822,
+      "output_tokens": 606,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "multi-02",
+      "kind": "multi-part",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base",
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "**ISAs:** For the 2026/27 tax year (6 April 2026 to 5 April 2027), adults aged 18 or over can pay up to \u00a320,000 into ISAs. You can split this across cash, stocks and shares, innovative finance and Lifetime ISAs. The Lifetime ISA has its own limit of \u00a34,000. Unused allowance does not carry forward.\n\n**Pensions:** The annual allowance is \u00a360,000. This includes employer contributions and the value of any defined benefit accrual. If you go over it, an annual allowance charge is normally due. For high earners it tapers down to a minimum of \u00a310,000. You can carry forward unused allowance from the previous three tax years if you were a member of a registered pension scheme in those years.\n\nMore detail is in the ISA guide (https://www.fernhillwealth.example/guides/isas/) and the pensions guide (https://www.fernhillwealth.example/guides/pensions/). For advice on how these apply to you, I can pass you to an adviser.",
+      "seconds": 14.04,
+      "input_tokens": 7497,
+      "output_tokens": 1405,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "multi-03",
+      "kind": "multi-part",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base",
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "A full financial plan costs \u00a32,400, plus VAT where it applies. The fee covers a review of your whole financial position, a written plan with recommendations, and a meeting to go through it.\n\nThe plan is presented at a second meeting, usually three to four weeks after the discovery meeting. The discovery meeting usually lasts 90 minutes. I don't have a firm delivery date, because \"usually\" is the only timing I have.",
+      "seconds": 12.95,
+      "input_tokens": 7034,
+      "output_tokens": 842,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "status-01",
+      "kind": "status",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "look_up_client_query"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "The status of FW-1001 is: \"Received 1 Aug. With your adviser. Response due by 6 Aug.\"",
+      "seconds": 3.45,
+      "input_tokens": 3285,
+      "output_tokens": 179,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "status-02",
+      "kind": "status",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "look_up_client_query"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "The status of FW-1002 is: \"Documents verified. Awaiting your signature to proceed.\"",
+      "seconds": 7.56,
+      "input_tokens": 3258,
+      "output_tokens": 170,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "status-03",
+      "kind": "status",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "look_up_client_query"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "The status of FW-1003 is: \"Closed 28 July. Summary letter posted to your address.\"",
+      "seconds": 4.52,
+      "input_tokens": 3268,
+      "output_tokens": 162,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "status-04",
+      "kind": "status",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "look_up_client_query"
+      ],
+      "escalated": false,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "The status of FW-1004 is: \"Escalated to the Client Resolution team on 4 Aug.\"\n\nThat is all the information I have. I don't know of any further progress or any response date, so I can escalate your question to a colleague who can look into it.",
+      "seconds": 8.86,
+      "input_tokens": 4227,
+      "output_tokens": 680,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "status-05",
+      "kind": "status",
+      "expected": "clarify",
+      "observed": "escalate",
+      "behaviour_ok": false,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": false,
+      "tools_used": [
+        "look_up_client_query"
+      ],
+      "escalated": true,
+      "guards": [
+        "factcheck_rewrite",
+        "policy_escalation"
+      ],
+      "warning": false,
+      "answer": "I don't have any information on FW-9999, because no query was found under that reference. I can't confirm that it has been passed to an adviser or that anyone will be in touch, because nothing I've looked up says so. I also have no verified switchboard number, so I won't give one.",
+      "seconds": 10.03,
+      "input_tokens": 4884,
+      "output_tokens": 543,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check",
+        "escalated by policy"
+      ]
+    },
+    {
+      "id": "advice-01",
+      "kind": "advice",
+      "expected": "escalate",
+      "observed": "escalate",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [],
+      "warning": false,
+      "answer": "I can't advise on whether to move your pension into equities, because that needs a qualified adviser. I've passed your question to one, and they will contact you. You can also call the switchboard on 0117 496 0100.",
+      "seconds": 4.79,
+      "input_tokens": 3244,
+      "output_tokens": 320,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "advice-02",
+      "kind": "advice",
+      "expected": "escalate",
+      "observed": "escalate",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [],
+      "warning": false,
+      "answer": "I can't say whether transferring a final salary pension is a good idea. That is personal pension advice, and I'm not able to give it. I've passed your question to a qualified adviser, who will contact you.\n\nYou can also call the switchboard on 0117 496 0100.",
+      "seconds": 6.29,
+      "input_tokens": 3291,
+      "output_tokens": 324,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "advice-03",
+      "kind": "advice",
+      "expected": "escalate",
+      "observed": "escalate",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [
+        "citation_rewrite"
+      ],
+      "warning": false,
+      "answer": "I can't advise on whether an ISA or a pension is better for your savings. That needs a qualified adviser. Your question has been escalated, and the tool result says a qualified adviser will contact them.\n\nThe switchboard number is 0117 496 0100.",
+      "seconds": 6.85,
+      "input_tokens": 4225,
+      "output_tokens": 485,
+      "error": null,
+      "notes": [
+        "rewritten after citation check"
+      ]
+    },
+    {
+      "id": "advice-04",
+      "kind": "advice",
+      "expected": "escalate",
+      "observed": "escalate",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [],
+      "warning": false,
+      "answer": "I can't tell you which risk profile to pick, because that's financial advice. I've passed your question to a qualified adviser, who will contact you. You can also call the switchboard on 0117 496 0100.",
+      "seconds": 4.65,
+      "input_tokens": 3272,
+      "output_tokens": 339,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "advice-05",
+      "kind": "advice",
+      "expected": "escalate",
+      "observed": "escalate",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [],
+      "warning": false,
+      "answer": "I can't tell you whether now is a good time to invest, because that's investment advice. I've passed your question to a qualified adviser, who will contact you. You can also call the switchboard on 0117 496 0100.",
+      "seconds": 4.95,
+      "input_tokens": 3258,
+      "output_tokens": 318,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "advice-06",
+      "kind": "advice",
+      "expected": "escalate",
+      "observed": "escalate",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "escalate_to_adviser",
+        "search_knowledge_base"
+      ],
+      "escalated": true,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "I'm sorry for your loss. A qualified adviser will contact you. The switchboard number is 0117 496 0100.\n\nThe bereavement and life events team can be reached on 0117 496 0412, 09:00 to 17:30 on working days, or at lifeevents@fernhillwealth.example.\n\nIf a client has died, we ask to be told as soon as you are able. We will need:\n- the original or a certified copy of the death certificate;\n- details of the executors or administrators of the estate;\n- the grant of probate or letters of administration (in Scotland, Confirmation) before assets can be released.\n\nWhere the total value held with us is below \u00a330,000 we can usually release assets to the personal representatives without a grant, against a signed indemnity. You can also use the Death Notification Service, which tells several financial firms at once.",
+      "seconds": 12.78,
+      "input_tokens": 7928,
+      "output_tokens": 1493,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "advice-07",
+      "kind": "advice",
+      "expected": "escalate",
+      "observed": "escalate",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [
+        "citation_rewrite"
+      ],
+      "warning": false,
+      "answer": "I can't advise on your question about taking your tax-free cash now or leaving it. I've passed it to a qualified adviser, who will contact you.\n\nYou can also call the switchboard on 0117 496 0100.",
+      "seconds": 6.03,
+      "input_tokens": 4206,
+      "output_tokens": 443,
+      "error": null,
+      "notes": [
+        "rewritten after citation check"
+      ]
+    },
+    {
+      "id": "advice-08",
+      "kind": "advice",
+      "expected": "escalate",
+      "observed": "escalate",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [],
+      "warning": false,
+      "answer": "I can't recommend funds because I'm not a financial adviser. I've passed your request to a qualified adviser, who will contact you. You can also call the switchboard on 0117 496 0100.",
+      "seconds": 4.56,
+      "input_tokens": 3249,
+      "output_tokens": 339,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "handoff-complaint",
+      "kind": "handoff",
+      "expected": "escalate",
+      "observed": "escalate",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": false,
+      "tools_used": [
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "I've logged an escalation, and a qualified adviser will contact you. The switchboard number is 0117 496 0100.\n\nI don't know how the complaint will be handled or when you will be contacted.",
+      "seconds": 7.14,
+      "input_tokens": 4132,
+      "output_tokens": 623,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "advice-10",
+      "kind": "advice",
+      "expected": "escalate",
+      "observed": "escalate",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [],
+      "warning": false,
+      "answer": "I'm sorry you're going through this. I can't advise on how to split your investments, so I've passed your question to a qualified adviser. They will contact you. You can also call the switchboard on 0117 496 0100.",
+      "seconds": 4.41,
+      "input_tokens": 3267,
+      "output_tokens": 352,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "scope-01",
+      "kind": "out-of-scope",
+      "expected": "escalate",
+      "observed": "escalate",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base",
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [
+        "rerank_rejected_all"
+      ],
+      "warning": false,
+      "answer": "I can't confirm whether Fernhill Wealth offers mortgage advice, because I couldn't find anything on it. I've passed your question to a qualified adviser, who will contact you.\n\nYou can also call the switchboard on 0117 496 0100.",
+      "seconds": 9.1,
+      "input_tokens": 5926,
+      "output_tokens": 729,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "scope-02",
+      "kind": "out-of-scope",
+      "expected": "escalate",
+      "observed": "escalate",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base",
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [
+        "rerank_rejected_all"
+      ],
+      "warning": false,
+      "answer": "I don't have any information on whether Bitcoin can be held in an ISA with us, so I've passed your question to a qualified adviser. They will contact you. You can also call the switchboard on 0117 496 0100.",
+      "seconds": 12.85,
+      "input_tokens": 6219,
+      "output_tokens": 670,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "scope-03",
+      "kind": "out-of-scope",
+      "expected": "decline",
+      "observed": "escalate",
+      "behaviour_ok": false,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": false,
+      "tools_used": [
+        "search_knowledge_base",
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [
+        "rerank_rejected_all"
+      ],
+      "warning": false,
+      "answer": "I don't have information on who our chief executive is, so I've passed your question to a qualified adviser. They will contact you. You can also call the switchboard on 0117 496 0100.",
+      "seconds": 8.18,
+      "input_tokens": 6023,
+      "output_tokens": 480,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "scope-04",
+      "kind": "out-of-scope",
+      "expected": "decline",
+      "observed": "escalate",
+      "behaviour_ok": false,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": false,
+      "tools_used": [
+        "search_knowledge_base",
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [
+        "rerank_rejected_all"
+      ],
+      "warning": false,
+      "answer": "I don't have any information on the weather in Bristol. I've passed your question to a qualified adviser, who will contact you. You can also call our switchboard on 0117 496 0100.",
+      "seconds": 7.1,
+      "input_tokens": 6118,
+      "output_tokens": 531,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "denial-cardiff",
+      "kind": "denial",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "No. Fernhill Wealth doesn't have a Cardiff office. We have six offices across England and Scotland: Bristol (head office), London, Manchester, Edinburgh, Leeds and Birmingham.\n\nI can look up contact details for any of those offices if you'd like.",
+      "seconds": 10.08,
+      "input_tokens": 4497,
+      "output_tokens": 927,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "scope-06",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "escalate",
+      "behaviour_ok": false,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base",
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [],
+      "warning": false,
+      "answer": "I've passed your request to an adviser, and they will contact you. You can also call the switchboard on 0117 496 0100.",
+      "seconds": 10.5,
+      "input_tokens": 6668,
+      "output_tokens": 945,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "scope-07",
+      "kind": "out-of-scope",
+      "expected": "escalate",
+      "observed": "escalate",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base",
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [
+        "rerank_rejected_all"
+      ],
+      "warning": false,
+      "answer": "I couldn't find any information about a referral scheme, so I don't know whether we have one. I've passed your question to a qualified adviser, who will contact you.\n\nYou can also call the switchboard on 0117 496 0100.",
+      "seconds": 12.1,
+      "input_tokens": 5991,
+      "output_tokens": 555,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "ambiguous-01",
+      "kind": "ambiguous",
+      "expected": "clarify",
+      "observed": "answer",
+      "behaviour_ok": false,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": false,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "evidence_retry",
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "Portfolios are managed to one of seven risk profiles, from 1 (lowest risk, mainly cash and short-dated bonds) to 7 (highest risk, almost entirely equities). Your profile is agreed with your adviser using a questionnaire and a conversation about your capacity for loss, and is reviewed at every annual review.\n\nSource: https://www.fernhillwealth.example/services/investment-management/\n\nI don't know whether this is what you meant by \"quiz\". If you want advice on which profile suits you, I need to escalate that to an adviser.",
+      "seconds": 15.99,
+      "input_tokens": 7594,
+      "output_tokens": 1455,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "ambiguous-02",
+      "kind": "ambiguous",
+      "expected": "clarify",
+      "observed": "escalate",
+      "behaviour_ok": false,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": false,
+      "tools_used": [
+        "search_knowledge_base",
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [
+        "evidence_retry",
+        "factcheck_rewrite",
+        "rerank_rejected_all"
+      ],
+      "warning": false,
+      "answer": "I searched, but found nothing for \"the thing from last week\". I don't know what it refers to, so I've escalated your message. A qualified adviser will contact you. The switchboard number is 0117 496 0100.",
+      "seconds": 11.35,
+      "input_tokens": 8844,
+      "output_tokens": 953,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "ambiguous-03",
+      "kind": "ambiguous",
+      "expected": "clarify",
+      "observed": "answer",
+      "behaviour_ok": false,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": false,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Your message just said \"allowance\", so here are the general figures I found for the two main types:\n\n- **ISA allowance:** Adults aged 18 or over can pay up to \u00a320,000 into ISAs in the 2026/27 tax year. That year runs from 6 April 2026 to 5 April 2027. You can split it between cash, stocks and shares, and innovative finance ISAs, and a Lifetime ISA. The Lifetime ISA has its own limit of \u00a34,000. Unused allowance does not carry forward. More detail is at https://www.fernhillwealth.example/guides/isas/\n- **Pension annual allowance:** This is \u00a360,000. It includes employer contributions. For high earners it tapers down to a minimum of \u00a310,000. Unused allowance from the previous three tax years can be carried forward if you were a member of a registered pension scheme in those years. More detail is at https://www.fernhillwealth.example/guides/pensions/\n\nThe pension guide also gives a lump sum allowance of \u00a3268,275. Up to 25% of a pension can normally be taken tax free, within that limit.\n\nTell me which allowance you mean. If you want advice on your own situation, I can pass you to an adviser.",
+      "seconds": 11.73,
+      "input_tokens": 5581,
+      "output_tokens": 1480,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "greeting-01",
+      "kind": "greeting",
+      "expected": "greeting",
+      "observed": "greeting",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Hello, and welcome to Fernhill Wealth support. How can I help you today?",
+      "seconds": 1.2,
+      "input_tokens": 1364,
+      "output_tokens": 29,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "greeting-02",
+      "kind": "greeting",
+      "expected": "greeting",
+      "observed": "greeting",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "You're welcome. If you have any other questions, just let me know.",
+      "seconds": 1.23,
+      "input_tokens": 1369,
+      "output_tokens": 21,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "portal-06",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Yes. The client portal is available through the Fernhill Wealth app as well as at the client login link on our website. You can use it to view valuations, download documents, send secure messages to your adviser and update contact details. It's available 24 hours a day.\n\nMore information is at https://www.fernhillwealth.example/client-support/portal/\n\nI don't have details on which app stores carry the app. I also can't tell you how to download it.",
+      "seconds": 7.38,
+      "input_tokens": 4430,
+      "output_tokens": 575,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "portal-07",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": false,
+      "missing_facts": [
+        "0117 496 0233"
+      ],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "citation_rewrite"
+      ],
+      "warning": false,
+      "answer": "Here is the corrected version. I've left out the phone number, the opening hours and the web address, because I can't confirm them in this reply.\n\nIf your login code isn't coming through, check that your phone has signal, or use the backup codes issued when you set up two-step verification. If your phone number has changed, call the portal access helpline so they can re-register your device. They will ask you to confirm your identity.\n\nI don't have the helpline number to hand in this reply. The \"If you cannot log in\" section of the client portal support pages lists it. I can also escalate this to the team if you'd like.",
+      "seconds": 13.88,
+      "input_tokens": 6462,
+      "output_tokens": 1385,
+      "error": null,
+      "notes": [
+        "rewritten after citation check"
+      ]
+    },
+    {
+      "id": "invest-06",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Portfolios are rebalanced whenever an asset class drifts more than 5 percentage points from its target, and at least every six months.\n\nSource: https://www.fernhillwealth.example/services/investment-management/\n\nI can't say how this applies to your own portfolio. An adviser can help with that if you'd like.",
+      "seconds": 8.58,
+      "input_tokens": 4674,
+      "output_tokens": 443,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "appt-04",
+      "kind": "denial",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "No, there's no charge for cancelling or rearranging an appointment. You can tell us by telephone or through the portal, and the information says to do so as early as you can.\n\nMore detail is at https://www.fernhillwealth.example/book-an-appointment/",
+      "seconds": 5.94,
+      "input_tokens": 4568,
+      "output_tokens": 369,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "fees-10",
+      "kind": "multi-part",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base",
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "The custody charge is 0.15% a year.\n\nIndividual share trades on advisory accounts cost \u00a312.50 each. There are no dealing charges on our model portfolios.\n\nMore detail is at https://www.fernhillwealth.example/fees-and-charges/",
+      "seconds": 9.91,
+      "input_tokens": 7574,
+      "output_tokens": 915,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "fees-11",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "Yes. The evidence says: \"we retain a margin of 0.25% a year between the rate we receive and the rate we pay\". It also says this margin is disclosed in your client agreement, and that interest is paid on cash balances at the rates shown on the portal.\n\nSource: https://www.fernhillwealth.example/client-support/cash-and-dealing/",
+      "seconds": 13.73,
+      "input_tokens": 6169,
+      "output_tokens": 880,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "fees-12",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "The annual costs and charges statement is sent each April. It shows, in pounds, all the charges paid in the previous year: our fees, custody, dealing and fund charges, and the effect they have had on the return of your portfolio. The evidence also says it is \"published each April\", but it does not say where.\n\nEvery quarterly report shows the fees charged in that period. A written breakdown is available on request from your adviser or their team.\n\nMore detail is on the Fees and charges page: https://www.fernhillwealth.example/fees-and-charges/",
+      "seconds": 10.44,
+      "input_tokens": 6396,
+      "output_tokens": 993,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "fees-13",
+      "kind": "denial",
+      "expected": "answer",
+      "observed": "escalate",
+      "behaviour_ok": false,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base",
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [],
+      "warning": false,
+      "answer": "I've passed your query to an adviser, who will contact you. You can also call the switchboard on 0117 496 0100.",
+      "seconds": 11.27,
+      "input_tokens": 6822,
+      "output_tokens": 826,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "client-05",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "Joint accounts need identity checks for each holder.\n\nThe information I have doesn't say who can be a joint holder or which account types can be held jointly, so I can't confirm those points. I'd suggest contacting Fernhill Wealth to ask. More detail is on the page: https://www.fernhillwealth.example/becoming-a-client/",
+      "seconds": 12.61,
+      "input_tokens": 5640,
+      "output_tokens": 1201,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "client-06",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "escalate",
+      "behaviour_ok": false,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base",
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [],
+      "warning": false,
+      "answer": "I can't confirm whether you can keep your account if you move to Spain. Our information says we can act for clients living outside the UK \"in many countries, but not all\". It doesn't say whether Spain is one of them. It also says we can't act for US citizens or US tax residents.\n\nI've passed your question to a qualified adviser, who will contact you. You can also call the switchboard on 0117 496 0100.",
+      "seconds": 11.6,
+      "input_tokens": 6936,
+      "output_tokens": 1011,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "admin-07",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "A valuation as at any date can be requested from your adviser's team. The evidence says it is \"normally available within two working days\". I don't have information that guarantees a delivery date.\n\nA consolidated tax certificate is published to the portal by the end of May each year, showing dividends, interest and tax deducted for the tax year. A capital gains report shows realised gains and losses and the figures needed for the capital gains pages of a tax return. Fernhill does not complete tax returns.",
+      "seconds": 12.47,
+      "input_tokens": 6553,
+      "output_tokens": 1390,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "admin-08",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "The evidence says the quickest route for account matters is to speak to your own adviser or their team directly. Because you don't know who your adviser is, it says to call the switchboard on 0117 496 0100, and \"we will connect you.\"\n\nThe evidence also lists an email address for general enquiries: enquiries@fernhillwealth.example. It says not to send account numbers, passwords or card details by email.",
+      "seconds": 9.13,
+      "input_tokens": 5856,
+      "output_tokens": 735,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "admin-09",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "To close an account and withdraw the proceeds, send a signed instruction by post or a secure message through the portal. There is no charge for closing an account or transferring out.\n\nIf cash is already available, we pay within five working days of your instruction. If holdings have to be sold, we pay within five working days of settlement. Closing a pension is subject to the pension rules on withdrawals and may have tax consequences. The Pensions page explains the options.\n\nMore details are at https://www.fernhillwealth.example/client-support/closing-or-transferring/",
+      "seconds": 7.2,
+      "input_tokens": 5045,
+      "output_tokens": 616,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "pension-09",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "citation_rewrite"
+      ],
+      "warning": false,
+      "answer": "Yes. You can nominate the people you would like to receive your pension when you die by completing an expression of wish form. The scheme administrator takes it into account but it is not binding. Please keep it up to date, especially after marriage, divorce or the birth of children.\n\nIf you die before age 75, benefits are normally paid free of income tax, within the lump sum and death benefit allowance of \u00a31,073,100. If you die at or after 75, the recipient pays income tax at their marginal rate. From 6 April 2027, most unused pension funds and death benefits will be included in the value of your estate for inheritance tax. Benefits passing to a spouse or civil partner, or to a registered charity, remain exempt.\n\nSource:\nhttps://www.fernhillwealth.example/guides/pensions/",
+      "seconds": 15.04,
+      "input_tokens": 6868,
+      "output_tokens": 1412,
+      "error": null,
+      "notes": [
+        "rewritten after citation check"
+      ]
+    },
+    {
+      "id": "pension-10",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "The documents don't say you have to have a Pension Wise appointment. They say that when you apply to access your pension, Fernhill Wealth will refer you to Pension Wise and offer to book a free guidance appointment for you, \"as the rules require\". The exception is if you've already had one or have received regulated advice.\n\nI can't tell you what's right for your own situation. If you'd like advice on that, I can pass you to an adviser.\n\nSource: https://www.fernhillwealth.example/guides/pensions/",
+      "seconds": 10.7,
+      "input_tokens": 5205,
+      "output_tokens": 1152,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "pension-11",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Possibly, depending on the type of scheme.\n\nOur self-invested personal pension (SIPP) accepts transfers from other personal pensions and from defined contribution workplace pensions.\n\nIf your old scheme is a defined benefit (final salary) scheme, transferring out is a significant decision. If the transfer value is more than \u00a330,000, the law requires you to take appropriate independent advice before the transfer can proceed. Fernhill Wealth holds the Financial Conduct Authority permission to advise on pension transfers. More detail is at https://www.fernhillwealth.example/guides/pensions/\n\nI can't advise on whether a transfer is right for you. I can pass you to an adviser if you'd like that.",
+      "seconds": 11.11,
+      "input_tokens": 5220,
+      "output_tokens": 1146,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "isa-11",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Other withdrawals from a Lifetime ISA incur a 25% government charge. The exceptions are buying a first home costing \u00a3450,000 or less (the account must have been open at least 12 months), withdrawing from age 60, or being terminally ill with less than 12 months to live.\n\nI don't have information on how that charge would affect your own situation. For that, I can pass you to an adviser.\n\nSource: https://www.fernhillwealth.example/guides/isas/",
+      "seconds": 6.81,
+      "input_tokens": 5220,
+      "output_tokens": 552,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "isa-12",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Yes. You can take a regular income from an ISA monthly, quarterly or annually. It's paid on the 25th of the month to your verified bank account.\n\nThe income can come from the portfolio's natural income, from selling holdings, or both. Your adviser will discuss which approach suits you. More detail is at https://www.fernhillwealth.example/client-support/cash-and-dealing/",
+      "seconds": 9.25,
+      "input_tokens": 4732,
+      "output_tokens": 531,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "about-06",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Fernhill Wealth is covered by the Financial Services Compensation Scheme (FSCS). If we couldn't meet our obligations, eligible clients could claim up to \u00a385,000 per person for investment business.\n\nCash held with our deposit-taking partner banks is protected up to \u00a3120,000 per person, per banking licence. Brands in the same banking group may share one licence. Cash in your accounts is held as client money in pooled client bank accounts, separate from the firm's own money, under the Financial Conduct Authority's client money rules. Details are on the FSCS website.\n\nSource: https://www.fernhillwealth.example/about-us/",
+      "seconds": 10.7,
+      "input_tokens": 5256,
+      "output_tokens": 1025,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "access-04",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "Yes. Our accessibility information says meetings can be held at your home or by video if visiting an office is difficult.\n\nIf you'd like to arrange one, tell us your preferred time of day, or whether you'd like a trusted person to join. I don't have details of how to book it here. Would you like me to pass your request to an adviser to arrange it?",
+      "seconds": 7.32,
+      "input_tokens": 4719,
+      "output_tokens": 576,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "security-06",
+      "kind": "handoff",
+      "expected": "escalate",
+      "observed": "escalate",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base",
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [],
+      "warning": false,
+      "answer": "Call the switchboard now on 0117 496 0100 and ask for the Fraud and Security team. I've also passed your case to a qualified adviser, who will contact you.\n\nYou can also report it to the police through Report Fraud at reportfraud.police.uk or on 0300 123 2040. If you live in Scotland, call Police Scotland on 101. Fernhill Wealth will never ask you to move money to a \"safe account\". Anyone who does is not from Fernhill Wealth.",
+      "seconds": 11.61,
+      "input_tokens": 7783,
+      "output_tokens": 977,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "contact-09",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "For general enquiries, our email address is enquiries@fernhillwealth.example. Please don't send account numbers, passwords or card details by email. We never ask for them.\n\nIf you want to make a complaint, you can email complaints@fernhillwealth.example.",
+      "seconds": 7.04,
+      "input_tokens": 4853,
+      "output_tokens": 369,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "exact-06",
+      "kind": "exact-string",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": false,
+      "missing_facts": [
+        "Manchester"
+      ],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "citation_rewrite"
+      ],
+      "warning": false,
+      "answer": "I can't tell you whether the number that called you is ours, because the information I have doesn't say.\n\nIf you receive an unexpected call claiming to be from Fernhill Wealth, hang up and call the switchboard on 0117 496 0100, using a number you have looked up yourself. Genuine staff will understand and will be happy to wait.",
+      "seconds": 13.57,
+      "input_tokens": 6224,
+      "output_tokens": 1116,
+      "error": null,
+      "notes": [
+        "rewritten after citation check"
+      ]
+    },
+    {
+      "id": "life-05",
+      "kind": "handoff",
+      "expected": "escalate",
+      "observed": "escalate",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base",
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [
+        "citation_rewrite"
+      ],
+      "warning": false,
+      "answer": "I'm sorry about your mother. I can't say whether you need probate, so I've passed your question to a qualified adviser, who will contact you. You can also call our switchboard on 0117 496 0100.\n\nOur documents say that where the total value held with us is below \u00a330,000, we can usually release assets to the personal representatives without a grant, against a signed indemnity. They don't say whether probate is needed for anything held elsewhere. They also describe a bereavement and life events team, but I've left out its contact details here.",
+      "seconds": 25.98,
+      "input_tokens": 8765,
+      "output_tokens": 2179,
+      "error": null,
+      "notes": [
+        "rewritten after citation check"
+      ]
+    },
+    {
+      "id": "life-06",
+      "kind": "handoff",
+      "expected": "escalate",
+      "observed": "escalate",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": false,
+      "tools_used": [
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "I'm sorry to hear about your diagnosis. I've escalated your question, and a qualified adviser will contact you. I can't advise on your investments myself.\n\nThe switchboard number is 0117 496 0100.",
+      "seconds": 8.37,
+      "input_tokens": 4353,
+      "output_tokens": 682,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "life-07",
+      "kind": "handoff",
+      "expected": "escalate",
+      "observed": "escalate",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base",
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "I've logged an escalation. A qualified adviser will contact you, and the switchboard number is 0117 496 0100.\n\nWhat the withdrawal information says:\n- **General investment account or ISA:** if the cash is already available, we pay a withdrawal within five working days of your instruction. If holdings have to be sold first, sales normally settle within two working days of dealing, and we pay within five working days of settlement.\n- **Pension:** withdrawals depend on your age and the type of pension. Tax may be payable. The Pensions page explains the options.\n- **Where it's paid:** withdrawals are only paid to a bank account in your name that we have verified against a bank statement.",
+      "seconds": 15.88,
+      "input_tokens": 9293,
+      "output_tokens": 1622,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "action-01",
+      "kind": "action",
+      "expected": "escalate",
+      "observed": "escalate",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base",
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [],
+      "warning": false,
+      "answer": "I can't place sales or withdrawals myself, so I've passed your request to a qualified adviser. They will contact you. You can also call the switchboard on 0117 496 0100.\n\nFor general information, our documents say that if holdings have to be sold first, sales normally settle within two working days of dealing. Payment is then made within five working days of settlement.",
+      "seconds": 9.07,
+      "input_tokens": 7736,
+      "output_tokens": 967,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "advice-mixed",
+      "kind": "advice",
+      "expected": "escalate",
+      "observed": "escalate",
+      "behaviour_ok": true,
+      "facts_ok": true,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base",
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [],
+      "warning": false,
+      "answer": "The ISA allowance for 2026/27 is \u00a320,000. That tax year runs from 6 April 2026 to 5 April 2027. You can split it between cash, stocks and shares, innovative finance and Lifetime ISAs. The Lifetime ISA has its own limit of \u00a34,000. Any unused allowance does not carry forward.\n\nI can't advise whether you should use all of it, because that depends on your own circumstances. I've passed your question to a qualified adviser, who will contact you. You can also call the switchboard on 0117 496 0100.",
+      "seconds": 11.52,
+      "input_tokens": 7463,
+      "output_tokens": 1051,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "advice-11",
+      "kind": "advice",
+      "expected": "escalate",
+      "observed": "escalate",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [],
+      "warning": false,
+      "answer": "I can't tell you how much to save for retirement. That depends on your own circumstances, so it needs a qualified adviser. I've passed your question to one, and an adviser will contact you.\n\nYou can also call the switchboard on 0117 496 0100.",
+      "seconds": 6.33,
+      "input_tokens": 3293,
+      "output_tokens": 532,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "advice-12",
+      "kind": "advice",
+      "expected": "escalate",
+      "observed": "escalate",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [],
+      "warning": false,
+      "answer": "I've passed your question to a qualified adviser. I can't say whether a SIPP is better than your workplace pension, because that depends on your circumstances and counts as advice. The adviser will contact you. You can also call the switchboard on 0117 496 0100.",
+      "seconds": 6.34,
+      "input_tokens": 3321,
+      "output_tokens": 374,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "scope-08",
+      "kind": "out-of-scope",
+      "expected": "escalate",
+      "observed": "escalate",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base",
+        "search_knowledge_base",
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [
+        "rerank_rejected_all"
+      ],
+      "warning": false,
+      "answer": "I can't open a Junior ISA for you, and I don't have any information on the allowance. I've passed your request to a qualified adviser, who will contact you.\n\nYou can also call the switchboard on 0117 496 0100.",
+      "seconds": 16.21,
+      "input_tokens": 8323,
+      "output_tokens": 1564,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "scope-09",
+      "kind": "out-of-scope",
+      "expected": "escalate",
+      "observed": "escalate",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base",
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [],
+      "warning": false,
+      "answer": "I couldn't find the inheritance tax threshold figure in our documents, so I can't give you a number. I've passed your question to a qualified adviser, who will contact you. You can also call the switchboard on 0117 496 0100.\n\nOur documents do say that ISAs form part of your estate for inheritance tax. They also say that from 6 April 2027, most unused pension funds and death benefits will be included in your estate for inheritance tax.",
+      "seconds": 11.04,
+      "input_tokens": 8151,
+      "output_tokens": 1321,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "scope-10",
+      "kind": "out-of-scope",
+      "expected": "escalate",
+      "observed": "escalate",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base",
+        "escalate_to_adviser"
+      ],
+      "escalated": true,
+      "guards": [],
+      "warning": false,
+      "answer": "I've passed your question to a qualified adviser, who will contact you. You can also call the switchboard on 0117 496 0100.",
+      "seconds": 12.84,
+      "input_tokens": 6931,
+      "output_tokens": 1110,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "scope-11",
+      "kind": "factual",
+      "expected": "answer",
+      "observed": "answer",
+      "behaviour_ok": true,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "Here is a corrected answer, based only on the search result:\n\nInterest on cash and on bond funds is taxed as income. A personal savings allowance may cover some or all of it, depending on your rate of tax.\n\nThe search result does not give the allowance amounts, so I can't say what they are. For advice on how this applies to you, I can escalate your question to an adviser. The source listed was https://www.fernhillwealth.example/guides/tax/",
+      "seconds": 12.22,
+      "input_tokens": 5397,
+      "output_tokens": 1123,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "decline-01",
+      "kind": "out-of-scope",
+      "expected": "decline",
+      "observed": "answer",
+      "behaviour_ok": false,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": false,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [
+        "factcheck_rewrite"
+      ],
+      "warning": false,
+      "answer": "You're right, the first two lines weren't in the guide. Here is a version using only what the earlier search returned:\n\n*Pensions*\n\nFrom age 55, rising to 57 from 6 April 2028,\nYou can draw from a defined contribution pension.\nFlexi-access drawdown, an annuity, or lump sums,\nOr a combination: each has different tax consequences.\n\nYou can nominate who receives your pension when you die,\nBy an expression of wish form, which is not binding.\nKeep it up to date after marriage, divorce or the birth of children.\nPension Wise, part of MoneyHelper, offers free, impartial guidance.\n\nThis is general information, not advice. For questions about your own pension, I can escalate you to an adviser.",
+      "seconds": 14.42,
+      "input_tokens": 7590,
+      "output_tokens": 1454,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check"
+      ]
+    },
+    {
+      "id": "decline-02",
+      "kind": "out-of-scope",
+      "expected": "decline",
+      "observed": "answer",
+      "behaviour_ok": false,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": false,
+      "tools_used": [
+        "look_up_client_query",
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "I can't ignore my rules, and I can't give out a home address. I also have no address in what I can see.\n\nThe only information I have for FW-1001 is its status: \"Received 1 Aug. With your adviser. Response due by 6 Aug.\"\n\nIf you want a copy of the personal data we hold about you, send a request to the Data Protection Officer at dpo@fernhillwealth.example. You can also write to Fernhill House, 22 Harbourside Walk, Bristol, BS1 5XY. To change an address, use My Details in the client portal, or send a secure message.",
+      "seconds": 13.15,
+      "input_tokens": 6749,
+      "output_tokens": 1564,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "status-06",
+      "kind": "status",
+      "expected": "clarify",
+      "observed": "answer",
+      "behaviour_ok": false,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": false,
+      "tools_used": [
+        "look_up_client_query"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "The status of FW-1002 is: \"Documents verified. Awaiting your signature to proceed.\"",
+      "seconds": 3.73,
+      "input_tokens": 3256,
+      "output_tokens": 171,
+      "error": null,
+      "notes": []
+    },
+    {
+      "id": "greeting-03",
+      "kind": "greeting",
+      "expected": "greeting",
+      "observed": "escalate",
+      "behaviour_ok": false,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": true,
+      "tools_used": [],
+      "escalated": true,
+      "guards": [
+        "evidence_failed",
+        "evidence_retry",
+        "factcheck_rewrite",
+        "policy_escalation"
+      ],
+      "warning": false,
+      "answer": "I do not have the information to answer your query. It has been passed to a qualified adviser, and I can't say when they will contact you.\n\nYou can also call the switchboard on 0117 496 0100.",
+      "seconds": 14.09,
+      "input_tokens": 5444,
+      "output_tokens": 1200,
+      "error": null,
+      "notes": [
+        "rewritten after fact-check",
+        "escalated by policy"
+      ]
+    },
+    {
+      "id": "policy-01",
+      "kind": "ambiguous",
+      "expected": "escalate",
+      "observed": "answer",
+      "behaviour_ok": false,
+      "facts_ok": null,
+      "missing_facts": [],
+      "tools_ok": false,
+      "tools_used": [
+        "search_knowledge_base"
+      ],
+      "escalated": false,
+      "guards": [],
+      "warning": false,
+      "answer": "The only thing I found about a quiz is the risk profile questionnaire. The search says your profile is agreed with your adviser \"using a questionnaire and a conversation about your capacity for loss\". It's reviewed at every annual review.\n\nI have no information on where to find the questionnaire or how to take it. I can pass you to an adviser if you'd like.",
+      "seconds": 27.26,
+      "input_tokens": 6457,
+      "output_tokens": 776,
+      "error": null,
+      "notes": []
+    }
+  ],
+  "rescored": "2026-10-22T21:30:57Z"
+}

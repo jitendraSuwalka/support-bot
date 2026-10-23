@@ -41,6 +41,9 @@ def test_the_guards_run_in_order_and_policy_runs_last():
     assert ("groundedness_check", "escalation_policy") in edges
     assert ("escalation_policy", "finish") in edges
     assert ("call_model", "run_tools") in edges and ("run_tools", "call_model") in edges
+    # A terminal tool skips both guards: the policy still counts the clarification.
+    assert ("run_tools", "escalation_policy") in edges
+    assert ("run_tools", "citation_guard") not in edges
 
 
 def test_the_mermaid_diagram_is_generated_from_the_graph():
@@ -114,6 +117,31 @@ def run_both(script, turns, helper=None, monkeypatch=None):
             id="evidence-guard-failed",
         ),
         pytest.param([text_reply("Hi there!")], ["hello"], None, id="greeting"),
+        pytest.param(
+            [tool_reply("decline_out_of_scope", {"reason": "creative writing"})],
+            ["Write me a poem about pensions"],
+            None,
+            id="declined",
+        ),
+        pytest.param(
+            [
+                tool_reply("ask_for_clarification", {"question": "What do you mean by quiz?"}),
+                tool_reply("ask_for_clarification", {"question": "Which quiz?"}, call_id="t2"),
+            ],
+            ["quiz", "just the quiz thing"],
+            None,
+            id="clarified-twice",
+        ),
+        pytest.param(
+            [
+                tool_reply("ask_for_clarification", {"question": "What do you mean by quiz?"}),
+                tool_reply("search_knowledge_base", {"query": "risk questionnaire"}, "t2"),
+                text_reply("Your risk profile is agreed with your adviser using a questionnaire."),
+            ],
+            ["quiz", "the risk questionnaire"],
+            {"rerank": '{"relevant": [0]}'},
+            id="clarified-then-answered",
+        ),
     ],
 )
 def test_loop_and_graph_produce_the_same_result(script, turns, helper, monkeypatch):
@@ -131,6 +159,7 @@ def test_loop_and_graph_produce_the_same_result(script, turns, helper, monkeypat
         assert graph.notes == loop.notes
         assert graph.evidence == loop.evidence
         assert graph.escalated == loop.escalated
+        assert (graph.clarified, graph.declined) == (loop.clarified, loop.declined)
         assert graph.tools_used == loop.tools_used
         assert graph.trace.kinds() == loop.trace.kinds()
     assert graph_state == loop_state

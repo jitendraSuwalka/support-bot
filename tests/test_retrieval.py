@@ -53,15 +53,16 @@ def test_a_candidate_clears_the_floor_on_either_side():
 
 
 def test_a_candidate_below_both_floors_is_dropped():
-    assert not agent.clears_floor(result_with(lexical=0.1, dense=0.5))
-    assert not agent.clears_floor(result_with(dense=0.59))
+    assert not agent.clears_floor(result_with(lexical=0.1, dense=agent.DENSE_FLOOR - 0.1))
+    assert not agent.clears_floor(result_with(dense=agent.DENSE_FLOOR - 0.01))
     assert not agent.clears_floor(result_with())
 
 
-def test_the_dense_floor_sits_between_measured_off_topic_and_on_topic_scores():
-    # Step 2.3 calibration with BAAI/bge-small-en-v1.5: off-topic questions
-    # peaked at 0.529; on-topic chunks scored 0.681 and above.
-    assert 0.53 < agent.DENSE_FLOOR < 0.68
+def test_the_dense_floor_sits_just_below_the_lowest_gold_chunk():
+    # reports/retrieval.json (BAAI/bge-small-en-v1.5, 169 cases): the lowest
+    # cosine a gold chunk scored was 0.504, so the dense side must never drop a
+    # chunk below that; the lowest best-score without gold was 0.447.
+    assert 0.447 < agent.DENSE_FLOOR <= 0.504
 
 
 def test_describe_hit_shows_both_methods_or_a_dash():
@@ -89,26 +90,27 @@ def test_real_matches_clear_the_lexical_floor_with_margin_not_by_luck(corpus_ret
 
 
 @pytest.mark.model
-def test_the_dense_floor_separates_on_topic_from_off_topic_with_margin():
-    """The real model against the real corpus: the calibration behind DENSE_FLOOR,
-    kept as a test so a model or corpus change that erodes the margin is caught."""
+def test_the_dense_floor_never_drops_a_gold_chunk():
+    """The real model against the real corpus and the labelled set: every gold
+    chunk the dense side returns must clear the floor, so a model or corpus
+    change that pushes answers below it is caught. (Off-topic questions are
+    NOT expected below the floor: cosine measures topic, not answerability.)"""
+    from eval.dataset import load_cases
     from rag.corpus import chunk_corpus
     from rag.embeddings import LocalEmbedder
     from rag.store import VectorStore
 
     store = VectorStore(LocalEmbedder())
     store.sync(chunk_corpus())
-    on_topic = [
-        "How much can I pay into an ISA this tax year?",
-        "How do I reset my password?",
-        "Do you have a Manchester office?",
-    ]
-    off_topic = ["What is the weather like in Bristol today?", "Can you recommend a pizza place?"]
-    best = {q: store.search(q, k=1)[0].score for q in on_topic + off_topic}
-    for question in on_topic:
-        assert best[question] >= agent.DENSE_FLOOR + 0.05, best
-    for question in off_topic:
-        assert best[question] <= agent.DENSE_FLOOR - 0.05, best
+    lowest = 1.0
+    for case in load_cases():
+        if not case.gold:
+            continue
+        for hit in store.search(case.question, k=10):
+            if hit.chunk.chunk_id in case.gold_chunk_ids:
+                lowest = min(lowest, hit.score)
+                break
+    assert lowest >= agent.DENSE_FLOOR, f"a gold chunk scored {lowest:.3f}, below the floor"
 
 
 # --- search_knowledge_base ------------------------------------------------------------------
@@ -171,6 +173,8 @@ def test_open_retriever_syncs_the_index_and_honours_the_mode(tmp_path):
     try:
         assert report.added == report.total > 100 and report.removed == 0
         assert retriever.dense_weight == 0.0 and retriever.lexical_weight == 1.0
+        assert retriever.rrf_k == settings.rrf_k == 20  # the setting, not the library default
+        assert retriever.lexical_first_within == settings.candidates
         assert retriever.search("0161 496 0170", k=1)[0].found_by == "lexical"
     finally:
         retriever.store.close()

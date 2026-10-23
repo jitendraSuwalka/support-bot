@@ -57,3 +57,70 @@ def test_greeting_is_recognised():
 
 def test_a_real_query_is_not_treated_as_a_greeting():
     assert "quiz" not in agent.PLEASANTRIES
+
+
+# --- the clarify and decline tools ---------------------------------------------------
+# When the model asks through ask_for_clarification the policy counts the
+# question exactly instead of looking for a "?" in prose; when it declines,
+# the turn is resolved.
+
+
+def test_a_clarification_through_the_tool_is_allowed_once():
+    state = {"unclear_turns": 0}
+    answer, forced = agent.enforce_escalation("What do you mean?", [], False, state, "clarified")
+    assert (answer, forced) == ("What do you mean?", False)
+    assert state["unclear_turns"] == 1
+
+
+def test_a_second_clarification_in_a_row_is_escalated_with_the_fixed_reply():
+    state = {"unclear_turns": 1}
+    answer, forced = agent.enforce_escalation("And what else?", [], False, state, "clarified")
+    assert forced is True
+    assert answer == agent.POLICY_ESCALATION_REPLY and agent.SWITCHBOARD in answer
+    assert "?" not in answer
+    assert state["unclear_turns"] == 0
+
+
+def test_a_declined_request_resolves_the_turn():
+    state = {"unclear_turns": 1}
+    answer, forced = agent.enforce_escalation(agent.DECLINE_REPLY, [], False, state, "declined")
+    assert (answer, forced) == (agent.DECLINE_REPLY, False)
+    assert state["unclear_turns"] == 0
+
+
+def test_the_tool_signal_outranks_the_prose_heuristic():
+    # The tool says the turn ended with a clarification even though the text has no "?".
+    state = {"unclear_turns": 0}
+    _, forced = agent.enforce_escalation(
+        "Tell me more about it.", UNRESOLVED, False, state, "clarified"
+    )
+    assert forced is False and state["unclear_turns"] == 1
+
+
+# --- greetings with something attached ------------------------------------------
+
+
+def test_a_greeting_with_a_pleasantry_attached_is_still_a_greeting():
+    for text in (
+        "Hi, hope you're well.",
+        "Hello there!",
+        "ok thanks",
+        "Great, thank you and goodbye",
+        "Thanks a lot - that's helpful",
+        "good morning",
+    ):
+        assert agent.is_pleasantry(text) is True, text
+
+
+def test_a_greeting_with_a_question_attached_is_not():
+    for text in (
+        "Hi, what's the ISA allowance?",
+        "thanks, and what about pensions",
+        "hello, FW-1001?",
+        "allowance",
+        "quiz",
+        "yes",
+        "no",
+        "",
+    ):
+        assert agent.is_pleasantry(text) is False, text

@@ -63,3 +63,14 @@ def test_policy_escalation_and_rerank_are_reported():
 
 def test_greeting_shows_the_no_tools_chip():
     assert labels(app.build_status(make_result())) == [("tool", "Answered without tools")]
+
+
+def test_a_declined_turn_shows_the_decline_and_what_was_not_run():
+    trace_kinds = ["tool", "tool_skipped", "declined"]
+    result = make_result(tools=["look_up_client_query", "decline_out_of_scope"])
+    for kind in trace_kinds:
+        result.trace.log(kind, kind, name="look_up_client_query" if kind != "declined" else "")
+    chips = labels(app.build_status(result))
+    assert ("tool", "Declined: outside scope") in chips
+    assert ("none", "Not run: Looked up case status") in chips
+    assert ("tool", "Looked up case status") not in chips

@@ -20,11 +20,16 @@ hide or lag behind.
 The turn:
 
     prepare -> call_model -> [tool_use?] -> run_tools -> call_model ...
+                                                      -> [terminal tool] escalation_policy
                           -> [no tools]  -> evidence_guard -> (retry) call_model
                                                            -> citation_guard
                                                            -> groundedness_check
                                                            -> escalation_policy
                                                            -> finish
+
+A terminal tool (ask_for_clarification, decline_out_of_scope) ends the turn
+from run_tools: the reply is the tool's output, the guards have no prose to
+read, and only the policy still runs, to count the clarification.
 
 A turn that keeps calling tools past max_steps ends at give_up, exactly as
 the loop does.
@@ -49,6 +54,7 @@ class TurnState(TypedDict, total=False):
     evidence_parts: list[str]
     tools_used: list[str]
     model_escalated: bool
+    ended: str | None  # "clarified" or "declined" when a terminal tool closed the turn
     guard_retries: int
     guard_verdict: str  # "pass", "retry" or "failed"
     steps: int
@@ -70,6 +76,7 @@ def prepare(state: TurnState) -> TurnState:
         "evidence_parts": [],
         "tools_used": [],
         "model_escalated": False,
+        "ended": None,
         "guard_retries": 0,
         "steps": 0,
         "notes": [],
@@ -78,15 +85,20 @@ def prepare(state: TurnState) -> TurnState:
 
 
 def call_model(state: TurnState) -> TurnState:
-    response = agent.call_model(state["messages"])
+    response = agent.call_model(state["messages"], use_tools=not state["is_greeting"])
     return {"response": response, "steps": state["steps"] + 1}
 
 
 def run_tools(state: TurnState) -> TurnState:
-    escalated = agent.run_tool_calls(
+    run = agent.run_tool_calls(
         state["response"], state["messages"], state["evidence_parts"], state["tools_used"]
     )
-    return {"model_escalated": state["model_escalated"] or escalated}
+    update: TurnState = {"model_escalated": state["model_escalated"] or run.escalated}
+    if run.ended:
+        update["ended"] = run.ended
+        update["answer"] = run.answer
+        update["notes"] = state["notes"] + [agent.TERMINAL_NOTES[run.ended]]
+    return update
 
 
 def evidence_guard(state: TurnState) -> TurnState:
@@ -121,6 +133,7 @@ def escalation_policy(state: TurnState) -> TurnState:
         state["evidence_parts"],
         state["model_escalated"],
         state["policy"],
+        state["ended"],
     )
     return {"answer": answer, "notes": state["notes"] + notes, "forced": forced}
 
@@ -135,6 +148,8 @@ def finish(state: TurnState) -> TurnState:
             escalated=state["model_escalated"] or state["forced"],
             tools_used=state["tools_used"],
             models=agent.models_in_use(),
+            clarified=state["ended"] == "clarified" and not state["forced"],
+            declined=state["ended"] == "declined",
         )
     }
 
@@ -156,7 +171,9 @@ def after_model(state: TurnState) -> Literal["run_tools", "evidence_guard"]:
     return "run_tools" if state["response"].stop_reason == "tool_use" else "evidence_guard"
 
 
-def after_tools(state: TurnState) -> Literal["call_model", "give_up"]:
+def after_tools(state: TurnState) -> Literal["call_model", "escalation_policy", "give_up"]:
+    if state["ended"]:
+        return "escalation_policy"
     return "call_model" if state["steps"] < agent.MAX_STEPS else "give_up"
 
 

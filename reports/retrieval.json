@@ -1,0 +1,3652 @@
+{
+  "generated": "2026-10-23T10:11:26Z",
+  "embedder": "BAAI/bge-small-en-v1.5-384",
+  "cases": 169,
+  "cases_with_gold": 135,
+  "chunks": 129,
+  "dense_floor": 0.5,
+  "relevance_floor": 0.15,
+  "rrf_k": 20,
+  "lexical_first_within": 6,
+  "modes": {
+    "hybrid": {
+      "n": 135,
+      "recall@1": 0.644,
+      "recall@3": 0.896,
+      "recall@6": 0.97,
+      "mrr": 0.772,
+      "pool": 10,
+      "by_kind": {
+        "action": {
+          "n": 1,
+          "recall@1": 0.0,
+          "recall@3": 0.0,
+          "recall@6": 1.0,
+          "mrr": 0.2
+        },
+        "advice": {
+          "n": 1,
+          "recall@1": 1.0,
+          "recall@3": 1.0,
+          "recall@6": 1.0,
+          "mrr": 1.0
+        },
+        "denial": {
+          "n": 8,
+          "recall@1": 0.625,
+          "recall@3": 0.75,
+          "recall@6": 0.875,
+          "mrr": 0.719
+        },
+        "exact-string": {
+          "n": 6,
+          "recall@1": 0.667,
+          "recall@3": 0.833,
+          "recall@6": 1.0,
+          "mrr": 0.75
+        },
+        "factual": {
+          "n": 109,
+          "recall@1": 0.633,
+          "recall@3": 0.927,
+          "recall@6": 0.982,
+          "mrr": 0.776
+        },
+        "handoff": {
+          "n": 6,
+          "recall@1": 0.667,
+          "recall@3": 0.667,
+          "recall@6": 0.833,
+          "mrr": 0.7
+        },
+        "multi-part": {
+          "n": 4,
+          "recall@1": 1.0,
+          "recall@3": 1.0,
+          "recall@6": 1.0,
+          "mrr": 1.0
+        }
+      },
+      "misses": [
+        "client-01",
+        "client-06",
+        "denial-cardiff",
+        "life-06"
+      ],
+      "outcomes": [
+        {
+          "id": "isa-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.853164032242603,
+          "top_dense": 0.853164032242603
+        },
+        {
+          "id": "isa-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7658751101363764,
+          "top_dense": 0.7658751101363764
+        },
+        {
+          "id": "isa-03",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.6773398214551231,
+          "top_dense": 0.7334454411419831
+        },
+        {
+          "id": "isa-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.8210884650349002,
+          "top_dense": 0.8210884650349002
+        },
+        {
+          "id": "isa-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7965310813413479,
+          "top_dense": 0.7965310813413479
+        },
+        {
+          "id": "isa-06",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.7435913930533955,
+          "top_dense": 0.7480627493271993
+        },
+        {
+          "id": "isa-07",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.8130417174073064,
+          "top_dense": 0.8130417174073064
+        },
+        {
+          "id": "isa-08",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.8926356318968338,
+          "top_dense": 0.8926356318968338
+        },
+        {
+          "id": "isa-09",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.8367569334335193,
+          "top_dense": 0.8367569334335193
+        },
+        {
+          "id": "isa-10",
+          "kind": "factual",
+          "gold_rank": 3,
+          "gold_dense": 0.7723182297330193,
+          "top_dense": 0.7723182297330193
+        },
+        {
+          "id": "pension-01",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.869235595741931,
+          "top_dense": 0.869235595741931
+        },
+        {
+          "id": "pension-02",
+          "kind": "factual",
+          "gold_rank": 5,
+          "gold_dense": 0.6534085458433554,
+          "top_dense": 0.7537103803588424
+        },
+        {
+          "id": "pension-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.8810047948800971,
+          "top_dense": 0.8810047948800971
+        },
+        {
+          "id": "pension-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.78501620549335,
+          "top_dense": 0.78501620549335
+        },
+        {
+          "id": "pension-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.8008650752210011,
+          "top_dense": 0.8008650752210011
+        },
+        {
+          "id": "pension-06",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7347332888824352,
+          "top_dense": 0.7382520019706145
+        },
+        {
+          "id": "pension-07",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7843360027260742,
+          "top_dense": 0.7843360027260742
+        },
+        {
+          "id": "pension-08",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.698518757128318,
+          "top_dense": 0.7388455260250943
+        },
+        {
+          "id": "fees-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7996843554095985,
+          "top_dense": 0.7996843554095985
+        },
+        {
+          "id": "fees-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.8846958947039231,
+          "top_dense": 0.8846958947039231
+        },
+        {
+          "id": "fees-03",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.837613080019861,
+          "top_dense": 0.8939038859954727
+        },
+        {
+          "id": "fees-04",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.68945163601884,
+          "top_dense": 0.7134957173657781
+        },
+        {
+          "id": "fees-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.786210044884347,
+          "top_dense": 0.786210044884347
+        },
+        {
+          "id": "fees-06",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6687785298589928,
+          "top_dense": 0.6687785298589928
+        },
+        {
+          "id": "fees-07",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6918500548140784,
+          "top_dense": 0.6918500548140784
+        },
+        {
+          "id": "fees-08",
+          "kind": "factual",
+          "gold_rank": 3,
+          "gold_dense": 0.7993068151083508,
+          "top_dense": 0.7993068151083508
+        },
+        {
+          "id": "fees-09",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.799595628066549,
+          "top_dense": 0.799595628066549
+        },
+        {
+          "id": "complaints-01",
+          "kind": "factual",
+          "gold_rank": 4,
+          "gold_dense": 0.7413588733801597,
+          "top_dense": 0.77551523884479
+        },
+        {
+          "id": "complaints-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7937660711433425,
+          "top_dense": 0.8133452872830631
+        },
+        {
+          "id": "complaints-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6170619328272303,
+          "top_dense": 0.6183053459823716
+        },
+        {
+          "id": "complaints-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7215459805268829,
+          "top_dense": 0.7215459805268829
+        },
+        {
+          "id": "complaints-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6355858662731693,
+          "top_dense": 0.6355858662731693
+        },
+        {
+          "id": "contact-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6925974414950493,
+          "top_dense": 0.6925974414950493
+        },
+        {
+          "id": "contact-02",
+          "kind": "factual",
+          "gold_rank": 4,
+          "gold_dense": 0.6038797016168179,
+          "top_dense": 0.6355162766977962
+        },
+        {
+          "id": "contact-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7403846675655283,
+          "top_dense": 0.7403846675655283
+        },
+        {
+          "id": "contact-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7702335646045415,
+          "top_dense": 0.7702335646045415
+        },
+        {
+          "id": "contact-05",
+          "kind": "denial",
+          "gold_rank": 1,
+          "gold_dense": 0.6105909619946528,
+          "top_dense": 0.6105909619946528
+        },
+        {
+          "id": "contact-06",
+          "kind": "factual",
+          "gold_rank": 3,
+          "gold_dense": 0.6231998222717974,
+          "top_dense": 0.6757018802806427
+        },
+        {
+          "id": "contact-07",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.6268913587931988,
+          "top_dense": 0.6965203821593571
+        },
+        {
+          "id": "contact-08",
+          "kind": "factual",
+          "gold_rank": 4,
+          "gold_dense": 0.5980117235737051,
+          "top_dense": 0.6506513888110727
+        },
+        {
+          "id": "portal-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6811644681066323,
+          "top_dense": 0.6811644681066323
+        },
+        {
+          "id": "portal-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6881851074231256,
+          "top_dense": 0.6881851074231256
+        },
+        {
+          "id": "portal-03",
+          "kind": "denial",
+          "gold_rank": 2,
+          "gold_dense": 0.5579035785728736,
+          "top_dense": 0.6038965084499768
+        },
+        {
+          "id": "portal-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.642563145571831,
+          "top_dense": 0.642563145571831
+        },
+        {
+          "id": "portal-05",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.5430715305459984,
+          "top_dense": 0.6290494806221738
+        },
+        {
+          "id": "admin-01",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.7287642737394426,
+          "top_dense": 0.7287642737394426
+        },
+        {
+          "id": "admin-02",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.7680517049859455,
+          "top_dense": 0.7680517049859455
+        },
+        {
+          "id": "admin-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7949372582371617,
+          "top_dense": 0.7949372582371617
+        },
+        {
+          "id": "admin-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.8465382359895779,
+          "top_dense": 0.8465382359895779
+        },
+        {
+          "id": "admin-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.832165783546779,
+          "top_dense": 0.832165783546779
+        },
+        {
+          "id": "admin-06",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7241458052489586,
+          "top_dense": 0.7241458052489586
+        },
+        {
+          "id": "cash-01",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.7526236278548186,
+          "top_dense": 0.7581019000396658
+        },
+        {
+          "id": "cash-02",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.6918394600298579,
+          "top_dense": 0.6918394600298579
+        },
+        {
+          "id": "cash-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7295239250826009,
+          "top_dense": 0.7295239250826009
+        },
+        {
+          "id": "cash-04",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.7277307041623855,
+          "top_dense": 0.7277307041623855
+        },
+        {
+          "id": "tax-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.797908701791683,
+          "top_dense": 0.797908701791683
+        },
+        {
+          "id": "tax-02",
+          "kind": "factual",
+          "gold_rank": 3,
+          "gold_dense": 0.7815079134471186,
+          "top_dense": 0.8086396776600129
+        },
+        {
+          "id": "tax-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.685199043299624,
+          "top_dense": 0.685199043299624
+        },
+        {
+          "id": "tax-04",
+          "kind": "denial",
+          "gold_rank": 1,
+          "gold_dense": 0.6320396023062376,
+          "top_dense": 0.6578233954792649
+        },
+        {
+          "id": "tax-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7760490440884987,
+          "top_dense": 0.7760490440884987
+        },
+        {
+          "id": "transfer-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.807466650945436,
+          "top_dense": 0.807466650945436
+        },
+        {
+          "id": "transfer-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.74745249954817,
+          "top_dense": 0.74745249954817
+        },
+        {
+          "id": "transfer-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7656077822619423,
+          "top_dense": 0.7656077822619423
+        },
+        {
+          "id": "invest-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.8383252889439046,
+          "top_dense": 0.8383252889439046
+        },
+        {
+          "id": "invest-02",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.6897438439225807,
+          "top_dense": 0.6897438439225807
+        },
+        {
+          "id": "invest-03",
+          "kind": "factual",
+          "gold_rank": 6,
+          "gold_dense": 0.6584346525376663,
+          "top_dense": 0.6745561944939866
+        },
+        {
+          "id": "invest-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7772563987085557,
+          "top_dense": 0.7772563987085557
+        },
+        {
+          "id": "invest-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7033602323248547,
+          "top_dense": 0.7033602323248547
+        },
+        {
+          "id": "about-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6684626290525345,
+          "top_dense": 0.6684626290525345
+        },
+        {
+          "id": "about-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6688865987743156,
+          "top_dense": 0.6688865987743156
+        },
+        {
+          "id": "about-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7977854868700208,
+          "top_dense": 0.7977854868700208
+        },
+        {
+          "id": "about-04",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.6201861045800563,
+          "top_dense": 0.6469862933594489
+        },
+        {
+          "id": "about-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7371678604925382,
+          "top_dense": 0.7371678604925382
+        },
+        {
+          "id": "planning-01",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.6719524956547986,
+          "top_dense": 0.6719524956547986
+        },
+        {
+          "id": "planning-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6812593553172366,
+          "top_dense": 0.6812593553172366
+        },
+        {
+          "id": "planning-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7730245600031092,
+          "top_dense": 0.7730245600031092
+        },
+        {
+          "id": "appt-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7647549027381007,
+          "top_dense": 0.7647549027381007
+        },
+        {
+          "id": "appt-02",
+          "kind": "denial",
+          "gold_rank": 1,
+          "gold_dense": 0.7651334358262496,
+          "top_dense": 0.7651334358262496
+        },
+        {
+          "id": "appt-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.8348541974986738,
+          "top_dense": 0.8348541974986738
+        },
+        {
+          "id": "client-01",
+          "kind": "factual",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6943641029684441
+        },
+        {
+          "id": "client-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7982685208060354,
+          "top_dense": 0.7982685208060354
+        },
+        {
+          "id": "client-03",
+          "kind": "denial",
+          "gold_rank": 1,
+          "gold_dense": 0.644160662423102,
+          "top_dense": 0.644160662423102
+        },
+        {
+          "id": "client-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.8198806869130024,
+          "top_dense": 0.8198806869130024
+        },
+        {
+          "id": "security-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7953450303006087,
+          "top_dense": 0.7953450303006087
+        },
+        {
+          "id": "security-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7421814378664496,
+          "top_dense": 0.7421814378664496
+        },
+        {
+          "id": "security-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7938375514958178,
+          "top_dense": 0.7938375514958178
+        },
+        {
+          "id": "security-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6734588193319111,
+          "top_dense": 0.6799696664340662
+        },
+        {
+          "id": "security-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7454862225087684,
+          "top_dense": 0.7454862225087684
+        },
+        {
+          "id": "access-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6673688067138043,
+          "top_dense": 0.6673688067138043
+        },
+        {
+          "id": "access-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6950269411717431,
+          "top_dense": 0.6950269411717431
+        },
+        {
+          "id": "access-03",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.6273675403580785,
+          "top_dense": 0.6346150627634497
+        },
+        {
+          "id": "life-01",
+          "kind": "handoff",
+          "gold_rank": 1,
+          "gold_dense": 0.6147395944490651,
+          "top_dense": 0.6147395944490651
+        },
+        {
+          "id": "life-02",
+          "kind": "factual",
+          "gold_rank": 6,
+          "gold_dense": 0.7577755229108921,
+          "top_dense": 0.7577755229108921
+        },
+        {
+          "id": "life-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.739564578686963,
+          "top_dense": 0.739564578686963
+        },
+        {
+          "id": "life-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6974642828905804,
+          "top_dense": 0.6974642828905804
+        },
+        {
+          "id": "exact-01",
+          "kind": "exact-string",
+          "gold_rank": 3,
+          "gold_dense": 0.5401251169026327,
+          "top_dense": 0.5735831092948329
+        },
+        {
+          "id": "exact-02",
+          "kind": "exact-string",
+          "gold_rank": 1,
+          "gold_dense": 0.7232192171661409,
+          "top_dense": 0.7232192171661409
+        },
+        {
+          "id": "exact-03",
+          "kind": "exact-string",
+          "gold_rank": 1,
+          "gold_dense": 0.6901552487537711,
+          "top_dense": 0.6901552487537711
+        },
+        {
+          "id": "exact-04",
+          "kind": "exact-string",
+          "gold_rank": 1,
+          "gold_dense": 0.7907855165344376,
+          "top_dense": 0.7907855165344376
+        },
+        {
+          "id": "exact-05",
+          "kind": "exact-string",
+          "gold_rank": 1,
+          "gold_dense": 0.7334281673750074,
+          "top_dense": 0.7334281673750074
+        },
+        {
+          "id": "multi-01",
+          "kind": "multi-part",
+          "gold_rank": 1,
+          "gold_dense": 0.751179151046486,
+          "top_dense": 0.751179151046486
+        },
+        {
+          "id": "multi-02",
+          "kind": "multi-part",
+          "gold_rank": 1,
+          "gold_dense": 0.7549947754234063,
+          "top_dense": 0.7790653694308061
+        },
+        {
+          "id": "multi-03",
+          "kind": "multi-part",
+          "gold_rank": 1,
+          "gold_dense": 0.8377043775337341,
+          "top_dense": 0.8377043775337341
+        },
+        {
+          "id": "handoff-complaint",
+          "kind": "handoff",
+          "gold_rank": 1,
+          "gold_dense": 0.680775182999192,
+          "top_dense": 0.680775182999192
+        },
+        {
+          "id": "denial-cardiff",
+          "kind": "denial",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6258147037825209
+        },
+        {
+          "id": "scope-06",
+          "kind": "factual",
+          "gold_rank": 3,
+          "gold_dense": 0.5192511451481233,
+          "top_dense": 0.6059316955623146
+        },
+        {
+          "id": "portal-06",
+          "kind": "factual",
+          "gold_rank": 3,
+          "gold_dense": 0.5037669682922908,
+          "top_dense": 0.5887510513619174
+        },
+        {
+          "id": "portal-07",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6955936305898662,
+          "top_dense": 0.6955936305898662
+        },
+        {
+          "id": "invest-06",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.7161595332440538,
+          "top_dense": 0.7161595332440538
+        },
+        {
+          "id": "appt-04",
+          "kind": "denial",
+          "gold_rank": 1,
+          "gold_dense": 0.8560263246113057,
+          "top_dense": 0.8560263246113057
+        },
+        {
+          "id": "fees-10",
+          "kind": "multi-part",
+          "gold_rank": 1,
+          "gold_dense": 0.7976480564529804,
+          "top_dense": 0.7976480564529804
+        },
+        {
+          "id": "fees-11",
+          "kind": "factual",
+          "gold_rank": 3,
+          "gold_dense": 0.7365206393223842,
+          "top_dense": 0.7579161930655924
+        },
+        {
+          "id": "fees-12",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7896340865677905,
+          "top_dense": 0.7896340865677905
+        },
+        {
+          "id": "fees-13",
+          "kind": "denial",
+          "gold_rank": 4,
+          "gold_dense": 0.7314113283298834,
+          "top_dense": 0.7314113283298834
+        },
+        {
+          "id": "client-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6941294219300802,
+          "top_dense": 0.6941294219300802
+        },
+        {
+          "id": "client-06",
+          "kind": "factual",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6424105630775823
+        },
+        {
+          "id": "admin-07",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7461902844805708,
+          "top_dense": 0.7461902844805708
+        },
+        {
+          "id": "admin-08",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.7174234009919623,
+          "top_dense": 0.7174234009919623
+        },
+        {
+          "id": "admin-09",
+          "kind": "factual",
+          "gold_rank": 3,
+          "gold_dense": 0.7275009807732857,
+          "top_dense": 0.7275009807732857
+        },
+        {
+          "id": "pension-09",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7748958893935542,
+          "top_dense": 0.7748958893935542
+        },
+        {
+          "id": "pension-10",
+          "kind": "factual",
+          "gold_rank": 3,
+          "gold_dense": 0.6790511761595753,
+          "top_dense": 0.7127644441373597
+        },
+        {
+          "id": "pension-11",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.6729199731856333,
+          "top_dense": 0.7237458221293318
+        },
+        {
+          "id": "isa-11",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7882532820138926,
+          "top_dense": 0.7882532820138926
+        },
+        {
+          "id": "isa-12",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.8641865462821078,
+          "top_dense": 0.8641865462821078
+        },
+        {
+          "id": "about-06",
+          "kind": "factual",
+          "gold_rank": 3,
+          "gold_dense": 0.7065698071706056,
+          "top_dense": 0.7289466315945845
+        },
+        {
+          "id": "access-04",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.5594316064764983,
+          "top_dense": 0.5594316064764983
+        },
+        {
+          "id": "security-06",
+          "kind": "handoff",
+          "gold_rank": 5,
+          "gold_dense": 0.7838728411359367,
+          "top_dense": 0.7838728411359367
+        },
+        {
+          "id": "contact-09",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.6166766974221272,
+          "top_dense": 0.6166766974221272
+        },
+        {
+          "id": "exact-06",
+          "kind": "exact-string",
+          "gold_rank": 6,
+          "gold_dense": 0.5668274089968197,
+          "top_dense": 0.6569709257955278
+        },
+        {
+          "id": "life-05",
+          "kind": "handoff",
+          "gold_rank": 1,
+          "gold_dense": 0.7128202818025551,
+          "top_dense": 0.7128202818025551
+        },
+        {
+          "id": "life-06",
+          "kind": "handoff",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6419301858816966
+        },
+        {
+          "id": "life-07",
+          "kind": "handoff",
+          "gold_rank": 1,
+          "gold_dense": 0.6355219960864221,
+          "top_dense": 0.6355219960864221
+        },
+        {
+          "id": "action-01",
+          "kind": "action",
+          "gold_rank": 5,
+          "gold_dense": 0.6859740422377179,
+          "top_dense": 0.7245557279291076
+        },
+        {
+          "id": "advice-mixed",
+          "kind": "advice",
+          "gold_rank": 1,
+          "gold_dense": 0.7761081249943336,
+          "top_dense": 0.7761081249943336
+        },
+        {
+          "id": "scope-11",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7068588440081406,
+          "top_dense": 0.7068588440081406
+        },
+        {
+          "id": "status-01",
+          "kind": "status",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.524510662828347
+        },
+        {
+          "id": "status-02",
+          "kind": "status",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.5273854875355063
+        },
+        {
+          "id": "status-03",
+          "kind": "status",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.5671910922301088
+        },
+        {
+          "id": "status-04",
+          "kind": "status",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.527349476986292
+        },
+        {
+          "id": "status-05",
+          "kind": "status",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.5886200277152143
+        },
+        {
+          "id": "advice-01",
+          "kind": "advice",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.7144464632197247
+        },
+        {
+          "id": "advice-02",
+          "kind": "advice",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.7822931238013313
+        },
+        {
+          "id": "advice-03",
+          "kind": "advice",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.7417351347372411
+        },
+        {
+          "id": "advice-04",
+          "kind": "advice",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.7629847579924335
+        },
+        {
+          "id": "advice-05",
+          "kind": "advice",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6122679157736414
+        },
+        {
+          "id": "advice-06",
+          "kind": "advice",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6673179494383118
+        },
+        {
+          "id": "advice-07",
+          "kind": "advice",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6798979645045432
+        },
+        {
+          "id": "advice-08",
+          "kind": "advice",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6041219469792334
+        },
+        {
+          "id": "advice-10",
+          "kind": "advice",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6362534164549658
+        },
+        {
+          "id": "scope-01",
+          "kind": "out-of-scope",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6854858973611956
+        },
+        {
+          "id": "scope-02",
+          "kind": "out-of-scope",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6895175184118358
+        },
+        {
+          "id": "scope-03",
+          "kind": "out-of-scope",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.5749203466427385
+        },
+        {
+          "id": "scope-04",
+          "kind": "out-of-scope",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.5258872701160862
+        },
+        {
+          "id": "scope-07",
+          "kind": "out-of-scope",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.624555131445237
+        },
+        {
+          "id": "ambiguous-01",
+          "kind": "ambiguous",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.55670800388046
+        },
+        {
+          "id": "ambiguous-02",
+          "kind": "ambiguous",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.5275872627427198
+        },
+        {
+          "id": "ambiguous-03",
+          "kind": "ambiguous",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.7307772021982138
+        },
+        {
+          "id": "greeting-01",
+          "kind": "greeting",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.5440722031316035
+        },
+        {
+          "id": "greeting-02",
+          "kind": "greeting",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.5696861207074558
+        },
+        {
+          "id": "advice-11",
+          "kind": "advice",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6930107178027266
+        },
+        {
+          "id": "advice-12",
+          "kind": "advice",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.7617607201202501
+        },
+        {
+          "id": "scope-08",
+          "kind": "out-of-scope",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6839428914425811
+        },
+        {
+          "id": "scope-09",
+          "kind": "out-of-scope",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6883693822974897
+        },
+        {
+          "id": "scope-10",
+          "kind": "out-of-scope",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.8109687944803655
+        },
+        {
+          "id": "decline-01",
+          "kind": "out-of-scope",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6371359816861348
+        },
+        {
+          "id": "decline-02",
+          "kind": "out-of-scope",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.563895842196559
+        },
+        {
+          "id": "status-06",
+          "kind": "status",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.4473246553875837
+        },
+        {
+          "id": "greeting-03",
+          "kind": "greeting",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.5303155499663642
+        },
+        {
+          "id": "policy-01",
+          "kind": "ambiguous",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.508913258008769
+        }
+      ],
+      "dense_calibration": {
+        "gold_chunk_cosine": {
+          "n": 131,
+          "min": 0.504,
+          "p10": 0.618,
+          "median": 0.735,
+          "p90": 0.834,
+          "max": 0.893
+        },
+        "best_cosine_without_gold": {
+          "n": 34,
+          "min": 0.447,
+          "p10": 0.525,
+          "median": 0.618,
+          "p90": 0.762,
+          "max": 0.811
+        }
+      }
+    },
+    "lexical": {
+      "n": 135,
+      "recall@1": 0.6,
+      "recall@3": 0.785,
+      "recall@6": 0.896,
+      "mrr": 0.71,
+      "pool": 10,
+      "by_kind": {
+        "action": {
+          "n": 1,
+          "recall@1": 0.0,
+          "recall@3": 0.0,
+          "recall@6": 1.0,
+          "mrr": 0.167
+        },
+        "advice": {
+          "n": 1,
+          "recall@1": 0.0,
+          "recall@3": 1.0,
+          "recall@6": 1.0,
+          "mrr": 0.333
+        },
+        "denial": {
+          "n": 8,
+          "recall@1": 0.5,
+          "recall@3": 0.75,
+          "recall@6": 0.75,
+          "mrr": 0.625
+        },
+        "exact-string": {
+          "n": 6,
+          "recall@1": 1.0,
+          "recall@3": 1.0,
+          "recall@6": 1.0,
+          "mrr": 1.0
+        },
+        "factual": {
+          "n": 109,
+          "recall@1": 0.606,
+          "recall@3": 0.807,
+          "recall@6": 0.927,
+          "mrr": 0.724
+        },
+        "handoff": {
+          "n": 6,
+          "recall@1": 0.167,
+          "recall@3": 0.167,
+          "recall@6": 0.333,
+          "mrr": 0.234
+        },
+        "multi-part": {
+          "n": 4,
+          "recall@1": 1.0,
+          "recall@3": 1.0,
+          "recall@6": 1.0,
+          "mrr": 1.0
+        }
+      },
+      "misses": [
+        "about-06",
+        "access-04",
+        "client-01",
+        "client-06",
+        "denial-cardiff",
+        "fees-13",
+        "invest-03",
+        "invest-06",
+        "life-02",
+        "life-06",
+        "security-06"
+      ],
+      "outcomes": [
+        {
+          "id": "isa-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "isa-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "isa-03",
+          "kind": "factual",
+          "gold_rank": 5,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "isa-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "isa-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "isa-06",
+          "kind": "factual",
+          "gold_rank": 3,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "isa-07",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "isa-08",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "isa-09",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "isa-10",
+          "kind": "factual",
+          "gold_rank": 6,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "pension-01",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "pension-02",
+          "kind": "factual",
+          "gold_rank": 4,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "pension-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "pension-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "pension-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "pension-06",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "pension-07",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "pension-08",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "fees-01",
+          "kind": "factual",
+          "gold_rank": 3,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "fees-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "fees-03",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "fees-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "fees-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "fees-06",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "fees-07",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "fees-08",
+          "kind": "factual",
+          "gold_rank": 5,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "fees-09",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "complaints-01",
+          "kind": "factual",
+          "gold_rank": 6,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "complaints-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "complaints-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "complaints-04",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "complaints-05",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "contact-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "contact-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "contact-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "contact-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "contact-05",
+          "kind": "denial",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "contact-06",
+          "kind": "factual",
+          "gold_rank": 3,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "contact-07",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "contact-08",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "portal-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "portal-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "portal-03",
+          "kind": "denial",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "portal-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "portal-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "admin-01",
+          "kind": "factual",
+          "gold_rank": 6,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "admin-02",
+          "kind": "factual",
+          "gold_rank": 5,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "admin-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "admin-04",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "admin-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "admin-06",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "cash-01",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "cash-02",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "cash-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "cash-04",
+          "kind": "factual",
+          "gold_rank": 4,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "tax-01",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "tax-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "tax-03",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "tax-04",
+          "kind": "denial",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "tax-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "transfer-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "transfer-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "transfer-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "invest-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "invest-02",
+          "kind": "factual",
+          "gold_rank": 4,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "invest-03",
+          "kind": "factual",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "invest-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "invest-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "about-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "about-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "about-03",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "about-04",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "about-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "planning-01",
+          "kind": "factual",
+          "gold_rank": 5,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "planning-02",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "planning-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "appt-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "appt-02",
+          "kind": "denial",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "appt-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "client-01",
+          "kind": "factual",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "client-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "client-03",
+          "kind": "denial",
+          "gold_rank": 2,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "client-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "security-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "security-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "security-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "security-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "security-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "access-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "access-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "access-03",
+          "kind": "factual",
+          "gold_rank": 4,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "life-01",
+          "kind": "handoff",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "life-02",
+          "kind": "factual",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "life-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "life-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "exact-01",
+          "kind": "exact-string",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "exact-02",
+          "kind": "exact-string",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "exact-03",
+          "kind": "exact-string",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "exact-04",
+          "kind": "exact-string",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "exact-05",
+          "kind": "exact-string",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "multi-01",
+          "kind": "multi-part",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "multi-02",
+          "kind": "multi-part",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "multi-03",
+          "kind": "multi-part",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "handoff-complaint",
+          "kind": "handoff",
+          "gold_rank": 8,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "denial-cardiff",
+          "kind": "denial",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "scope-06",
+          "kind": "factual",
+          "gold_rank": 3,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "portal-06",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "portal-07",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "invest-06",
+          "kind": "factual",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "appt-04",
+          "kind": "denial",
+          "gold_rank": 2,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "fees-10",
+          "kind": "multi-part",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "fees-11",
+          "kind": "factual",
+          "gold_rank": 4,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "fees-12",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "fees-13",
+          "kind": "denial",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "client-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "client-06",
+          "kind": "factual",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "admin-07",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "admin-08",
+          "kind": "factual",
+          "gold_rank": 8,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "admin-09",
+          "kind": "factual",
+          "gold_rank": 4,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "pension-09",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "pension-10",
+          "kind": "factual",
+          "gold_rank": 3,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "pension-11",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "isa-11",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "isa-12",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "about-06",
+          "kind": "factual",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "access-04",
+          "kind": "factual",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "security-06",
+          "kind": "handoff",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "contact-09",
+          "kind": "factual",
+          "gold_rank": 3,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "exact-06",
+          "kind": "exact-string",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "life-05",
+          "kind": "handoff",
+          "gold_rank": 6,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "life-06",
+          "kind": "handoff",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "life-07",
+          "kind": "handoff",
+          "gold_rank": 9,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "action-01",
+          "kind": "action",
+          "gold_rank": 6,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "advice-mixed",
+          "kind": "advice",
+          "gold_rank": 3,
+          "gold_dense": null,
+          "top_dense": null
+        },
+        {
+          "id": "scope-11",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": null,
+          "top_dense": null
+        }
+      ]
+    },
+    "dense": {
+      "n": 135,
+      "recall@1": 0.726,
+      "recall@3": 0.867,
+      "recall@6": 0.933,
+      "mrr": 0.806,
+      "pool": 10,
+      "by_kind": {
+        "action": {
+          "n": 1,
+          "recall@1": 0.0,
+          "recall@3": 0.0,
+          "recall@6": 0.0,
+          "mrr": 0.125
+        },
+        "advice": {
+          "n": 1,
+          "recall@1": 1.0,
+          "recall@3": 1.0,
+          "recall@6": 1.0,
+          "mrr": 1.0
+        },
+        "denial": {
+          "n": 8,
+          "recall@1": 0.625,
+          "recall@3": 0.625,
+          "recall@6": 0.75,
+          "mrr": 0.666
+        },
+        "exact-string": {
+          "n": 6,
+          "recall@1": 0.667,
+          "recall@3": 0.667,
+          "recall@6": 0.833,
+          "mrr": 0.694
+        },
+        "factual": {
+          "n": 109,
+          "recall@1": 0.734,
+          "recall@3": 0.89,
+          "recall@6": 0.954,
+          "mrr": 0.819
+        },
+        "handoff": {
+          "n": 6,
+          "recall@1": 0.833,
+          "recall@3": 1.0,
+          "recall@6": 1.0,
+          "mrr": 0.917
+        },
+        "multi-part": {
+          "n": 4,
+          "recall@1": 0.75,
+          "recall@3": 1.0,
+          "recall@6": 1.0,
+          "mrr": 0.875
+        }
+      },
+      "misses": [
+        "denial-cardiff",
+        "exact-06",
+        "portal-05",
+        "portal-06",
+        "scope-06"
+      ],
+      "outcomes": [
+        {
+          "id": "isa-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.8531640322426031,
+          "top_dense": 0.8531640322426031
+        },
+        {
+          "id": "isa-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7658751101363764,
+          "top_dense": 0.7658751101363764
+        },
+        {
+          "id": "isa-03",
+          "kind": "factual",
+          "gold_rank": 3,
+          "gold_dense": 0.6773398214551231,
+          "top_dense": 0.7334454411419831
+        },
+        {
+          "id": "isa-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.8210884650349002,
+          "top_dense": 0.8210884650349002
+        },
+        {
+          "id": "isa-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7965310813413479,
+          "top_dense": 0.7965310813413479
+        },
+        {
+          "id": "isa-06",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.7435913930533955,
+          "top_dense": 0.7480627493271993
+        },
+        {
+          "id": "isa-07",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.8130417174073064,
+          "top_dense": 0.8130417174073064
+        },
+        {
+          "id": "isa-08",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.8926356318968338,
+          "top_dense": 0.8926356318968338
+        },
+        {
+          "id": "isa-09",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.8367569334335193,
+          "top_dense": 0.8367569334335193
+        },
+        {
+          "id": "isa-10",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7723182297330193,
+          "top_dense": 0.7723182297330193
+        },
+        {
+          "id": "pension-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.869235595741931,
+          "top_dense": 0.869235595741931
+        },
+        {
+          "id": "pension-02",
+          "kind": "factual",
+          "gold_rank": 10,
+          "gold_dense": 0.6534085458433554,
+          "top_dense": 0.7537103803588424
+        },
+        {
+          "id": "pension-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.8810047948800971,
+          "top_dense": 0.8810047948800971
+        },
+        {
+          "id": "pension-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.78501620549335,
+          "top_dense": 0.78501620549335
+        },
+        {
+          "id": "pension-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.8008650752210011,
+          "top_dense": 0.8008650752210011
+        },
+        {
+          "id": "pension-06",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.7347332888824352,
+          "top_dense": 0.7382520019706145
+        },
+        {
+          "id": "pension-07",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7843360027260742,
+          "top_dense": 0.7843360027260742
+        },
+        {
+          "id": "pension-08",
+          "kind": "factual",
+          "gold_rank": 5,
+          "gold_dense": 0.698518757128318,
+          "top_dense": 0.7388455260250943
+        },
+        {
+          "id": "fees-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7996843554095985,
+          "top_dense": 0.7996843554095985
+        },
+        {
+          "id": "fees-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.8846958947039231,
+          "top_dense": 0.8846958947039231
+        },
+        {
+          "id": "fees-03",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.837613080019861,
+          "top_dense": 0.8939038859954727
+        },
+        {
+          "id": "fees-04",
+          "kind": "factual",
+          "gold_rank": 4,
+          "gold_dense": 0.68945163601884,
+          "top_dense": 0.7134957173657781
+        },
+        {
+          "id": "fees-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.786210044884347,
+          "top_dense": 0.786210044884347
+        },
+        {
+          "id": "fees-06",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6687785298589928,
+          "top_dense": 0.6687785298589928
+        },
+        {
+          "id": "fees-07",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6918500548140784,
+          "top_dense": 0.6918500548140784
+        },
+        {
+          "id": "fees-08",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7993068151083508,
+          "top_dense": 0.7993068151083508
+        },
+        {
+          "id": "fees-09",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.799595628066549,
+          "top_dense": 0.799595628066549
+        },
+        {
+          "id": "complaints-01",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.7413588733801597,
+          "top_dense": 0.77551523884479
+        },
+        {
+          "id": "complaints-02",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.7937660711433425,
+          "top_dense": 0.8133452872830631
+        },
+        {
+          "id": "complaints-03",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.6170619328272303,
+          "top_dense": 0.6183053459823716
+        },
+        {
+          "id": "complaints-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7215459805268829,
+          "top_dense": 0.7215459805268829
+        },
+        {
+          "id": "complaints-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6355858662731693,
+          "top_dense": 0.6355858662731693
+        },
+        {
+          "id": "contact-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6925974414950493,
+          "top_dense": 0.6925974414950493
+        },
+        {
+          "id": "contact-02",
+          "kind": "factual",
+          "gold_rank": 5,
+          "gold_dense": 0.6038797016168179,
+          "top_dense": 0.6355162766977962
+        },
+        {
+          "id": "contact-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7403846675655283,
+          "top_dense": 0.7403846675655283
+        },
+        {
+          "id": "contact-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7702335646045415,
+          "top_dense": 0.7702335646045415
+        },
+        {
+          "id": "contact-05",
+          "kind": "denial",
+          "gold_rank": 1,
+          "gold_dense": 0.6105909619946528,
+          "top_dense": 0.6105909619946528
+        },
+        {
+          "id": "contact-06",
+          "kind": "factual",
+          "gold_rank": 4,
+          "gold_dense": 0.6531794075867209,
+          "top_dense": 0.6757018802806427
+        },
+        {
+          "id": "contact-07",
+          "kind": "factual",
+          "gold_rank": 3,
+          "gold_dense": 0.6268913587931988,
+          "top_dense": 0.6965203821593571
+        },
+        {
+          "id": "contact-08",
+          "kind": "factual",
+          "gold_rank": 6,
+          "gold_dense": 0.601705926877268,
+          "top_dense": 0.6506513888110727
+        },
+        {
+          "id": "portal-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6811644681066323,
+          "top_dense": 0.6811644681066323
+        },
+        {
+          "id": "portal-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6881851074231256,
+          "top_dense": 0.6881851074231256
+        },
+        {
+          "id": "portal-03",
+          "kind": "denial",
+          "gold_rank": 5,
+          "gold_dense": 0.5579035785728736,
+          "top_dense": 0.6038965084499768
+        },
+        {
+          "id": "portal-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.642563145571831,
+          "top_dense": 0.642563145571831
+        },
+        {
+          "id": "portal-05",
+          "kind": "factual",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6290494806221738
+        },
+        {
+          "id": "admin-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7287642737394426,
+          "top_dense": 0.7287642737394426
+        },
+        {
+          "id": "admin-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7680517049859455,
+          "top_dense": 0.7680517049859455
+        },
+        {
+          "id": "admin-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7949372582371617,
+          "top_dense": 0.7949372582371617
+        },
+        {
+          "id": "admin-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.8465382359895779,
+          "top_dense": 0.8465382359895779
+        },
+        {
+          "id": "admin-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.832165783546779,
+          "top_dense": 0.832165783546779
+        },
+        {
+          "id": "admin-06",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7241458052489586,
+          "top_dense": 0.7241458052489586
+        },
+        {
+          "id": "cash-01",
+          "kind": "factual",
+          "gold_rank": 3,
+          "gold_dense": 0.7526236278548186,
+          "top_dense": 0.7581019000396658
+        },
+        {
+          "id": "cash-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6918394600298579,
+          "top_dense": 0.6918394600298579
+        },
+        {
+          "id": "cash-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7295239250826009,
+          "top_dense": 0.7295239250826009
+        },
+        {
+          "id": "cash-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7277307041623855,
+          "top_dense": 0.7277307041623855
+        },
+        {
+          "id": "tax-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.797908701791683,
+          "top_dense": 0.797908701791683
+        },
+        {
+          "id": "tax-02",
+          "kind": "factual",
+          "gold_rank": 5,
+          "gold_dense": 0.7815079134471186,
+          "top_dense": 0.8086396776600129
+        },
+        {
+          "id": "tax-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.685199043299624,
+          "top_dense": 0.685199043299624
+        },
+        {
+          "id": "tax-04",
+          "kind": "denial",
+          "gold_rank": 8,
+          "gold_dense": 0.6320396023062376,
+          "top_dense": 0.6578233954792649
+        },
+        {
+          "id": "tax-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7760490440884987,
+          "top_dense": 0.7760490440884987
+        },
+        {
+          "id": "transfer-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.807466650945436,
+          "top_dense": 0.807466650945436
+        },
+        {
+          "id": "transfer-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.74745249954817,
+          "top_dense": 0.74745249954817
+        },
+        {
+          "id": "transfer-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7656077822619423,
+          "top_dense": 0.7656077822619423
+        },
+        {
+          "id": "invest-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.8383252889439046,
+          "top_dense": 0.8383252889439046
+        },
+        {
+          "id": "invest-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6897438439225807,
+          "top_dense": 0.6897438439225807
+        },
+        {
+          "id": "invest-03",
+          "kind": "factual",
+          "gold_rank": 4,
+          "gold_dense": 0.6584346525376663,
+          "top_dense": 0.7165174985199634
+        },
+        {
+          "id": "invest-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7772563987085557,
+          "top_dense": 0.7772563987085557
+        },
+        {
+          "id": "invest-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7033602323248547,
+          "top_dense": 0.7033602323248547
+        },
+        {
+          "id": "about-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6684626290525345,
+          "top_dense": 0.6684626290525345
+        },
+        {
+          "id": "about-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6688865987743156,
+          "top_dense": 0.6688865987743156
+        },
+        {
+          "id": "about-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7977854868700208,
+          "top_dense": 0.7977854868700208
+        },
+        {
+          "id": "about-04",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.6201861045800563,
+          "top_dense": 0.6469862933594489
+        },
+        {
+          "id": "about-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7371678604925382,
+          "top_dense": 0.7371678604925382
+        },
+        {
+          "id": "planning-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6719524956547986,
+          "top_dense": 0.6719524956547986
+        },
+        {
+          "id": "planning-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6812593553172366,
+          "top_dense": 0.6812593553172366
+        },
+        {
+          "id": "planning-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7730245600031092,
+          "top_dense": 0.7730245600031092
+        },
+        {
+          "id": "appt-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7647549027381007,
+          "top_dense": 0.7647549027381007
+        },
+        {
+          "id": "appt-02",
+          "kind": "denial",
+          "gold_rank": 1,
+          "gold_dense": 0.7651334358262496,
+          "top_dense": 0.7651334358262496
+        },
+        {
+          "id": "appt-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.8348541974986738,
+          "top_dense": 0.8348541974986738
+        },
+        {
+          "id": "client-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7215442297063845,
+          "top_dense": 0.7215442297063845
+        },
+        {
+          "id": "client-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7982685208060354,
+          "top_dense": 0.7982685208060354
+        },
+        {
+          "id": "client-03",
+          "kind": "denial",
+          "gold_rank": 1,
+          "gold_dense": 0.644160662423102,
+          "top_dense": 0.644160662423102
+        },
+        {
+          "id": "client-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.8198806869130024,
+          "top_dense": 0.8198806869130024
+        },
+        {
+          "id": "security-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7953450303006087,
+          "top_dense": 0.7953450303006087
+        },
+        {
+          "id": "security-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7421814378664496,
+          "top_dense": 0.7421814378664496
+        },
+        {
+          "id": "security-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7938375514958178,
+          "top_dense": 0.7938375514958178
+        },
+        {
+          "id": "security-04",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.6734588193319111,
+          "top_dense": 0.6799696664340662
+        },
+        {
+          "id": "security-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7454862225087684,
+          "top_dense": 0.7454862225087684
+        },
+        {
+          "id": "access-01",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6673688067138043,
+          "top_dense": 0.6673688067138043
+        },
+        {
+          "id": "access-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6950269411717431,
+          "top_dense": 0.6950269411717431
+        },
+        {
+          "id": "access-03",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.6273675403580785,
+          "top_dense": 0.6346150627634497
+        },
+        {
+          "id": "life-01",
+          "kind": "handoff",
+          "gold_rank": 1,
+          "gold_dense": 0.6147395944490651,
+          "top_dense": 0.6147395944490651
+        },
+        {
+          "id": "life-02",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7577755229108921,
+          "top_dense": 0.7577755229108921
+        },
+        {
+          "id": "life-03",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.739564578686963,
+          "top_dense": 0.739564578686963
+        },
+        {
+          "id": "life-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6974642828905804,
+          "top_dense": 0.6974642828905804
+        },
+        {
+          "id": "exact-01",
+          "kind": "exact-string",
+          "gold_rank": 6,
+          "gold_dense": 0.5401251169026327,
+          "top_dense": 0.5735831092948329
+        },
+        {
+          "id": "exact-02",
+          "kind": "exact-string",
+          "gold_rank": 1,
+          "gold_dense": 0.7232192171661409,
+          "top_dense": 0.7232192171661409
+        },
+        {
+          "id": "exact-03",
+          "kind": "exact-string",
+          "gold_rank": 1,
+          "gold_dense": 0.6901552487537711,
+          "top_dense": 0.6901552487537711
+        },
+        {
+          "id": "exact-04",
+          "kind": "exact-string",
+          "gold_rank": 1,
+          "gold_dense": 0.7907855165344376,
+          "top_dense": 0.7907855165344376
+        },
+        {
+          "id": "exact-05",
+          "kind": "exact-string",
+          "gold_rank": 1,
+          "gold_dense": 0.7334281673750074,
+          "top_dense": 0.7334281673750074
+        },
+        {
+          "id": "multi-01",
+          "kind": "multi-part",
+          "gold_rank": 1,
+          "gold_dense": 0.751179151046486,
+          "top_dense": 0.751179151046486
+        },
+        {
+          "id": "multi-02",
+          "kind": "multi-part",
+          "gold_rank": 2,
+          "gold_dense": 0.7784618060937685,
+          "top_dense": 0.7790653694308061
+        },
+        {
+          "id": "multi-03",
+          "kind": "multi-part",
+          "gold_rank": 1,
+          "gold_dense": 0.8377043775337341,
+          "top_dense": 0.8377043775337341
+        },
+        {
+          "id": "handoff-complaint",
+          "kind": "handoff",
+          "gold_rank": 1,
+          "gold_dense": 0.680775182999192,
+          "top_dense": 0.680775182999192
+        },
+        {
+          "id": "denial-cardiff",
+          "kind": "denial",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6258147037825209
+        },
+        {
+          "id": "scope-06",
+          "kind": "factual",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6059316955623146
+        },
+        {
+          "id": "portal-06",
+          "kind": "factual",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.5887510513619174
+        },
+        {
+          "id": "portal-07",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6955936305898662,
+          "top_dense": 0.6955936305898662
+        },
+        {
+          "id": "invest-06",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7161595332440538,
+          "top_dense": 0.7161595332440538
+        },
+        {
+          "id": "appt-04",
+          "kind": "denial",
+          "gold_rank": 1,
+          "gold_dense": 0.8560263246113057,
+          "top_dense": 0.8560263246113057
+        },
+        {
+          "id": "fees-10",
+          "kind": "multi-part",
+          "gold_rank": 1,
+          "gold_dense": 0.7976480564529804,
+          "top_dense": 0.7976480564529804
+        },
+        {
+          "id": "fees-11",
+          "kind": "factual",
+          "gold_rank": 3,
+          "gold_dense": 0.7365206393223842,
+          "top_dense": 0.7579161930655924
+        },
+        {
+          "id": "fees-12",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7896340865677905,
+          "top_dense": 0.7896340865677905
+        },
+        {
+          "id": "fees-13",
+          "kind": "denial",
+          "gold_rank": 1,
+          "gold_dense": 0.7314113283298834,
+          "top_dense": 0.7314113283298834
+        },
+        {
+          "id": "client-05",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.6941294219300802,
+          "top_dense": 0.6941294219300802
+        },
+        {
+          "id": "client-06",
+          "kind": "factual",
+          "gold_rank": 3,
+          "gold_dense": 0.6102261904749491,
+          "top_dense": 0.6424105630775823
+        },
+        {
+          "id": "admin-07",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7461902844805708,
+          "top_dense": 0.7461902844805708
+        },
+        {
+          "id": "admin-08",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7174234009919623,
+          "top_dense": 0.7174234009919623
+        },
+        {
+          "id": "admin-09",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7275009807732857,
+          "top_dense": 0.7275009807732857
+        },
+        {
+          "id": "pension-09",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7748958893935542,
+          "top_dense": 0.7748958893935542
+        },
+        {
+          "id": "pension-10",
+          "kind": "factual",
+          "gold_rank": 9,
+          "gold_dense": 0.6790511761595753,
+          "top_dense": 0.7127644441373597
+        },
+        {
+          "id": "pension-11",
+          "kind": "factual",
+          "gold_rank": 3,
+          "gold_dense": 0.6729199731856333,
+          "top_dense": 0.7237458221293318
+        },
+        {
+          "id": "isa-11",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7882532820138926,
+          "top_dense": 0.7882532820138926
+        },
+        {
+          "id": "isa-12",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.8641865462821078,
+          "top_dense": 0.8641865462821078
+        },
+        {
+          "id": "about-06",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.7065698071706056,
+          "top_dense": 0.7289466315945845
+        },
+        {
+          "id": "access-04",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.5594316064764983,
+          "top_dense": 0.5594316064764983
+        },
+        {
+          "id": "security-06",
+          "kind": "handoff",
+          "gold_rank": 1,
+          "gold_dense": 0.7838728411359367,
+          "top_dense": 0.7838728411359367
+        },
+        {
+          "id": "contact-09",
+          "kind": "factual",
+          "gold_rank": 2,
+          "gold_dense": 0.6166766974221272,
+          "top_dense": 0.6334917442961098
+        },
+        {
+          "id": "exact-06",
+          "kind": "exact-string",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6569709257955278
+        },
+        {
+          "id": "life-05",
+          "kind": "handoff",
+          "gold_rank": 1,
+          "gold_dense": 0.7128202818025551,
+          "top_dense": 0.7128202818025551
+        },
+        {
+          "id": "life-06",
+          "kind": "handoff",
+          "gold_rank": 2,
+          "gold_dense": 0.6380992422121441,
+          "top_dense": 0.6419301858816966
+        },
+        {
+          "id": "life-07",
+          "kind": "handoff",
+          "gold_rank": 1,
+          "gold_dense": 0.6355219960864221,
+          "top_dense": 0.6355219960864221
+        },
+        {
+          "id": "action-01",
+          "kind": "action",
+          "gold_rank": 8,
+          "gold_dense": 0.6859740422377179,
+          "top_dense": 0.7245557279291076
+        },
+        {
+          "id": "advice-mixed",
+          "kind": "advice",
+          "gold_rank": 1,
+          "gold_dense": 0.7761081249943336,
+          "top_dense": 0.7761081249943336
+        },
+        {
+          "id": "scope-11",
+          "kind": "factual",
+          "gold_rank": 1,
+          "gold_dense": 0.7068588440081406,
+          "top_dense": 0.7068588440081406
+        },
+        {
+          "id": "status-01",
+          "kind": "status",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.524510662828347
+        },
+        {
+          "id": "status-02",
+          "kind": "status",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.5273854875355063
+        },
+        {
+          "id": "status-03",
+          "kind": "status",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.5671910922301088
+        },
+        {
+          "id": "status-04",
+          "kind": "status",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.527349476986292
+        },
+        {
+          "id": "status-05",
+          "kind": "status",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.5886200277152143
+        },
+        {
+          "id": "advice-01",
+          "kind": "advice",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.7144464632197247
+        },
+        {
+          "id": "advice-02",
+          "kind": "advice",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.7822931238013313
+        },
+        {
+          "id": "advice-03",
+          "kind": "advice",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.7417351347372411
+        },
+        {
+          "id": "advice-04",
+          "kind": "advice",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.7629847579924335
+        },
+        {
+          "id": "advice-05",
+          "kind": "advice",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6122679157736414
+        },
+        {
+          "id": "advice-06",
+          "kind": "advice",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6673179494383118
+        },
+        {
+          "id": "advice-07",
+          "kind": "advice",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6798979645045432
+        },
+        {
+          "id": "advice-08",
+          "kind": "advice",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6041219469792334
+        },
+        {
+          "id": "advice-10",
+          "kind": "advice",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6695704833500578
+        },
+        {
+          "id": "scope-01",
+          "kind": "out-of-scope",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.7077531267739948
+        },
+        {
+          "id": "scope-02",
+          "kind": "out-of-scope",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6895175184118358
+        },
+        {
+          "id": "scope-03",
+          "kind": "out-of-scope",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.5749203466427385
+        },
+        {
+          "id": "scope-04",
+          "kind": "out-of-scope",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.5258872701160862
+        },
+        {
+          "id": "scope-07",
+          "kind": "out-of-scope",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.624555131445237
+        },
+        {
+          "id": "ambiguous-01",
+          "kind": "ambiguous",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.55670800388046
+        },
+        {
+          "id": "ambiguous-02",
+          "kind": "ambiguous",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.5275872627427198
+        },
+        {
+          "id": "ambiguous-03",
+          "kind": "ambiguous",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.7307772021982138
+        },
+        {
+          "id": "greeting-01",
+          "kind": "greeting",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.5440722031316035
+        },
+        {
+          "id": "greeting-02",
+          "kind": "greeting",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.5696861207074558
+        },
+        {
+          "id": "advice-11",
+          "kind": "advice",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6930107178027266
+        },
+        {
+          "id": "advice-12",
+          "kind": "advice",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.7617607201202501
+        },
+        {
+          "id": "scope-08",
+          "kind": "out-of-scope",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6839428914425811
+        },
+        {
+          "id": "scope-09",
+          "kind": "out-of-scope",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6883693822974897
+        },
+        {
+          "id": "scope-10",
+          "kind": "out-of-scope",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.8109687944803655
+        },
+        {
+          "id": "decline-01",
+          "kind": "out-of-scope",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.6371359816861348
+        },
+        {
+          "id": "decline-02",
+          "kind": "out-of-scope",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.563895842196559
+        },
+        {
+          "id": "status-06",
+          "kind": "status",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.4473246553875837
+        },
+        {
+          "id": "greeting-03",
+          "kind": "greeting",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.5303155499663642
+        },
+        {
+          "id": "policy-01",
+          "kind": "ambiguous",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.508913258008769
+        }
+      ],
+      "dense_calibration": {
+        "gold_chunk_cosine": {
+          "n": 130,
+          "min": 0.54,
+          "p10": 0.628,
+          "median": 0.736,
+          "p90": 0.835,
+          "max": 0.893
+        },
+        "best_cosine_without_gold": {
+          "n": 34,
+          "min": 0.447,
+          "p10": 0.525,
+          "median": 0.618,
+          "p90": 0.762,
+          "max": 0.811
+        }
+      }
+    }
+  },
+  "seconds": 18.8,
+  "sweep": [
+    {
+      "rrf_k": 20,
+      "dense_weight": 0.5,
+      "recall@1": 0.607,
+      "recall@6": 0.948,
+      "mrr": 0.748,
+      "misses": 4
+    },
+    {
+      "rrf_k": 20,
+      "dense_weight": 1.0,
+      "recall@1": 0.644,
+      "recall@6": 0.97,
+      "mrr": 0.772,
+      "misses": 4
+    },
+    {
+      "rrf_k": 20,
+      "dense_weight": 1.5,
+      "recall@1": 0.637,
+      "recall@6": 0.963,
+      "mrr": 0.767,
+      "misses": 4
+    },
+    {
+      "rrf_k": 20,
+      "dense_weight": 2.0,
+      "recall@1": 0.667,
+      "recall@6": 0.963,
+      "mrr": 0.781,
+      "misses": 2
+    },
+    {
+      "rrf_k": 20,
+      "dense_weight": 3.0,
+      "recall@1": 0.696,
+      "recall@6": 0.963,
+      "mrr": 0.794,
+      "misses": 1
+    },
+    {
+      "rrf_k": 60,
+      "dense_weight": 0.5,
+      "recall@1": 0.607,
+      "recall@6": 0.948,
+      "mrr": 0.744,
+      "misses": 6
+    },
+    {
+      "rrf_k": 60,
+      "dense_weight": 1.0,
+      "recall@1": 0.637,
+      "recall@6": 0.956,
+      "mrr": 0.764,
+      "misses": 4
+    },
+    {
+      "rrf_k": 60,
+      "dense_weight": 1.5,
+      "recall@1": 0.637,
+      "recall@6": 0.956,
+      "mrr": 0.764,
+      "misses": 4
+    },
+    {
+      "rrf_k": 60,
+      "dense_weight": 2.0,
+      "recall@1": 0.659,
+      "recall@6": 0.963,
+      "mrr": 0.774,
+      "misses": 4
+    },
+    {
+      "rrf_k": 60,
+      "dense_weight": 3.0,
+      "recall@1": 0.681,
+      "recall@6": 0.963,
+      "mrr": 0.785,
+      "misses": 4
+    }
+  ]
+}

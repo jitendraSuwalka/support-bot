@@ -33,7 +33,7 @@ def test_every_setting_can_be_overridden_from_the_environment():
 def test_retrieval_settings_default_to_the_local_model_and_an_on_disk_index():
     settings = Settings()
     assert settings.retrieval_mode == "hybrid"
-    assert settings.relevance_floor == 0.15 and settings.dense_floor == 0.60
+    assert settings.relevance_floor == 0.15 and settings.dense_floor == 0.50
     assert settings.candidates == 6 and settings.top_k == 3
     assert settings.embedder == "local" and settings.embedding_model == "BAAI/bge-small-en-v1.5"
     assert settings.index_path == ".index" and settings.model_cache == ".models"
@@ -60,6 +60,7 @@ def test_blank_values_fall_back_to_defaults():
         ("SUPPORT_BOT_EMBEDDER", "openai"),
         ("SUPPORT_BOT_DENSE_FLOOR", "-0.1"),
         ("SUPPORT_BOT_RETRIEVAL_MODE", "sparse"),
+        ("SUPPORT_BOT_RRF_K", "0"),
     ],
 )
 def test_invalid_values_are_rejected_loudly(name, value):

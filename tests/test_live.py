@@ -79,17 +79,40 @@ def test_live_question(question, expect_tools, expect_text, expect_escalated):
     assert not any(note.startswith("WARNING") for note in result.notes), result.notes
 
 
-def test_live_escalation_wording_is_not_rewritten_by_the_fact_checker():
+def test_live_the_fact_checker_never_flags_the_assistants_own_limits():
     # "I can't advise on that" is the assistant stating its own limit, not a
     # factual claim. An earlier verifier prompt flagged it and forced a rewrite
     # that deleted the one sentence telling the customer why they were being
     # passed on.
+    #
+    # This test once asserted that no fact-check rewrite happened at all. The
+    # run of 23 October 2026 showed why that was the wrong assertion: the model
+    # added that the switchboard would let the customer "speak to someone
+    # sooner", the fact-checker rightly flagged a promise the evidence does not
+    # make, and the test failed on the guard doing its job. What must hold is
+    # narrower: whatever is flagged, it is never the statement of the limit,
+    # and the final answer still says it, still escalates, still gives the
+    # switchboard.
     messages, state = (
         [{"role": "user", "content": "Should I move my pension into equities?"}],
         {"unclear_turns": 0},
     )
     result = agent.run_agent(messages, state)
-    assert "rewritten after fact-check" not in result.notes, result.trace.render()
+    flagged = [
+        claim for event in result.trace.find("unsupported") for claim in event.data["claims"]
+    ]
+    about_the_limit = [
+        claim
+        for claim in flagged
+        if any(
+            word in claim.lower()
+            for word in ("can't advise", "cannot advise", "not able to advise")
+        )
+    ]
+    assert about_the_limit == [], result.trace.render()
+    assert result.escalated is True, result.trace.render()
+    assert "advis" in result.answer.lower(), result.answer  # the hand-off is still explained
+    assert agent.SWITCHBOARD in result.answer, result.answer
 
 
 def test_live_greeting_uses_no_tools():

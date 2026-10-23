@@ -48,16 +48,24 @@ class Settings:
     # Retrieval. Search is hybrid: BM25 and the vector index, fused by
     # reciprocal rank; "lexical" or "dense" runs one method alone (used to
     # compare them). A candidate must clear a floor on at least one side.
-    # The lexical floor is a share of the query's BM25 ceiling and is
-    # deliberately loose; the dense floor is a cosine similarity, set from
-    # measurement (off-topic questions peak at about 0.53, on-topic start at
-    # 0.68). Reranking does the real filtering: retrieve `candidates` widely,
-    # keep `top_k` after reranking.
+    # Both floors are noise gates, not relevance judgements: the lexical
+    # floor is a loose share of the query's BM25 ceiling, and the dense floor
+    # sits just below the lowest cosine any gold chunk scored on the labelled
+    # set (0.504; reports/retrieval.json), so the dense side never drops a
+    # chunk that answers a question. Cosine similarity measures topic, not
+    # answerability, so no floor can separate advice or out-of-scope
+    # questions from answerable ones. Reranking does the real filtering:
+    # retrieve `candidates` widely, keep `top_k` after reranking.
     retrieval_mode: str = "hybrid"
     relevance_floor: float = 0.15
-    dense_floor: float = 0.60
+    dense_floor: float = 0.50
     candidates: int = 6
     top_k: int = 3
+    # Reciprocal rank fusion adds 1/(rrf_k + rank) per ranking. The literature's
+    # default is 60; the sweep in reports/retrieval.json (python -m eval.retrieval
+    # --sweep) put 20 ahead on every metric at the depth the agent reads
+    # (recall@6 0.970 against 0.956), so 20 is the setting.
+    rrf_k: int = 20
 
     # Guards. Each can be switched off independently; a fully guarded answer
     # costs several model calls, which is right for a regulated firm and wrong
@@ -96,7 +104,14 @@ class Settings:
         for name in ("main_effort", "helper_effort"):
             if getattr(self, name) not in EFFORT_LEVELS:
                 raise ValueError(f"{name} must be one of {EFFORT_LEVELS}")
-        for name in ("main_max_tokens", "helper_max_tokens", "max_steps", "candidates", "top_k"):
+        for name in (
+            "main_max_tokens",
+            "helper_max_tokens",
+            "max_steps",
+            "candidates",
+            "top_k",
+            "rrf_k",
+        ):
             if getattr(self, name) < 1:
                 raise ValueError(f"{name} must be at least 1")
         if not 0.0 <= self.relevance_floor <= 1.0:

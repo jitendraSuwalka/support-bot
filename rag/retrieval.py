@@ -16,6 +16,18 @@ likes. k = 60 is the value from the paper; it damps the advantage of rank 1
 over rank 2 so that agreement between methods matters more than either
 method's top pick.
 
+Fusion has one blind spot, found by the evaluation: a chunk that only one
+method finds scores below chunks that both find weakly. Asked about a missed
+call from 0161 496 0170, BM25 put the Manchester office first -- it holds the
+number -- while the vector index, to which a phone number means nothing,
+returned the security guidance about unexpected calls, which BM25 also
+matched on "call". Fused, the one chunk with the answer fell to sixth and
+out of the candidates once the lexical side was widened. So the lexical
+side's first choice is guaranteed a place within the first
+``lexical_first_within`` results: an exact string -- a number, a reference,
+a postcode -- is the one thing fusion can lose, and the reranker still
+decides whether it stays.
+
 The result keeps each method's rank and score, so a caller (and a reader of
 the trace) can see why a chunk was retrieved.
 """
@@ -78,14 +90,20 @@ class HybridRetriever:
         rrf_k: int = RRF_K,
         lexical_weight: float = 1.0,
         dense_weight: float = 1.0,
+        lexical_first_within: int | None = None,
     ):
         if lexical_weight < 0 or dense_weight < 0 or lexical_weight + dense_weight == 0:
             raise ValueError("weights must be non-negative and not both zero")
+        if lexical_first_within is not None and lexical_first_within < 1:
+            raise ValueError("lexical_first_within must be at least 1")
         self.lexical = lexical
         self.store = store
         self.rrf_k = rrf_k
         self.lexical_weight = lexical_weight
         self.dense_weight = dense_weight
+        # When both methods run, BM25's first choice is placed within this many
+        # results if fusion ranked it lower; None switches the guarantee off.
+        self.lexical_first_within = lexical_first_within
 
     def search(
         self,
@@ -135,7 +153,23 @@ class HybridRetriever:
                 )
             )
         results.sort(key=lambda result: (-result.score, result.chunk.chunk_id))
-        return results[:k]
+        return self._guarantee_lexical_first(results, lexical_hits, dense_hits, k)
+
+    def _guarantee_lexical_first(self, results, lexical_hits, dense_hits, k):
+        """Move BM25's first choice up to position ``lexical_first_within``
+        when fusion put it lower. Only when both methods contributed: in a
+        single-method mode fusion is that method's own order."""
+        depth = self.lexical_first_within
+        if depth is None or not lexical_hits or not dense_hits:
+            return results[:k]
+        slot = min(depth, k)
+        favourite = lexical_hits[0].chunk.chunk_id
+        position = next(i for i, r in enumerate(results) if r.chunk.chunk_id == favourite)
+        if position < slot:
+            return results[:k]
+        promoted = results[position]
+        rest = [r for i, r in enumerate(results) if i != position]
+        return (rest[: slot - 1] + [promoted] + rest[slot - 1 :])[:k]
 
 
 def build_retriever(chunks: Iterable[Chunk], store: VectorStore, **kwargs) -> HybridRetriever:
@@ -160,5 +194,11 @@ def open_retriever(settings) -> tuple[HybridRetriever, SyncReport]:
     chunks = chunk_corpus(load_corpus())
     store = open_store(settings, build_embedder(settings))
     report = store.sync(chunks)
-    retriever = HybridRetriever(BM25Index(chunks), store, **weights_for(settings.retrieval_mode))
+    retriever = HybridRetriever(
+        BM25Index(chunks),
+        store,
+        rrf_k=settings.rrf_k,
+        lexical_first_within=settings.candidates,
+        **weights_for(settings.retrieval_mode),
+    )
     return retriever, report

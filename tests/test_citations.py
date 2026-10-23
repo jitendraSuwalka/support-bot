@@ -58,3 +58,32 @@ def test_number_tokens_are_digit_only_and_deduplicated():
 def test_differently_punctuated_phone_number_still_passes():
     evidence = "Call 0117 496 0100."
     assert agent.check_citations("Ring 0117-496-0100 any weekday.", evidence) == []
+
+
+# --- numbers next to each other in the evidence -----------------------------------
+# The baseline evaluation (reports/live-baseline.json: portal-02, portal-07)
+# found the guard rejecting a helpline number copied exactly, because the
+# evidence wrote the number and the opening hours in one breath.
+
+
+def test_a_number_followed_by_a_comma_and_another_number_is_still_one_number():
+    evidence = "call the portal access helpline on 0117 496 0233, 09:00 to 17:30 on working days."
+    assert agent.number_tokens(evidence) == {"01174960233", "0900", "1730"}
+    assert agent.check_citations("Call the helpline on 0117 496 0233.", evidence) == []
+    assert agent.check_citations("Open 09:00 to 17:30.", evidence) == []
+
+
+def test_everyday_figures_keep_their_own_shape():
+    text = "£20,000 in 2026/27, from 6 April 2026; 1.5% a year; £1,000,000; FW-1001; M2 3ZX"
+    expected = {"20000", "202627", "6", "2026", "15", "1000000", "1001", "2", "3"}
+    assert agent.number_tokens(text) == expected
+
+
+def test_a_phone_number_is_one_token_but_a_short_group_after_it_is_not():
+    assert agent.number_tokens("Telephone 0161 496 0170. Nearest tram stop") == {"01614960170"}
+    assert agent.number_tokens("0117 496 0100 9 to 5") == {"01174960100", "9", "5"}
+
+
+def test_a_number_assembled_across_a_comma_is_caught():
+    evidence = "call 0117 496 0233, 09:00 to 17:30"
+    assert agent.check_citations("Call 0117 496 0233 0900.", evidence) != []
