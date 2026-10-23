@@ -655,7 +655,7 @@ End to end: every case through the real agent (`claude-sonnet-5-5` answering, `c
 | Run | Date | Cases | Behaviour accuracy | Answers correct | Escalation precision | Escalation recall | Untouched by guards | Median latency | Tokens per case |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|
 | baseline | 2026-10-22 | 169 | 88.8% | 91.6% | 65.8% | 96.2% | 74.4% | 9.1 s | 6,335 |
-| current | 2026-10-23 | 169 | 98.8% | 99.2% | 96.2% | 96.2% | 76.3% | 8.6 s | 8,221 |
+| current | 2026-10-23 | 169 | 98.8% | 99.2% | 96.2% | 96.2% | 75.6% | 8.2 s | 2,370 |
 
 Behaviour accuracy: the agent did what the label expects (answer, escalate, clarify, decline, greeting). Answers correct: answerable questions answered with every required fact. Escalation precision: escalations that were wanted; recall: wanted escalations that happened. Untouched: answers that passed the citation guard and the fact-check without a rewrite. Every failure is listed by id in the report.
 
