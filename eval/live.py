@@ -56,20 +56,7 @@ DEFAULT_REPORT = Path(__file__).resolve().parent.parent / "reports" / "live.json
 
 Runner = Callable[[list, dict], agent.AgentResult]
 
-GUARD_EVENTS = {
-    "evidence_guard": "evidence_retry",
-    "evidence_guard_failed": "evidence_failed",
-    "citation_violation": "citation_rewrite",
-    "citations_remaining": "citation_remaining",
-    "unsupported": "factcheck_rewrite",
-    "verification_unavailable": "factcheck_unavailable",
-    "policy_escalate": "policy_escalation",
-    "policy_clarify": "policy_clarify",
-    "rerank_rejected_all": "rerank_rejected_all",
-    "no_candidates": "no_candidates",
-    "helper_failed": "helper_failed",
-    "max_steps": "step_limit",
-}
+GUARD_EVENTS = agent.GUARD_EVENTS  # one vocabulary for the evaluation and the log
 
 
 @dataclass
@@ -95,6 +82,10 @@ class Observation:
     # The URLs and numbers the citation guard still could not find in the
     # evidence when the turn ended, so a warning can be read without rerunning it.
     unverified: list[str] = field(default_factory=list)
+    # Added with the cost model; reports written before it load with the defaults.
+    cache_read_tokens: int = 0
+    cache_write_tokens: int = 0
+    cost_usd: float | None = None
 
 
 # =========================================================
@@ -103,21 +94,8 @@ class Observation:
 
 
 def observe_behaviour(result: agent.AgentResult) -> str:
-    """What the agent did, in the label's vocabulary."""
-    if result.escalated:
-        return "escalate"
-    if result.declined:
-        return "decline"
-    if result.clarified:
-        return "clarify"
-    if not result.tools_used and not result.evidence:
-        return "greeting"
-    unresolved = any(
-        marker in part for part in result.evidence for marker in agent.UNRESOLVED_MARKERS
-    )
-    if unresolved and "?" in result.answer:
-        return "clarify"  # asked in prose after NO_MATCH; the policy allows it once
-    return "answer"
+    """What the agent did, in the label's vocabulary (AgentResult.behaviour)."""
+    return result.behaviour
 
 
 def tools_credited(result: agent.AgentResult) -> set[str]:
@@ -140,9 +118,9 @@ def observe(case: Case, result: agent.AgentResult, seconds: float) -> Observatio
     observed = observe_behaviour(result)
     answer_lower = result.answer.lower()
     missing = [needle for needle in case.must_contain if needle.lower() not in answer_lower]
-    kinds = result.trace.kinds()
-    guards = sorted({label for event, label in GUARD_EVENTS.items() if event in kinds})
+    guards = result.guards()
     tokens_in, tokens_out = tokens_used(result)
+    cost = result.cost()
     return Observation(
         id=case.id,
         kind=case.kind,
@@ -166,6 +144,9 @@ def observe(case: Case, result: agent.AgentResult, seconds: float) -> Observatio
             for event in result.trace.find("citations_remaining")
             for violation in event.data.get("violations", [])
         ],
+        cache_read_tokens=cost.cache_read_tokens,
+        cache_write_tokens=cost.cache_write_tokens,
+        cost_usd=None if cost.usd is None else round(cost.usd, 6),
     )
 
 
@@ -331,7 +312,25 @@ def summarise(rows: list[Observation]) -> dict:
             )
             if scored
             else None,
+            "cache_read": sum(row.cache_read_tokens for row in scored),
+            "cache_write": sum(row.cache_write_tokens for row in scored),
         },
+        "cost_usd": cost_summary(scored),
+    }
+
+
+def cost_summary(rows: list[Observation]) -> dict:
+    """Dollars per run and per case; None where a row could not be priced.
+
+    Rows from a report written before the cost model have no cost and are
+    counted as unpriced, never as free.
+    """
+    priced = [row.cost_usd for row in rows if row.cost_usd is not None]
+    return {
+        "total": round(sum(priced), 4) if priced else None,
+        "per_case_mean": round(sum(priced) / len(priced), 5) if priced else None,
+        "priced_cases": len(priced),
+        "unpriced_cases": len(rows) - len(priced),
     }
 
 
@@ -357,6 +356,14 @@ def render(summary: dict) -> str:
         f"median {summary['latency_seconds']['median']}s; "
         f"tokens in {summary['tokens']['input']}, out {summary['tokens']['output']}"
     )
+    cost = summary.get("cost_usd") or {}
+    if cost.get("total") is not None:
+        lines.append(
+            f"cost ${cost['total']:.2f} for {cost['priced_cases']} cases, "
+            f"${cost['per_case_mean']:.4f} a case; "
+            f"cache {summary['tokens'].get('cache_read', 0)} read / "
+            f"{summary['tokens'].get('cache_write', 0)} written"
+        )
     if summary["wrong_behaviour"]:
         lines.append("wrong behaviour:")
         lines.extend(f"  {cid}: {why}" for cid, why in summary["wrong_behaviour"].items())

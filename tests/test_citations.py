@@ -87,3 +87,22 @@ def test_a_phone_number_is_one_token_but_a_short_group_after_it_is_not():
 def test_a_number_assembled_across_a_comma_is_caught():
     evidence = "call 0117 496 0233, 09:00 to 17:30"
     assert agent.check_citations("Call 0117 496 0233 0900.", evidence) != []
+
+
+# --- the customer's own numbers ----------------------------------------------------
+# Step 4.3's caching runs, isa-07: asked "I'm 70. Does the new cash ISA cap
+# apply to me?", the answer said "You told me you are 70" and the guard
+# flagged 70 as not in the evidence, twice, in both runs.
+
+
+def test_a_number_the_customer_wrote_may_be_repeated_back():
+    evidence = "The £12,000 cap applies to investors under the age of 65."
+    answer = "You told me you are 70, so the under-65 cap does not apply."
+    assert agent.check_citations(answer, evidence) != []  # without the customer's words
+    assert agent.check_citations(answer, evidence, customer_text="I'm 70. Does it apply?") == []
+
+
+def test_a_url_the_customer_wrote_is_still_not_repeated():
+    customer = "Is fernhill-wealth-login.example/verify really you?"
+    answer = "Yes, fernhill-wealth-login.example/verify is ours."
+    assert agent.check_citations(answer, "Our site is fernhillwealth.example", customer) != []

@@ -65,3 +65,21 @@ jobs:
         with:
           name: coverage-xml
           path: coverage.xml
+
+  # The container the service ships in: build the image from the Dockerfile,
+  # start it, and prove the service inside answers (health, readiness, the
+  # docs, refusals, request ids), runs as an unprivileged user, carries no
+  # tests or secrets, and is reported healthy by Docker. No model is called and
+  # no secret is needed. Nobody has to install Docker locally for this.
+  container:
+    name: Container image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+
+      - name: Build the image
+        run: docker build --tag support-bot:ci .
+
+      - name: Smoke-test the running container
+        run: bash scripts/container_smoke_test.sh support-bot:ci

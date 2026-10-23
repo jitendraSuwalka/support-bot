@@ -31,7 +31,7 @@ filterwarnings = [
 ]
 
 [tool.coverage.run]
-source = ["agent", "agent_graph", "config", "app", "rag", "eval"]
+source = ["agent", "agent_graph", "api", "config", "app", "observability", "pricing", "rag", "eval"]
 
 [tool.coverage.report]
 show_missing = true

@@ -20,6 +20,8 @@ EFFORT_LEVELS = ("low", "medium", "high", "xhigh", "max")
 EMBEDDERS = ("local", "hash")
 RETRIEVAL_MODES = ("hybrid", "lexical", "dense")
 AGENT_IMPLS = ("loop", "graph")
+LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR")
+LOG_FORMATS = ("json", "text")
 
 
 @dataclass(frozen=True)
@@ -71,6 +73,11 @@ class Settings:
     # costs several model calls, which is right for a regulated firm and wrong
     # for most products, so the trade-off is explicit rather than baked in.
     use_rerank: bool = True
+    # Prompt caching. The system prompt and the five tool definitions, about
+    # 2,500 tokens, are the same on every main-model call — two or three a
+    # turn, in every conversation — and a cached read costs a twentieth of
+    # fresh input. Off only to measure what it saves (reports/caching-*.json).
+    prompt_caching: bool = True
     verify_answers: bool = True
     check_citations: bool = True
     require_evidence: bool = True
@@ -85,6 +92,28 @@ class Settings:
     model_cache: str = ".models"
     index_path: str = ".index"
     qdrant_url: str = ""
+
+    # Structured logging (observability.py). Every turn is one JSON line on
+    # stderr — what it did, which guards fired, latency, tokens and cost —
+    # and, if turn_log_path is set, the same line appended to that file.
+    # The customer's words and the answer are NOT logged unless log_content
+    # is switched on: a support log for a regulated firm records what
+    # happened, not what was said; lengths and a hash are kept instead, so a
+    # turn can still be matched to a complaint without storing the text.
+    log_level: str = "INFO"
+    log_format: str = "json"
+    turn_log_path: str = ""
+    log_content: bool = False
+
+    # The HTTP API (api.py). Conversations are held in memory by the server,
+    # keyed by an id the server issues; one idle for session_ttl_minutes is
+    # dropped, the oldest goes first when max_sessions is reached, and one
+    # that reaches max_turns must be restarted. A message longer than
+    # max_message_chars is refused before any model is called.
+    max_message_chars: int = 2000
+    session_ttl_minutes: int = 30
+    max_sessions: int = 1000
+    max_turns: int = 50
 
     @classmethod
     def from_env(cls, env: dict[str, str] | None = None) -> Settings:
@@ -111,6 +140,10 @@ class Settings:
             "candidates",
             "top_k",
             "rrf_k",
+            "max_message_chars",
+            "session_ttl_minutes",
+            "max_sessions",
+            "max_turns",
         ):
             if getattr(self, name) < 1:
                 raise ValueError(f"{name} must be at least 1")
@@ -129,6 +162,10 @@ class Settings:
         for name in ("embedding_model", "model_cache", "index_path"):
             if not getattr(self, name).strip():
                 raise ValueError(f"{name} must not be blank")
+        if self.log_level not in LOG_LEVELS:
+            raise ValueError(f"log_level must be one of {LOG_LEVELS}")
+        if self.log_format not in LOG_FORMATS:
+            raise ValueError(f"log_format must be one of {LOG_FORMATS}")
 
     def describe(self) -> dict[str, object]:
         """A plain dictionary, attached to every result for auditability."""

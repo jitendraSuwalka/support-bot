@@ -67,6 +67,7 @@ docstring-parser==0.18.0
 fastapi==0.151.0
     # via
     #   -c requirements.lock
+    #   -r requirements.txt
     #   gradio
 fastembed==0.9.0
     # via
@@ -135,6 +136,7 @@ httpcore2==2.15.1 ; sys_platform != 'emscripten'
 httpx==0.28.1
     # via
     #   -c requirements.lock
+    #   -r requirements-dev.txt
     #   gradio
     #   gradio-client
     #   huggingface-hub
@@ -494,6 +496,7 @@ uuid-utils==0.18.0
 uvicorn==0.54.0
     # via
     #   -c requirements.lock
+    #   -r requirements.txt
     #   gradio
 websockets==16.1.1
     # via

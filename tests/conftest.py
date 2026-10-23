@@ -15,6 +15,7 @@ import pytest
 
 import agent
 import agent_graph
+import observability
 from rag.corpus import Chunk, chunk_corpus, chunk_id_for
 from rag.embeddings import HashEmbedder
 from rag.lexical import BM25Index
@@ -108,6 +109,15 @@ def offline_retriever(request, monkeypatch, corpus_retriever):
     must exercise the real model and the real index."""
     if request.node.get_closest_marker("live") is None:
         monkeypatch.setattr(agent, "_RETRIEVER", corpus_retriever)
+
+
+@pytest.fixture(autouse=True)
+def project_logging_left_as_found():
+    """A test that configures the project's logging cannot leave it configured
+    for the next one: agent events outside a turn go to the log when it is
+    configured and are printed when it is not, and tests rely on both."""
+    yield
+    observability.reset_logging()
 
 
 IMPLEMENTATIONS = {"loop": agent.run_loop_agent, "graph": agent_graph.run_graph_agent}

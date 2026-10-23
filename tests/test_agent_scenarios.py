@@ -161,7 +161,7 @@ def test_an_answer_from_memory_is_sent_back_for_a_lookup(run_scenario):
     assert results[0].tools_used == ["search_knowledge_base"]
     assert results[0].escalated is False
     # The retry instruction was inserted as a user turn before the model tried again.
-    assert any(m.get("content") == agent.EVIDENCE_GUARD_RETRY for m in fake.calls[1]["messages"])
+    assert agent.instruction(agent.EVIDENCE_GUARD_RETRY) in fake.calls[1]["messages"]
 
 
 def test_two_answers_from_memory_are_escalated_not_delivered(run_scenario):
@@ -494,3 +494,122 @@ def test_a_clean_fact_check_rewrite_is_recorded_as_checked(run_scenario):
     assert not any(note.startswith("WARNING") for note in result.notes)
     clean = result.trace.find("citations_clean")
     assert [event.data["after_rewrite"] for event in clean] == [False, True]
+
+
+# --- the behaviour is part of the result -------------------------------------------
+
+
+def test_each_turn_reports_its_behaviour_in_one_vocabulary(run_scenario):
+    results, _, _ = run_scenario(
+        script=[
+            text_reply("Hello! How can I help?"),
+            tool_reply("decline_out_of_scope", {"reason": "poem"}, call_id="t1"),
+            tool_reply("ask_for_clarification", {"question": "Which one?"}, call_id="t2"),
+            *STATUS_SCRIPT,
+            tool_reply("escalate_to_adviser", {"reason": "advice", "summary": "x"}, call_id="t4"),
+            text_reply("An adviser will contact you. Call 0117 496 0100."),
+        ],
+        user_messages=[
+            "hello",
+            "write me a poem",
+            "allowance",
+            "Is FW-1001 done?",
+            "Should I buy gold?",
+        ],
+    )
+    assert [r.behaviour for r in results] == [
+        "greeting",
+        "decline",
+        "clarify",
+        "answer",
+        "escalate",
+    ]
+
+
+# --- the sections a turn relied on ------------------------------------------------
+
+
+def test_a_turn_lists_the_sections_its_evidence_came_from(run_scenario):
+    results, _, _ = run_scenario(
+        script=[
+            tool_reply("search_knowledge_base", {"query": "Manchester office address"}),
+            tool_reply("search_knowledge_base", {"query": "Manchester office"}, call_id="t2"),
+            text_reply("Our Manchester office is in Peterloo Buildings."),
+        ],
+        user_messages=["Where is your Manchester office?"],
+        helper={"rerank": '{"relevant": [0]}'},
+    )
+    sources = results[0].sources()
+    assert sources, results[0].trace.render()
+    assert all(set(s) == {"title", "section", "url"} for s in sources)
+    assert all(s["url"].startswith("https://www.fernhillwealth.example/") for s in sources)
+    # The same section found by two searches is listed once.
+    assert len({(s["title"], s["section"]) for s in sources}) == len(sources)
+
+
+def test_a_turn_with_no_search_has_no_sources(run_scenario):
+    results, _, _ = run_scenario(STATUS_SCRIPT, ["Is FW-1001 done?"])
+    assert results[0].sources() == []
+
+
+# --- prompt caching --------------------------------------------------------------
+
+
+def test_every_main_model_call_marks_the_stable_prefix_for_caching(run_scenario):
+    _, _, fake = run_scenario(STATUS_SCRIPT, ["Is FW-1001 done?"])
+    assert fake.calls, "no main-model call was made"
+    for call in fake.calls:
+        [block] = call["system"]
+        assert block["text"] == agent.SYSTEM_PROMPT
+        assert block["cache_control"] == {"type": "ephemeral"}  # tools + system, shared by everyone
+        assert call["cache_control"] == {"type": "ephemeral"}  # the conversation so far
+
+
+def test_caching_can_be_switched_off_to_measure_it(run_scenario, monkeypatch):
+    monkeypatch.setattr(agent, "SETTINGS", agent.Settings(prompt_caching=False))
+    _, _, fake = run_scenario(STATUS_SCRIPT, ["Is FW-1001 done?"])
+    for call in fake.calls:
+        assert "cache_control" not in call and "cache_control" not in call["system"][0]
+
+
+# --- the agent's own instructions are never the customer's words ---------------------
+
+
+def test_a_rewrite_instruction_does_not_make_its_number_the_customers(run_scenario):
+    # The citation guard tells the model which number was unsupported. If that
+    # instruction counted as something the customer said, the same number in
+    # the rewrite would then pass. It must still be caught.
+    results, _, fake = run_scenario(
+        script=[
+            tool_reply("search_knowledge_base", {"query": "ISA allowance"}),
+            text_reply("Call 0800 999 9999 about the ISA allowance."),
+            text_reply("Call 0800 999 9999 about the ISA allowance."),
+        ],
+        user_messages=["What is the ISA allowance?"],
+        helper={"rerank": '{"relevant": [0]}'},
+    )
+    assert "WARNING: unverified detail remains (1)" in results[0].notes
+    instructions = [
+        m
+        for m in fake.calls[-1]["messages"]
+        if m["role"] == "user" and isinstance(m["content"], list)
+    ]
+    assert any("0800 999 9999" in str(m["content"]) for m in instructions)  # it was named...
+    assert agent.customer_messages(fake.calls[-1]["messages"]) == ["What is the ISA allowance?"]
+
+
+def test_a_number_from_an_earlier_customer_message_counts_as_theirs(run_scenario):
+    results, _, _ = run_scenario(
+        script=[
+            tool_reply("search_knowledge_base", {"query": "ISAs for retired clients"}),
+            text_reply("Our ISA guide covers who can pay in."),
+            tool_reply("search_knowledge_base", {"query": "cash ISA cap"}, call_id="t2"),
+            text_reply("You said you are 70; the guide's cap applies under 65."),
+        ],
+        user_messages=[
+            "I'm 70 and retired. Tell me about ISAs.",
+            "Does the cash ISA cap apply to me?",
+        ],
+        helper={"rerank": '{"relevant": [0]}'},
+    )
+    assert "rewritten after citation check" not in results[1].notes

@@ -21,3 +21,9 @@ langgraph==1.2.16
 # The evaluation harness reads its labelled question set from YAML. Already in
 # the lockfile through gradio; pinned here because eval/ imports it directly.
 pyyaml==6.0.3
+
+# The HTTP API (api.py, Phase 4). FastAPI and the uvicorn server are already
+# in the lockfile through gradio, at these versions: measured against this
+# lockfile they add no packages. Pinned here because api.py imports them.
+fastapi==0.151.0
+uvicorn==0.54.0

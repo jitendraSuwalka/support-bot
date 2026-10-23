@@ -16,6 +16,9 @@ dist/
 .index/
 .models/
 
+# Turn logs written by SUPPORT_BOT_TURN_LOG_PATH
+logs/
+
 # Tooling caches and reports
 .pytest_cache/
 .ruff_cache/

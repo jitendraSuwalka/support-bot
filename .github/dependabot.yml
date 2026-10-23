@@ -1,9 +1,15 @@
-# Keeps the GitHub Actions used by ci.yml current. Python dependencies are
-# updated deliberately instead: edit the pin, regenerate requirements.lock,
-# and let CI prove the change (see "Updating dependencies" in the README).
+# Keeps the GitHub Actions used by ci.yml and the Dockerfile's base image
+# current. Python dependencies are updated deliberately instead: edit the
+# pin, regenerate requirements.lock, and let CI prove the change (see "Updating dependencies" in the README).
 version: 2
 updates:
   - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  # The Dockerfile's base image, so security fixes to Python and Debian arrive
+  # as a pull request that CI builds and smoke-tests before anyone merges it.
+  - package-ecosystem: docker
     directory: /
     schedule:
       interval: weekly

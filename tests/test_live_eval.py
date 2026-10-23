@@ -216,7 +216,20 @@ def test_summary_arithmetic():
         "e2": "expected escalate, observed answer",
     }
     assert summary["latency_seconds"]["median"] == 1.0
-    assert summary["tokens"] == {"input": 50, "output": 5, "per_case_mean": 11}
+    assert summary["tokens"] == {
+        "input": 50,
+        "output": 5,
+        "per_case_mean": 11,
+        "cache_read": 0,
+        "cache_write": 0,
+    }
+    # The rows were built without prices, so the run is unpriced, never free.
+    assert summary["cost_usd"] == {
+        "total": None,
+        "per_case_mean": None,
+        "priced_cases": 0,
+        "unpriced_cases": 5,
+    }
 
 
 def test_render_lists_the_failures():
@@ -329,3 +342,24 @@ def test_the_unverified_details_are_recorded_with_the_row():
     old = asdict(row)
     del old["unverified"]
     assert Observation(**old).unverified == []
+
+
+def test_each_row_carries_its_cost_and_cache_tokens():
+    priced = result(tools=("search_knowledge_base",), evidence=["search_knowledge_base -> [ISA] x"])
+    priced.trace.log(
+        "usage",
+        "u",
+        role="main",
+        model="claude-sonnet-5-5",
+        input_tokens=1000,
+        output_tokens=100,
+        cache_read_tokens=2000,
+        cache_write_tokens=0,
+    )
+    row = observe(case(), priced, 1.0)
+    assert row.cost_usd == round((1000 * 2 + 100 * 10 + 2000 * 0.1) / 1e6, 6)
+    assert (row.cache_read_tokens, row.cache_write_tokens) == (2000, 0)
+    summary = summarise([row])
+    assert summary["cost_usd"]["total"] == round(row.cost_usd, 4)
+    assert summary["cost_usd"]["priced_cases"] == 1
+    assert "cost $" in live.render(summary)

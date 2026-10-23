@@ -61,4 +61,31 @@ def test_token_usage_is_recorded_when_the_response_carries_it():
     finally:
         agent._CURRENT_TRACE.reset(token)
     [event] = trace.find("usage")
-    assert event.data == {"role": "helper", "model": "m", "input_tokens": 120, "output_tokens": 30}
+    assert event.data == {
+        "role": "helper",
+        "model": "m",
+        "input_tokens": 120,
+        "output_tokens": 30,
+        "cache_write_tokens": 0,
+        "cache_read_tokens": 0,
+    }
+
+
+def test_cache_tokens_are_recorded_separately_when_the_api_reports_them():
+    from types import SimpleNamespace
+
+    trace = agent.Trace()
+    token = agent._CURRENT_TRACE.set(trace)
+    try:
+        usage = SimpleNamespace(
+            input_tokens=40,
+            output_tokens=10,
+            cache_creation_input_tokens=None,  # the API sends null when nothing was written
+            cache_read_input_tokens=2000,
+        )
+        agent.record_usage(SimpleNamespace(usage=usage, model="claude-sonnet-5-5"), "main")
+    finally:
+        agent._CURRENT_TRACE.reset(token)
+    [event] = trace.find("usage")
+    assert (event.data["cache_read_tokens"], event.data["cache_write_tokens"]) == (2000, 0)
+    assert "cache 2000 read / 0 written" in event.message

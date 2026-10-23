@@ -64,6 +64,7 @@ from __future__ import annotations
 import atexit
 import contextvars
 import json
+import logging
 import re
 from dataclasses import dataclass, field
 
@@ -71,6 +72,7 @@ from anthropic import Anthropic
 from dotenv import load_dotenv
 
 from config import Settings
+from pricing import TurnCost, turn_cost, usage_from_events
 from rag.lexical import tokenize
 from rag.retrieval import HybridRetriever, RetrievedChunk, open_retriever
 
@@ -153,14 +155,41 @@ _CURRENT_TRACE: contextvars.ContextVar[Trace | None] = contextvars.ContextVar(
 def log(kind: str, message: str, **data) -> None:
     """Record an event on the current turn's trace.
 
-    Outside a run (for example a function called directly from the terminal)
-    there is no trace, so the event is printed instead — nothing is lost.
+    Outside a run there is no trace. In a service that has configured the
+    project's logging (the app, the API, the container) the event becomes a
+    log line in the same structured stream as the turns, so the stream stays
+    one format; anywhere else (a function called from the terminal) it is
+    printed. Nothing is lost either way.
     """
     trace = _CURRENT_TRACE.get()
-    if trace is None:
-        print(f"  [{kind}] {message}")
-    else:
+    if trace is not None:
         trace.log(kind, message, **data)
+        return
+    if logging.getLogger("support_bot").handlers:
+        fields = {"event": kind, "message": message, **data}
+        logging.getLogger("support_bot.agent").info(message, extra={"fields": fields})
+    else:
+        print(f"  [{kind}] {message}")
+
+
+# The trace events that mean a guard or a policy acted, under the short names
+# the evaluation and the structured log both report them by.
+GUARD_EVENTS = {
+    "evidence_guard": "evidence_retry",
+    "evidence_guard_failed": "evidence_failed",
+    "citation_violation": "citation_rewrite",
+    "citations_remaining": "citation_remaining",
+    "unsupported": "factcheck_rewrite",
+    "verification_unavailable": "factcheck_unavailable",
+    "policy_escalate": "policy_escalation",
+    "policy_clarify": "policy_clarify",
+    "reference_not_given": "reference_refused",
+    "tool_skipped": "tool_skipped",
+    "rerank_rejected_all": "rerank_rejected_all",
+    "no_candidates": "no_candidates",
+    "helper_failed": "helper_failed",
+    "max_steps": "step_limit",
+}
 
 
 @dataclass
@@ -176,6 +205,61 @@ class AgentResult:
     models: dict
     clarified: bool = False  # the turn ended with ask_for_clarification
     declined: bool = False  # the turn ended with decline_out_of_scope
+
+    @property
+    def behaviour(self) -> str:
+        """What the turn did: answer, escalate, clarify, decline or greeting.
+
+        One vocabulary for the evaluation, the structured log and the API, read
+        from what the turn recorded rather than from the prose. Escalation
+        outranks everything; the two terminal tools say what they did; a reply
+        with no tool and no evidence is a greeting; a question asked in prose
+        after an unresolved lookup is the one clarification the policy allows.
+        """
+        if self.escalated:
+            return "escalate"
+        if self.declined:
+            return "decline"
+        if self.clarified:
+            return "clarify"
+        if not self.tools_used and not self.evidence:
+            return "greeting"
+        unresolved = any(marker in part for part in self.evidence for marker in UNRESOLVED_MARKERS)
+        if unresolved and "?" in self.answer:
+            return "clarify"
+        return "answer"
+
+    def sources(self) -> list[dict]:
+        """The document sections the turn's evidence came from, in the order
+        they were kept, each once: title, section and page URL.
+
+        Read from the retrieval events, not parsed out of the evidence text,
+        so a caller (the API, the log) gets structured provenance it can show
+        or count without depending on how evidence is formatted for the model.
+        """
+        seen, sources = set(), []
+        for event in self.trace.find("kept"):
+            key = event.data.get("chunk_id")
+            if key in seen:
+                continue
+            seen.add(key)
+            sources.append(
+                {
+                    "title": event.data.get("title"),
+                    "section": event.data.get("section"),
+                    "url": event.data.get("url"),
+                }
+            )
+        return sources
+
+    def guards(self) -> list[str]:
+        """The guards and policies that acted this turn, by short name."""
+        kinds = set(self.trace.kinds())
+        return sorted({label for event, label in GUARD_EVENTS.items() if event in kinds})
+
+    def cost(self) -> TurnCost:
+        """Tokens and dollars for every model call in the turn (pricing.py)."""
+        return turn_cost(usage_from_events(self.trace.find("usage")))
 
     def render(self) -> str:
         """Terminal view: the answer, then the notes and the raw evidence."""
@@ -249,13 +333,21 @@ def record_usage(response, role: str) -> None:
     usage = getattr(response, "usage", None)
     if usage is None:
         return
+    # input_tokens counts only input that was neither written to nor read from
+    # the prompt cache; the two cache counts are reported separately and priced
+    # differently, so all three are kept.
+    cache_write = getattr(usage, "cache_creation_input_tokens", None) or 0
+    cache_read = getattr(usage, "cache_read_input_tokens", None) or 0
     log(
         "usage",
-        f"{role}: {usage.input_tokens} in, {usage.output_tokens} out",
+        f"{role}: {usage.input_tokens} in, {usage.output_tokens} out, "
+        f"cache {cache_read} read / {cache_write} written",
         role=role,
         model=getattr(response, "model", None),
         input_tokens=usage.input_tokens,
         output_tokens=usage.output_tokens,
+        cache_write_tokens=cache_write,
+        cache_read_tokens=cache_read,
     )
 
 
@@ -321,8 +413,13 @@ def number_tokens(text):
     return {normalise_number(match) for match in NUMBER_PATTERN.findall(text)} - {""}
 
 
-def check_citations(answer, evidence):
+def check_citations(answer, evidence, customer_text=""):
     """Require every URL and number in the answer to appear in the evidence.
+
+    A number the customer wrote is theirs to have repeated back — "you told me
+    you are 70" — so numbers in ``customer_text`` are allowed too. URLs are
+    not: an answer that repeats a link the customer pasted would lend it the
+    firm's authority, which is how a phishing link gets laundered.
 
     This is the only guarantee in the whole system that cannot be talked out
     of. The LLM verifier passed 'fernhillwealth.example/offices' because it
@@ -354,7 +451,7 @@ def check_citations(answer, evidence):
         else:
             violations.append(f"URL '{raw}' does not appear in the evidence at all.")
 
-    evidence_numbers = number_tokens(evidence)
+    evidence_numbers = number_tokens(evidence) | number_tokens(customer_text)
     for raw in NUMBER_PATTERN.findall(answer):
         digits = normalise_number(raw)
         if not digits or digits in NUMBER_ALLOWLIST:
@@ -554,6 +651,7 @@ def search_knowledge_base(query):
             chunk_id=chunk.chunk_id,
             title=chunk.title,
             section=chunk.section,
+            url=chunk.url,
             found_by=result.found_by,
             lexical_score=result.lexical_score,
             dense_score=result.dense_score,
@@ -1007,34 +1105,75 @@ def enforce_escalation(answer, evidence_parts, model_escalated, state, ended=Non
 # =========================================================
 
 
+def system_blocks(caching: bool) -> list[dict]:
+    """The system prompt as a content block, marked for caching when asked.
+
+    The API caches a prompt's prefix in the order tools, system, messages,
+    so a breakpoint at the end of the system prompt caches the tool
+    definitions and the system prompt together: the part that is identical
+    on every main-model call of every conversation. That breakpoint is what
+    lets one customer's turn reuse what another's wrote.
+    """
+    block: dict = {"type": "text", "text": SYSTEM_PROMPT}
+    if caching:
+        block["cache_control"] = {"type": "ephemeral"}
+    return [block]
+
+
 def _main_call(messages, use_tools):
     request = {
         "model": MAIN_MODEL,
         "max_tokens": SETTINGS.main_max_tokens,
         "output_config": {"effort": SETTINGS.main_effort},
-        "system": SYSTEM_PROMPT,
+        "system": system_blocks(SETTINGS.prompt_caching),
         "messages": messages,
     }
     if use_tools:
         request["tools"] = tools
+    if SETTINGS.prompt_caching:
+        # Automatic caching as well: a second breakpoint that moves to the end
+        # of the conversation, so the calls within one turn (answer, tool
+        # results, a rewrite) read the conversation so far from the cache
+        # instead of paying for it again. Two of the four breakpoints allowed.
+        request["cache_control"] = {"type": "ephemeral"}
     response = client.messages.create(**request)
     record_usage(response, "main")
     return response
 
 
+def instruction(text):
+    """A message from the agent to the model, sent in the user role.
+
+    Written as a list of content blocks, never as a plain string: a plain
+    string in the user role is, by construction, something the customer
+    typed. That is what lets the code tell the customer's words from its own
+    instructions — for counting turns, for the case references the customer
+    gave, and for the numbers the citation guard lets the customer have
+    repeated back. An instruction naming an unsupported number must not make
+    that number the customer's.
+    """
+    return {"role": "user", "content": [{"type": "text", "text": text}]}
+
+
+def customer_messages(messages) -> list[str]:
+    """What the customer wrote in this conversation, oldest first."""
+    return [
+        m["content"]
+        for m in messages
+        if m.get("role") == "user" and isinstance(m.get("content"), str)
+    ]
+
+
 def rewrite(messages, problems):
     """Send the answer back to be rewritten strictly from evidence."""
     messages.append(
-        {
-            "role": "user",
-            "content": (
-                "Your previous answer had these problems: "
-                + "; ".join(problems)
-                + ". Rewrite it using only what the tool results actually say. Remove "
-                "every added detail. Copy URLs and numbers exactly or omit them "
-                "entirely. Do not call any tools."
-            ),
-        }
+        instruction(
+            "Your previous answer had these problems: "
+            + "; ".join(problems)
+            + ". Rewrite it using only what the tool results actually say. Remove "
+            "every added detail. Copy URLs and numbers exactly or omit them "
+            "entirely. Do not call any tools."
+        )
     )
     response = _main_call(messages, use_tools=False)
     messages.append({"role": "assistant", "content": response.content})
@@ -1049,19 +1188,16 @@ def rewrite_after_escalation(messages):
     needs to give.
     """
     messages.append(
-        {
-            "role": "user",
-            "content": (
-                "This query has now been escalated to a human adviser automatically, "
-                "because the knowledge base could not answer it. Rewrite your last "
-                "message as one short, coherent reply that: says plainly you do not "
-                "have the information; states that it HAS BEEN passed to a qualified "
-                "adviser who will be in touch; gives the switchboard number "
-                f"{SWITCHBOARD}. Do not offer to escalate, since it has already "
-                "happened, and do not ask the customer any question. Do not call "
-                "any tools."
-            ),
-        }
+        instruction(
+            "This query has now been escalated to a human adviser automatically, "
+            "because the knowledge base could not answer it. Rewrite your last "
+            "message as one short, coherent reply that: says plainly you do not "
+            "have the information; states that it HAS BEEN passed to a qualified "
+            "adviser who will be in touch; gives the switchboard number "
+            f"{SWITCHBOARD}. Do not offer to escalate, since it has already "
+            "happened, and do not ask the customer any question. Do not call "
+            "any tools."
+        )
     )
     response = _main_call(messages, use_tools=False)
     messages.append({"role": "assistant", "content": response.content})
@@ -1226,7 +1362,7 @@ def evidence_guard(messages, evidence_parts, is_greeting, guard_retries) -> str:
         return "pass"
     if guard_retries == 0:
         log("evidence_guard", "answered without a tool — asking for a lookup")
-        messages.append({"role": "user", "content": EVIDENCE_GUARD_RETRY})
+        messages.append(instruction(EVIDENCE_GUARD_RETRY))
         return "retry"
     log("evidence_guard_failed", "still no tool call — treating as unanswerable")
     evidence_parts.append(EVIDENCE_GUARD_NO_MATCH)
@@ -1238,14 +1374,15 @@ def citation_guard(answer, messages, evidence) -> tuple[str, list[str]]:
     notes: list[str] = []
     if not CHECK_CITATIONS or not evidence:
         return answer, notes
-    violations = check_citations(answer, evidence)
+    customer_text = "\n".join(customer_messages(messages))
+    violations = check_citations(answer, evidence, customer_text)
     if not violations:
         log("citations_clean", "citations: clean", after_rewrite=False)
         return answer, notes
     log("citation_violation", "CITATION VIOLATIONS (deterministic)", violations=violations)
     answer = rewrite(messages, violations)
     notes.append("rewritten after citation check")
-    remaining = check_citations(answer, evidence)
+    remaining = check_citations(answer, evidence, customer_text)
     if remaining:
         log("citations_remaining", "STILL UNSUPPORTED after rewrite", violations=remaining)
         notes.append(f"WARNING: unverified detail remains ({len(remaining)})")
@@ -1254,7 +1391,7 @@ def citation_guard(answer, messages, evidence) -> tuple[str, list[str]]:
     return answer, notes
 
 
-def recheck_citations(answer, evidence) -> list[str]:
+def recheck_citations(answer, evidence, customer_text="") -> list[str]:
     """The deterministic check again, on text a fact-check rewrite produced.
 
     The citation guard runs before the fact-checker, so a rewrite the
@@ -1266,7 +1403,7 @@ def recheck_citations(answer, evidence) -> list[str]:
     """
     if not CHECK_CITATIONS:
         return []
-    remaining = check_citations(answer, evidence)
+    remaining = check_citations(answer, evidence, customer_text)
     if not remaining:
         log("citations_clean", "citations: clean after fact-check rewrite", after_rewrite=True)
         return []
@@ -1289,7 +1426,7 @@ def groundedness_check(answer, messages, evidence) -> tuple[str, list[str]]:
         log("unsupported", "UNSUPPORTED CLAIMS", claims=verdict["unsupported"])
         answer = rewrite(messages, verdict["unsupported"])
         notes.append("rewritten after fact-check")
-        notes += recheck_citations(answer, evidence)
+        notes += recheck_citations(answer, evidence, "\n".join(customer_messages(messages)))
     elif verdict["status"] == "grounded":
         log("verified", "verified: grounded")
     else:

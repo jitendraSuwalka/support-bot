@@ -128,3 +128,79 @@ def test_the_readme_carries_the_numbers_rendered_from_the_committed_reports():
     reports in the repository render to, so a number can only be measured."""
     text = Path(report.README).read_text(encoding="utf-8")
     assert report.readme_block(text) == report.current_block()
+
+
+def caching_run(per_case, tokens_in, cache_read, median):
+    return {
+        "summary": {
+            "cases": 20,
+            "behaviour_accuracy": 1.0,
+            "tokens": {"input": tokens_in, "cache_read": cache_read},
+            "latency_seconds": {"median": median},
+            "cost_usd": {"per_case_mean": per_case},
+        }
+    }
+
+
+def test_the_caching_table_compares_the_same_cases_off_and_on(tmp_path):
+    (tmp_path / "caching-off.json").write_text(
+        json.dumps(caching_run(0.0150, 166_000, 0, 9.2)), encoding="utf-8"
+    )
+    (tmp_path / "caching-on.json").write_text(
+        json.dumps(caching_run(0.0060, 40_000, 120_000, 8.1)), encoding="utf-8"
+    )
+    runs = report.load_caching(tmp_path)
+    assert list(runs) == ["off", "on"]
+    text = report.caching_table(runs)
+    assert "| off | 20 | $0.0150 | 8,300 | 0 | 9.2 s | 100.0% |" in text
+    assert "| on | 20 | $0.0060 | 2,000 | 6,000 | 8.1 s | 100.0% |" in text
+    assert "cut the cost of an answer by 60%, from $0.0150 to $0.0060" in text
+    assert "Prompt caching, measured" in report.render(None, {}, runs)
+
+
+def test_without_both_runs_there_is_no_saving_claimed(tmp_path):
+    (tmp_path / "caching-on.json").write_text(
+        json.dumps(caching_run(0.006, 40_000, 120_000, 8.1)), encoding="utf-8"
+    )
+    text = report.caching_table(report.load_caching(tmp_path))
+    assert "| on |" in text and "cut the cost" not in text
+    assert report.load_caching(tmp_path / "nowhere") == {}
+
+
+def test_the_headline_states_the_numbers_a_reader_sees_first():
+    runs = {
+        "baseline": live("2026-10-22T19:07:44Z", 0.888),
+        "current": live("2026-10-24T10:00:00Z", 0.988),
+    }
+    caching = {"off": caching_run(0.0154, 1, 0, 9.4), "on": caching_run(0.0064, 1, 0, 9.0)}
+    lines = report.headline(RETRIEVAL, runs, caching).splitlines()
+    assert lines[0].startswith("- **98.8%** of 169 labelled")
+    assert "(the first measurement: 88.8%)" in lines[0]
+    assert lines[1] == (
+        "- **60.0%** of escalations were wanted, and **95.0%** of the questions that needed "
+        "a person reached one."
+    )
+    assert "**100.0%** of answerable questions" in lines[2]
+    assert lines[3] == "- **$0.0064** an answer with prompt caching, **58%** less than without."
+    assert report.headline(None, {}, {}) == "_No reports yet._"
+
+
+def test_the_readme_carries_the_headline_rendered_from_the_committed_reports():
+    text = Path(report.README).read_text(encoding="utf-8")
+    block = report.readme_block(text, report.HEADLINE_START, report.HEADLINE_END)
+    assert block == report.current_headline()
+
+
+def test_write_updates_both_blocks_even_when_they_start_empty(tmp_path):
+    (tmp_path / "retrieval.json").write_text(json.dumps(RETRIEVAL), encoding="utf-8")
+    readme = tmp_path / "README.md"
+    readme.write_text(
+        "<!-- headline:start -->\n<!-- headline:end -->\n\n"
+        "<!-- eval:start -->\nold\n<!-- eval:end -->\n",
+        encoding="utf-8",
+    )
+    assert report.main(["--reports", str(tmp_path), "--readme", str(readme), "--write"]) == 0
+    text = readme.read_text(encoding="utf-8")
+    assert "of answerable questions" in text.split("<!-- headline:end -->")[0]
+    assert "| hybrid |" in text.split("<!-- eval:start -->")[1]
+    assert report.readme_block("a\n<!-- eval:start -->\n<!-- eval:end -->\n") == ""

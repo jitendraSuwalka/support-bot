@@ -15,10 +15,22 @@ looping when it cannot help. This project treats those as engineering
 requirements with tests attached, rather than as instructions in a prompt and
 a hope.
 
+Measured on a labelled set of customer questions, with every number below
+rendered from the reports in `reports/` ([Evaluation](#evaluation)):
+
+<!-- headline:start -->
+- **98.8%** of 169 labelled customer questions handled as the label says — answered, escalated, clarified or declined (the first measurement: 88.8%).
+- **96.2%** of escalations were wanted, and **96.2%** of the questions that needed a person reached one.
+- **97.0%** of answerable questions have the passage that answers them among the six retrieved (hybrid BM25 and vector search).
+- **$0.0064** an answer with prompt caching, **58%** less than without.
+<!-- headline:end -->
+
 ```
-python app.py          # web interface
-python agent.py        # same agent, in the terminal
-pytest                 # 332 tests, under fifteen seconds, no API calls, no network
+python app.py                  # web interface
+uvicorn api:app                # the same agent as an HTTP service; docs at /docs
+docker build -t support-bot .  # the service as a container (CI builds and tests it)
+python agent.py                # same agent, in the terminal
+pytest                         # 406 tests, under twenty seconds, no API calls, no network
 ```
 
 > **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
@@ -118,7 +130,7 @@ user question
      ├─ CHECK 2: groundedness — independent LLM           (semantic drift; any rewrite meets CHECK 1 again)
      ├─ CHECK 3: escalation policy — deterministic        (clarify once, then escalate)
      │
-     └─ answer + audit trail of raw evidence
+     └─ answer + audit trail of raw evidence + one JSON log line (behaviour, guards, latency, cost)
 ```
 
 Checks run cheapest-and-most-certain first. The deterministic citation guard
@@ -227,6 +239,138 @@ graph TD;
 The model is still called through the Anthropic SDK directly, because the
 guards need the raw response blocks and the request needs the effort setting;
 a chat-model wrapper would hide the first and lag the second.
+
+### The HTTP service
+
+`api.py` serves the same agent over HTTP with FastAPI. `uvicorn api:app` starts
+it; `/docs` is interactive OpenAPI documentation generated from the code, and
+the bare address redirects there.
+
+| Endpoint | Does |
+|---|---|
+| `POST /chat` | One customer turn. Omit `session_id` to start a conversation; send the one you were given to continue it |
+| `DELETE /sessions/{id}` | Ends a conversation and drops what the server held for it |
+| `GET /health` | The process is up (liveness) |
+| `GET /ready` | It can answer: the API key is set and the document index is loaded (readiness, 503 if not) |
+
+```json
+POST /chat  {"message": "How much can I pay into an ISA this tax year?"}
+
+200 {"session_id": "5d0c5ae6…", "request_id": "c855d840…", "turn": 1,
+     "answer": "You can pay up to £20,000 into ISAs in the 2026/27 tax year…",
+     "behaviour": "answer", "escalated": false,
+     "sources": [{"title": "ISAs: a guide for clients", "section": "The allowance",
+                  "url": "https://www.fernhillwealth.example/guides/isas/"}],
+     "warnings": [], "latency_ms": 8016, "cost": {"usd": 0.0146, …}}
+```
+
+A client gets the outcome as data — the behaviour, whether a person was
+brought in, the sections the answer rests on, any guard warning, the cost —
+so a front end can show a hand-off banner or the sources without parsing the
+answer. The choices that make it a service rather than a demo:
+
+- **The server issues conversation ids** (128 random bits) and refuses an
+  unknown or expired one with a 404, instead of starting a conversation under
+  an id the client picked: one customer cannot continue another's by
+  guessing.
+- **Limits are settings.** A message over `max_message_chars` is refused before
+  any model is called; a conversation idle for `session_ttl_minutes` is
+  dropped; the least recently used goes first beyond `max_sessions`; one of
+  `max_turns` must be restarted (409).
+- **One turn at a time per conversation.** A turn extends the conversation it
+  reads, so two requests for one conversation are answered in order; a test
+  proves the lock, and fails without it.
+- **A failure leaks nothing.** An exception inside the agent is a 502 with a
+  request id to quote and none of the exception's text; the message is taken
+  back off the conversation so the customer can retry; the log line has the
+  exception type.
+- **Every response carries `X-Request-ID`**, the client's own if it sent a
+  well-formed one, and the same id is in the turn's log line.
+- **No new dependencies.** FastAPI and uvicorn were already in the lockfile
+  through Gradio; pinning them added nothing.
+- **Every request is a JSON log line too** — method, path, status, latency
+  and the request id — except liveness probes, so refusals show up in the
+  same stream as turns, and a turn's line and its request's line share an id.
+
+### The container
+
+```bash
+docker build -t support-bot .
+docker run -p 8000:8000 -e ANTHROPIC_API_KEY=sk-ant-... support-bot
+```
+
+The `Dockerfile` builds the HTTP service into an image, and CI builds that
+image and runs `scripts/container_smoke_test.sh` against it on every push, so
+nobody needs Docker installed to know the container works. What the image
+guarantees, and the smoke test checks:
+
+- **It is ready when it starts.** The embedding model is downloaded and the
+  document index built at *build* time, then `HF_HUB_OFFLINE=1` is set: a
+  container never reaches out to the model hub, its only outbound calls are
+  to the Anthropic API, and `/ready` is green from the first second.
+- **It runs as an unprivileged user** (uid 10001), and nothing in it needs
+  root once built.
+- **Only what it needs goes in.** `.dockerignore` is an allow-list — the
+  service's modules, `rag/`, `corpus/` and the requirements — so a `.env`
+  with a key in it, a local index, the tests or the git history can never be
+  copied into an image by accident. Runtime dependencies come from
+  `requirements.txt` at the lockfile's exact versions; the test tools stay out.
+- **Docker knows whether it is healthy.** A `HEALTHCHECK` calls `/health`, and
+  `docker ps` shows the result.
+- **It is 637 MB** as CI builds it — the slim Python base, the dependencies
+  (ONNX Runtime and Gradio the largest) and the 67 MB embedding model.
+- **Its logs are one format.** JSON lines on stderr — turns, requests and the
+  service's own events — with uvicorn's plain-text access log switched off;
+  only uvicorn's few start-up lines remain plain text.
+
+The smoke test needs no secret and calls no model: health, readiness, the
+redirect and the docs, an empty message refused with 422, an unknown
+conversation with 404, a request id on every response, a non-root user, no
+tests or `.env` inside, the model and index present, Docker's health check
+passing, and no traceback in the logs. Dependabot proposes base-image
+updates, which CI then builds and smoke-tests before anyone merges them.
+
+### One log line per turn
+
+Every turn the web interface serves is written as one JSON line to stderr
+(`observability.py`), and optionally appended to a file
+(`SUPPORT_BOT_TURN_LOG_PATH=logs/turns.jsonl`). The shape, with illustrative values:
+
+```json
+{"event":"turn","ts":"2026-10-24T09:12:03.512Z","request_id":"9f3c…","session_id":"41ab…",
+ "turn":2,"behaviour":"answer","escalated":false,"tools":["search_knowledge_base"],
+ "guards":["citation_rewrite"],"warnings":[],"evidence_parts":1,"latency_ms":8412,
+ "message":{"chars":44,"sha256":"5d1e0c7a9b2f4e31"},"answer":{"chars":312,"sha256":"…"},
+ "cost":{"usd":0.0121,"input_tokens":4211,"output_tokens":388,"cache_read_tokens":0,
+ "cache_write_tokens":0,"calls":4,"unpriced_models":[]},"level":"INFO"}
+```
+
+That is what an on-call engineer, a cost report or a complaints reviewer needs
+about a turn, and it says nothing about what the customer wrote. The message
+and the answer are kept as a length and the first sixteen hex digits of a
+SHA-256 hash: hash a complainant's words and the turn can be found, without
+the log becoming a second copy of every conversation. `SUPPORT_BOT_LOG_CONTENT=true`
+records the text for a deployment that has decided it may. A turn with a
+`WARNING` note is logged at warning level, a turn that fails at error level
+with the exception's type, so alerting needs no parsing.
+
+**Prompt caching.** The tool definitions and the system prompt, about 2,500
+tokens, are identical on every main-model call of every conversation, and a
+turn makes two or three such calls. The system prompt carries a cache
+breakpoint, which caches the tools with it (the API caches in the order
+tools, system, messages), and automatic caching adds a second breakpoint that
+moves to the end of the conversation, so the later calls in a turn read the
+conversation so far from the cache. A cached read is priced at a twentieth of
+fresh input; what it saved on the labelled set is measured in
+[Evaluation](#evaluation). `SUPPORT_BOT_PROMPT_CACHING=false` switches it off,
+which exists to make that measurement.
+
+Cost comes from `pricing.py`: the Claude API's per-million-token prices for
+the two models, with the page and the date they were read, applied to every
+call's input, cache and output tokens. A model the table does not know makes
+the turn *unpriced*, never free, and the line names it.
+`SUPPORT_BOT_LOG_FORMAT=text` prints one readable line per turn instead, for a
+terminal.
 
 ---
 
@@ -440,6 +584,25 @@ question about how a service, fee or process works. Rule 13 adds the
 principle: answer the part the documents cover, say plainly what they do not.
 Prompt text, so the evaluation measures it rather than a test proving it.
 
+### 14. A customer who could not be told their own age
+
+**Symptom.** In both caching runs, *"I'm 70. Does the new cash ISA cap apply to
+me?"* ended with a warning: the answer said *"you told me you are 70"*, and the
+citation guard flagged 70 as a number not in the evidence.
+
+**Cause.** The guard checked numbers against the evidence only. And looking
+for where the customer's words could come from exposed a second fault: the
+agent's own instructions to the model — *rewrite this, these numbers were
+unsupported* — went in the user role as plain strings, exactly like the
+customer's messages, so they were counted as customer turns in the log, and
+would have counted as things the customer said.
+
+**Fix.** The agent's instructions are now content blocks, so a plain string
+in the user role is by construction the customer's. Numbers the customer
+wrote may be repeated back; URLs they wrote may not, because repeating a link
+a customer pasted lends it the firm's authority. A test proves an instruction
+that names an unsupported number does not make it the customer's.
+
 ---
 
 ## Evaluation
@@ -492,16 +655,25 @@ End to end: every case through the real agent (`claude-sonnet-5-5` answering, `c
 | Run | Date | Cases | Behaviour accuracy | Answers correct | Escalation precision | Escalation recall | Untouched by guards | Median latency | Tokens per case |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|
 | baseline | 2026-10-22 | 169 | 88.8% | 91.6% | 65.8% | 96.2% | 74.4% | 9.1 s | 6,335 |
-| current | 2026-10-23 | 169 | 98.8% | 99.2% | 96.2% | 96.2% | 76.3% | 8.6 s | 8,221 |
+| current | 2026-10-23 | 169 | 98.8% | 99.2% | 96.2% | 96.2% | 75.6% | 8.2 s | 2,370 |
 
 Behaviour accuracy: the agent did what the label expects (answer, escalate, clarify, decline, greeting). Answers correct: answerable questions answered with every required fact. Escalation precision: escalations that were wanted; recall: wanted escalations that happened. Untouched: answers that passed the citation guard and the fact-check without a rewrite. Every failure is listed by id in the report.
+
+Prompt caching, measured: the same cases through the real agent with caching off, then on (`SUPPORT_BOT_PROMPT_CACHING`, `python -m eval.live --limit … --out …`).
+
+| Prompt caching | Cases | Cost per answer | Uncached input tokens per answer | Cache reads per answer | Median latency | Behaviour accuracy |
+|---|---:|---:|---:|---:|---:|---:|
+| off | 20 | $0.0154 | 8,094 | 0 | 9.4 s | 100.0% |
+| on | 20 | $0.0064 | 2,177 | 5,134 | 9.0 s | 100.0% |
+
+Caching cut the cost of an answer by 58%, from $0.0154 to $0.0064.
 <!-- eval:end -->
 
 ---
 
 ## Testing strategy
 
-`tests/` — **332 tests, under fifteen seconds, no API calls, no network.** Run with `pytest`.
+`tests/` — **406 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
 Eight further tests call the real API and run only on request: `pytest -m live`;
 two download and run the real embedding model: `pytest -m model`.
 
@@ -516,6 +688,7 @@ well-behaved model would never take.
 | Unit tests | Chunking, embeddings, vector-store sync, BM25, rank fusion, citation guard, JSON extraction, expiry, policy state machine, rerank failure modes | free |
 | Agent scenarios | Full turns against the fake model and an in-memory index of the real corpus, on **both** implementations: verbatim quoting, citation rewrites, forced escalation, greeting handling, crashed tools, a decline that runs nothing else, clarify once then escalate, a refused lookup | free |
 | Evaluation harness | The label validator against the corpus, retrieval metrics and the sweep with the hash embedder, the live scorer with an injectable runner, the README tables against the committed reports | free |
+| Service and logs | The HTTP API in-process (sessions, limits, refusals, a failing turn, one turn at a time), the turn log's fields and privacy, the cost model | free |
 | Live tests (`-m live`) | Eight real questions through the real API, including a fact found by meaning and one found by exact string | opt-in |
 | Model tests (`-m model`) | The real embedding model: meaning beats wording; the dense floor's margin | opt-in |
 
@@ -587,6 +760,11 @@ models produced it.
 **Auditability over polish.** Every answer carries its raw evidence. Terse and
 traceable beats fluent and unverifiable.
 
+**Log what happened, not what was said.** The turn log records behaviour,
+guards, latency and cost for every turn, and a hash of the words instead of
+the words. A log is copied, shipped and kept longer than anyone intends; it
+should not be the place customer conversations accumulate by default.
+
 ---
 
 ## Known limitations
@@ -627,8 +805,14 @@ one whose weaknesses are unknown.
 - **Greetings are a list.** It grew by the pleasantries customers attach, not
   by a classifier; a greeting it does not know is treated as a question, and
   the model's best move is then to ask what the customer needs.
-- **Single-user, in-memory, no persistence.** No session store, no concurrency,
-  no rate limiting. Not production infrastructure.
+- **Conversations live in one process's memory.** A restart forgets them and a
+  second worker would not share them; a deployment with more than one
+  process needs a shared session store (Redis, a database) behind the same
+  `SessionStore` interface.
+- **No authentication or rate limiting in the service.** Both belong in front
+  of it — an API gateway or a reverse proxy — and the service assumes one
+  is there. The per-message and per-conversation limits bound the cost of
+  any single caller, but they are not a rate limit.
 
 ---
 
@@ -667,6 +851,8 @@ Then:
 
 ```bash
 python app.py                   # web interface at http://127.0.0.1:7860
+uvicorn api:app --port 8000     # HTTP service; interactive docs at http://127.0.0.1:8000/docs
+docker build -t support-bot .   # the same service as a container (CI does this on every push)
 python agent.py                 # same agent, in the terminal
 python -m rag.index -q "ISA"    # inspect retrieval: both methods' ranks and scores
 pip install -r requirements-dev.txt
@@ -689,12 +875,17 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `agent.py` | The agent — tools, retrieval, guards, policy, loop; returns a structured `AgentResult` |
 | `agent_graph.py` | The same turn as a LangGraph state graph, selectable by `SUPPORT_BOT_AGENT_IMPL=graph`; `python agent_graph.py --mermaid` draws it |
 | `config.py` | Every runtime setting, read from the environment with validation |
+| `observability.py` | One JSON log line per turn: behaviour, guards, latency, tokens, cost; content hashed unless enabled |
+| `pricing.py` | Claude API prices per million tokens, with source and date; the cost of a turn from its calls |
 | `corpus/` | 18 documents for the fictional firm, with front matter; `corpus/README.md` sources every public figure |
 | `rag/` | `corpus.py` chunker, `embeddings.py`, `store.py` (Qdrant), `lexical.py` (BM25), `retrieval.py` (fusion), `index.py` (CLI) |
 | `eval/` | `questions.yaml` (169 labelled cases), `dataset.py` validator, `retrieval.py` metrics and sweep, `live.py` end-to-end scorer, `report.py` README tables |
 | `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json` |
-| `tests/` | 332 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
+| `tests/` | 406 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
+| `api.py` | FastAPI service — `/chat`, `/sessions/{id}`, `/health`, `/ready`, OpenAPI docs at `/docs` |
+| `Dockerfile` / `.dockerignore` | The service as a container: model and index baked in, non-root, health-checked, allow-listed contents |
+| `scripts/container_smoke_test.sh` | Starts the image and checks the service in it, with no model call and no secret; run by CI |
 | `requirements.txt` / `requirements.lock` | Direct dependencies / every resolved dependency |
 
 The intermediate build stages that show how each guard arose are preserved in the
@@ -720,17 +911,20 @@ working tree because nothing runs or tests them.
 
 ## What I would do next
 
-1. **Measure the fact-checker.** It rewrote 18–23% of answers across the two
-   runs; a labelled sample of those rewrites would say how many were needed,
-   and whether the check is worth its call.
-2. **Cache the prompt.** The behaviour rules and five tool descriptions cost
-   tokens on every call — tokens per case rose from 6,335 to 8,040 between
-   the two runs — and they are identical from call to call, which is what
-   prompt caching is for.
-3. **Serve it properly**: a FastAPI endpoint beside the Gradio interface,
-   structured logs with cost and latency per answer, a Docker image built in CI.
-4. **Persist the audit trail**, so escalation rates, `NO_MATCH` rates and
-   rewrite frequency become monitorable metrics rather than terminal output.
+1. **Measure the fact-checker.** It rewrites about a fifth of answers; a
+   labelled sample of those rewrites would say how many were needed, and
+   whether the check is worth its call.
+2. **Turn the log into monitoring.** Every turn and request is already a JSON
+   line with its behaviour, guards, latency and cost; shipped to a log store,
+   escalation rate, rewrite rate and cost per answer become dashboards and
+   alerts rather than lines in a terminal.
+3. **A shared session store and a gateway**, for more than one process:
+   conversations in Redis behind the existing `SessionStore` interface, and
+   authentication and rate limiting in front of the service.
+4. **A smaller image.** The image is 637 MB as CI builds it, and carries
+   Gradio because the web interface and the service share `requirements.txt`;
+   splitting the service's dependencies out would shrink it, at the cost of a
+   second list to keep in step.
 5. **A cross-encoder reranker**, measured on the same labelled set against the
    LLM rerank it would replace: cheaper per call, and the harness already says
    whether it is better.
