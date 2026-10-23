@@ -524,3 +524,29 @@ def test_each_turn_reports_its_behaviour_in_one_vocabulary(run_scenario):
         "answer",
         "escalate",
     ]
+
+
+# --- the sections a turn relied on ------------------------------------------------
+
+
+def test_a_turn_lists_the_sections_its_evidence_came_from(run_scenario):
+    results, _, _ = run_scenario(
+        script=[
+            tool_reply("search_knowledge_base", {"query": "Manchester office address"}),
+            tool_reply("search_knowledge_base", {"query": "Manchester office"}, call_id="t2"),
+            text_reply("Our Manchester office is in Peterloo Buildings."),
+        ],
+        user_messages=["Where is your Manchester office?"],
+        helper={"rerank": '{"relevant": [0]}'},
+    )
+    sources = results[0].sources()
+    assert sources, results[0].trace.render()
+    assert all(set(s) == {"title", "section", "url"} for s in sources)
+    assert all(s["url"].startswith("https://www.fernhillwealth.example/") for s in sources)
+    # The same section found by two searches is listed once.
+    assert len({(s["title"], s["section"]) for s in sources}) == len(sources)
+
+
+def test_a_turn_with_no_search_has_no_sources(run_scenario):
+    results, _, _ = run_scenario(STATUS_SCRIPT, ["Is FW-1001 done?"])
+    assert results[0].sources() == []

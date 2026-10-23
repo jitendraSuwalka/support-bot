@@ -221,6 +221,29 @@ class AgentResult:
             return "clarify"
         return "answer"
 
+    def sources(self) -> list[dict]:
+        """The document sections the turn's evidence came from, in the order
+        they were kept, each once: title, section and page URL.
+
+        Read from the retrieval events, not parsed out of the evidence text,
+        so a caller (the API, the log) gets structured provenance it can show
+        or count without depending on how evidence is formatted for the model.
+        """
+        seen, sources = set(), []
+        for event in self.trace.find("kept"):
+            key = event.data.get("chunk_id")
+            if key in seen:
+                continue
+            seen.add(key)
+            sources.append(
+                {
+                    "title": event.data.get("title"),
+                    "section": event.data.get("section"),
+                    "url": event.data.get("url"),
+                }
+            )
+        return sources
+
     def guards(self) -> list[str]:
         """The guards and policies that acted this turn, by short name."""
         kinds = set(self.trace.kinds())
@@ -615,6 +638,7 @@ def search_knowledge_base(query):
             chunk_id=chunk.chunk_id,
             title=chunk.title,
             section=chunk.section,
+            url=chunk.url,
             found_by=result.found_by,
             lexical_score=result.lexical_score,
             dense_score=result.dense_score,
