@@ -19,7 +19,7 @@ a hope.
 python app.py          # web interface
 uvicorn api:app        # the same agent as an HTTP service; docs at /docs
 python agent.py        # same agent, in the terminal
-pytest                 # 389 tests, under fifteen seconds, no API calls, no network
+pytest                 # 390 tests, under fifteen seconds, no API calls, no network
 ```
 
 > **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
@@ -232,7 +232,8 @@ a chat-model wrapper would hide the first and lag the second.
 ### The HTTP service
 
 `api.py` serves the same agent over HTTP with FastAPI. `uvicorn api:app` starts
-it; `/docs` is interactive OpenAPI documentation generated from the code.
+it; `/docs` is interactive OpenAPI documentation generated from the code, and
+the bare address redirects there.
 
 | Endpoint | Does |
 |---|---|
@@ -592,7 +593,7 @@ Behaviour accuracy: the agent did what the label expects (answer, escalate, clar
 
 ## Testing strategy
 
-`tests/` — **389 tests, under fifteen seconds, no API calls, no network.** Run with `pytest`.
+`tests/` — **390 tests, under fifteen seconds, no API calls, no network.** Run with `pytest`.
 Eight further tests call the real API and run only on request: `pytest -m live`;
 two download and run the real embedding model: `pytest -m model`.
 
@@ -799,7 +800,7 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `rag/` | `corpus.py` chunker, `embeddings.py`, `store.py` (Qdrant), `lexical.py` (BM25), `retrieval.py` (fusion), `index.py` (CLI) |
 | `eval/` | `questions.yaml` (169 labelled cases), `dataset.py` validator, `retrieval.py` metrics and sweep, `live.py` end-to-end scorer, `report.py` README tables |
 | `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json` |
-| `tests/` | 389 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
+| `tests/` | 390 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `api.py` | FastAPI service — `/chat`, `/sessions/{id}`, `/health`, `/ready`, OpenAPI docs at `/docs` |
 | `requirements.txt` / `requirements.lock` | Direct dependencies / every resolved dependency |

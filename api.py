@@ -8,6 +8,7 @@ The support agent as an HTTP service.
     GET    /health               the process is up (liveness)
     GET    /ready                it can answer: API key set, document index loaded (readiness)
     GET    /docs                 interactive OpenAPI documentation, generated from the code
+    GET    /                     redirects to /docs
 
 The service is a thin layer over the same agent the web interface uses:
 every turn goes through ``observability.run_logged_turn``, so it is logged
@@ -42,7 +43,7 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 
 from fastapi import FastAPI, HTTPException, Request, Response
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel, Field, field_validator
 
 import agent
@@ -298,6 +299,12 @@ def create_app(
         if not re.fullmatch(_SESSION_ID, session_id) or not sessions.delete(session_id):
             raise HTTPException(404, "unknown or expired session")
         return Response(status_code=204)
+
+    @app.get("/", include_in_schema=False)
+    def root() -> RedirectResponse:
+        # Someone who opens the service's address in a browser wants to know
+        # what it is: send them to the documentation instead of a 404.
+        return RedirectResponse("/docs")
 
     @app.get("/health", response_model=Health)
     def health() -> Health:

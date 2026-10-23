@@ -340,3 +340,11 @@ def test_starting_the_service_configures_logging_and_opens_the_index(monkeypatch
     with TestClient(api.create_app(Settings(), runner=Runner())) as client:  # runs the lifespan
         assert calls == ["logging", "index"]
         assert client.get("/health").status_code == 200
+
+
+def test_the_bare_address_leads_to_the_documentation():
+    client, _ = client_for()
+    response = client.get("/", follow_redirects=False)
+    assert response.status_code == 307 and response.headers["location"] == "/docs"
+    assert client.get("/").status_code == 200  # followed, it is the docs page
+    assert "/" not in client.get("/openapi.json").json()["paths"]  # not part of the API
