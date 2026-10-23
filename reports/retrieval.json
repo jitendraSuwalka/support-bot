@@ -1,19 +1,20 @@
 {
-  "generated": "2026-10-22T20:36:50Z",
+  "generated": "2026-10-23T10:11:26Z",
   "embedder": "BAAI/bge-small-en-v1.5-384",
   "cases": 169,
-  "cases_with_gold": 136,
+  "cases_with_gold": 135,
   "chunks": 129,
   "dense_floor": 0.5,
   "relevance_floor": 0.15,
   "rrf_k": 20,
+  "lexical_first_within": 6,
   "modes": {
     "hybrid": {
-      "n": 136,
-      "recall@1": 0.647,
-      "recall@3": 0.897,
-      "recall@6": 0.971,
-      "mrr": 0.774,
+      "n": 135,
+      "recall@1": 0.644,
+      "recall@3": 0.896,
+      "recall@6": 0.97,
+      "mrr": 0.772,
       "pool": 10,
       "by_kind": {
         "action": {
@@ -24,13 +25,6 @@
           "mrr": 0.2
         },
         "advice": {
-          "n": 1,
-          "recall@1": 1.0,
-          "recall@3": 1.0,
-          "recall@6": 1.0,
-          "mrr": 1.0
-        },
-        "ambiguous": {
           "n": 1,
           "recall@1": 1.0,
           "recall@3": 1.0,
@@ -823,13 +817,6 @@
           "top_dense": 0.6059316955623146
         },
         {
-          "id": "ambiguous-03",
-          "kind": "ambiguous",
-          "gold_rank": 1,
-          "gold_dense": 0.7307772021982138,
-          "top_dense": 0.7307772021982138
-        },
-        {
           "id": "portal-06",
           "kind": "factual",
           "gold_rank": 3,
@@ -1180,6 +1167,13 @@
           "top_dense": 0.5275872627427198
         },
         {
+          "id": "ambiguous-03",
+          "kind": "ambiguous",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.7307772021982138
+        },
+        {
           "id": "greeting-01",
           "kind": "greeting",
           "gold_rank": null,
@@ -1266,29 +1260,29 @@
       ],
       "dense_calibration": {
         "gold_chunk_cosine": {
-          "n": 132,
+          "n": 131,
           "min": 0.504,
           "p10": 0.618,
-          "median": 0.734,
+          "median": 0.735,
           "p90": 0.834,
           "max": 0.893
         },
         "best_cosine_without_gold": {
-          "n": 33,
+          "n": 34,
           "min": 0.447,
           "p10": 0.525,
-          "median": 0.612,
+          "median": 0.618,
           "p90": 0.762,
           "max": 0.811
         }
       }
     },
     "lexical": {
-      "n": 136,
-      "recall@1": 0.603,
-      "recall@3": 0.787,
-      "recall@6": 0.897,
-      "mrr": 0.712,
+      "n": 135,
+      "recall@1": 0.6,
+      "recall@3": 0.785,
+      "recall@6": 0.896,
+      "mrr": 0.71,
       "pool": 10,
       "by_kind": {
         "action": {
@@ -1304,13 +1298,6 @@
           "recall@3": 1.0,
           "recall@6": 1.0,
           "mrr": 0.333
-        },
-        "ambiguous": {
-          "n": 1,
-          "recall@1": 1.0,
-          "recall@3": 1.0,
-          "recall@6": 1.0,
-          "mrr": 1.0
         },
         "denial": {
           "n": 8,
@@ -2105,13 +2092,6 @@
           "top_dense": null
         },
         {
-          "id": "ambiguous-03",
-          "kind": "ambiguous",
-          "gold_rank": 1,
-          "gold_dense": null,
-          "top_dense": null
-        },
-        {
           "id": "portal-06",
           "kind": "factual",
           "gold_rank": 1,
@@ -2317,11 +2297,11 @@
       ]
     },
     "dense": {
-      "n": 136,
-      "recall@1": 0.728,
-      "recall@3": 0.868,
-      "recall@6": 0.934,
-      "mrr": 0.808,
+      "n": 135,
+      "recall@1": 0.726,
+      "recall@3": 0.867,
+      "recall@6": 0.933,
+      "mrr": 0.806,
       "pool": 10,
       "by_kind": {
         "action": {
@@ -2332,13 +2312,6 @@
           "mrr": 0.125
         },
         "advice": {
-          "n": 1,
-          "recall@1": 1.0,
-          "recall@3": 1.0,
-          "recall@6": 1.0,
-          "mrr": 1.0
-        },
-        "ambiguous": {
           "n": 1,
           "recall@1": 1.0,
           "recall@3": 1.0,
@@ -3132,13 +3105,6 @@
           "top_dense": 0.6059316955623146
         },
         {
-          "id": "ambiguous-03",
-          "kind": "ambiguous",
-          "gold_rank": 1,
-          "gold_dense": 0.7307772021982138,
-          "top_dense": 0.7307772021982138
-        },
-        {
           "id": "portal-06",
           "kind": "factual",
           "gold_rank": null,
@@ -3489,6 +3455,13 @@
           "top_dense": 0.5275872627427198
         },
         {
+          "id": "ambiguous-03",
+          "kind": "ambiguous",
+          "gold_rank": null,
+          "gold_dense": null,
+          "top_dense": 0.7307772021982138
+        },
+        {
           "id": "greeting-01",
           "kind": "greeting",
           "gold_rank": null,
@@ -3575,104 +3548,104 @@
       ],
       "dense_calibration": {
         "gold_chunk_cosine": {
-          "n": 131,
+          "n": 130,
           "min": 0.54,
           "p10": 0.628,
-          "median": 0.735,
-          "p90": 0.834,
+          "median": 0.736,
+          "p90": 0.835,
           "max": 0.893
         },
         "best_cosine_without_gold": {
-          "n": 33,
+          "n": 34,
           "min": 0.447,
           "p10": 0.525,
-          "median": 0.612,
+          "median": 0.618,
           "p90": 0.762,
           "max": 0.811
         }
       }
     }
   },
-  "seconds": 20.4,
+  "seconds": 18.8,
   "sweep": [
     {
       "rrf_k": 20,
       "dense_weight": 0.5,
-      "recall@1": 0.61,
-      "recall@6": 0.949,
-      "mrr": 0.75,
+      "recall@1": 0.607,
+      "recall@6": 0.948,
+      "mrr": 0.748,
       "misses": 4
     },
     {
       "rrf_k": 20,
       "dense_weight": 1.0,
-      "recall@1": 0.647,
-      "recall@6": 0.971,
-      "mrr": 0.774,
+      "recall@1": 0.644,
+      "recall@6": 0.97,
+      "mrr": 0.772,
       "misses": 4
     },
     {
       "rrf_k": 20,
       "dense_weight": 1.5,
-      "recall@1": 0.64,
-      "recall@6": 0.956,
-      "mrr": 0.769,
+      "recall@1": 0.637,
+      "recall@6": 0.963,
+      "mrr": 0.767,
       "misses": 4
     },
     {
       "rrf_k": 20,
       "dense_weight": 2.0,
-      "recall@1": 0.669,
-      "recall@6": 0.956,
-      "mrr": 0.783,
+      "recall@1": 0.667,
+      "recall@6": 0.963,
+      "mrr": 0.781,
       "misses": 2
     },
     {
       "rrf_k": 20,
       "dense_weight": 3.0,
-      "recall@1": 0.699,
-      "recall@6": 0.949,
-      "mrr": 0.795,
+      "recall@1": 0.696,
+      "recall@6": 0.963,
+      "mrr": 0.794,
       "misses": 1
     },
     {
       "rrf_k": 60,
       "dense_weight": 0.5,
-      "recall@1": 0.61,
-      "recall@6": 0.949,
-      "mrr": 0.746,
+      "recall@1": 0.607,
+      "recall@6": 0.948,
+      "mrr": 0.744,
       "misses": 6
     },
     {
       "rrf_k": 60,
       "dense_weight": 1.0,
-      "recall@1": 0.64,
+      "recall@1": 0.637,
       "recall@6": 0.956,
-      "mrr": 0.765,
+      "mrr": 0.764,
       "misses": 4
     },
     {
       "rrf_k": 60,
       "dense_weight": 1.5,
-      "recall@1": 0.64,
+      "recall@1": 0.637,
       "recall@6": 0.956,
-      "mrr": 0.765,
+      "mrr": 0.764,
       "misses": 4
     },
     {
       "rrf_k": 60,
       "dense_weight": 2.0,
-      "recall@1": 0.662,
-      "recall@6": 0.956,
-      "mrr": 0.775,
+      "recall@1": 0.659,
+      "recall@6": 0.963,
+      "mrr": 0.774,
       "misses": 4
     },
     {
       "rrf_k": 60,
       "dense_weight": 3.0,
-      "recall@1": 0.684,
-      "recall@6": 0.956,
-      "mrr": 0.787,
+      "recall@1": 0.681,
+      "recall@6": 0.963,
+      "mrr": 0.785,
       "misses": 4
     }
   ]
