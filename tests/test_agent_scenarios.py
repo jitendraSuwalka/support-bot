@@ -494,3 +494,33 @@ def test_a_clean_fact_check_rewrite_is_recorded_as_checked(run_scenario):
     assert not any(note.startswith("WARNING") for note in result.notes)
     clean = result.trace.find("citations_clean")
     assert [event.data["after_rewrite"] for event in clean] == [False, True]
+
+
+# --- the behaviour is part of the result -------------------------------------------
+
+
+def test_each_turn_reports_its_behaviour_in_one_vocabulary(run_scenario):
+    results, _, _ = run_scenario(
+        script=[
+            text_reply("Hello! How can I help?"),
+            tool_reply("decline_out_of_scope", {"reason": "poem"}, call_id="t1"),
+            tool_reply("ask_for_clarification", {"question": "Which one?"}, call_id="t2"),
+            *STATUS_SCRIPT,
+            tool_reply("escalate_to_adviser", {"reason": "advice", "summary": "x"}, call_id="t4"),
+            text_reply("An adviser will contact you. Call 0117 496 0100."),
+        ],
+        user_messages=[
+            "hello",
+            "write me a poem",
+            "allowance",
+            "Is FW-1001 done?",
+            "Should I buy gold?",
+        ],
+    )
+    assert [r.behaviour for r in results] == [
+        "greeting",
+        "decline",
+        "clarify",
+        "answer",
+        "escalate",
+    ]

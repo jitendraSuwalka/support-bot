@@ -103,21 +103,8 @@ class Observation:
 
 
 def observe_behaviour(result: agent.AgentResult) -> str:
-    """What the agent did, in the label's vocabulary."""
-    if result.escalated:
-        return "escalate"
-    if result.declined:
-        return "decline"
-    if result.clarified:
-        return "clarify"
-    if not result.tools_used and not result.evidence:
-        return "greeting"
-    unresolved = any(
-        marker in part for part in result.evidence for marker in agent.UNRESOLVED_MARKERS
-    )
-    if unresolved and "?" in result.answer:
-        return "clarify"  # asked in prose after NO_MATCH; the policy allows it once
-    return "answer"
+    """What the agent did, in the label's vocabulary (AgentResult.behaviour)."""
+    return result.behaviour
 
 
 def tools_credited(result: agent.AgentResult) -> set[str]:

@@ -177,6 +177,29 @@ class AgentResult:
     clarified: bool = False  # the turn ended with ask_for_clarification
     declined: bool = False  # the turn ended with decline_out_of_scope
 
+    @property
+    def behaviour(self) -> str:
+        """What the turn did: answer, escalate, clarify, decline or greeting.
+
+        One vocabulary for the evaluation, the structured log and the API, read
+        from what the turn recorded rather than from the prose. Escalation
+        outranks everything; the two terminal tools say what they did; a reply
+        with no tool and no evidence is a greeting; a question asked in prose
+        after an unresolved lookup is the one clarification the policy allows.
+        """
+        if self.escalated:
+            return "escalate"
+        if self.declined:
+            return "decline"
+        if self.clarified:
+            return "clarify"
+        if not self.tools_used and not self.evidence:
+            return "greeting"
+        unresolved = any(marker in part for part in self.evidence for marker in UNRESOLVED_MARKERS)
+        if unresolved and "?" in self.answer:
+            return "clarify"
+        return "answer"
+
     def render(self) -> str:
         """Terminal view: the answer, then the notes and the raw evidence."""
         text = self.answer
