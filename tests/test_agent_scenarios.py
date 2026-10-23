@@ -429,3 +429,24 @@ def test_an_unresolved_reference_answered_without_a_question_is_escalated(run_sc
         user_messages=["any news on 1002?"],
     )
     assert results[0].escalated is True and "escalated by policy" in results[0].notes
+
+
+# --- a greeting is offered no tools ------------------------------------------
+# Second evaluation run, greeting-02: "Thanks a lot" was declined through
+# decline_out_of_scope as soon as that tool existed. A recognised greeting
+# needs no tool, so the model is not offered one.
+
+
+def test_a_greeting_turn_offers_the_model_no_tools(run_scenario):
+    results, _, fake = run_scenario(
+        script=[text_reply("You're welcome — anything else I can help with?")],
+        user_messages=["Thanks a lot"],
+    )
+    assert "tools" not in fake.calls[0]
+    assert results[0].tools_used == [] and results[0].declined is False
+    assert results[0].answer.startswith("You're welcome")
+
+
+def test_a_real_question_is_offered_the_tools(run_scenario):
+    results, _, fake = run_scenario(STATUS_SCRIPT, ["Is FW-1001 done?"])
+    assert [t["name"] for t in fake.calls[0]["tools"]] == list(agent.TOOL_FUNCTIONS)

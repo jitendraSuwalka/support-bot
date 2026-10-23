@@ -85,7 +85,7 @@ def prepare(state: TurnState) -> TurnState:
 
 
 def call_model(state: TurnState) -> TurnState:
-    response = agent.call_model(state["messages"])
+    response = agent.call_model(state["messages"], use_tools=not state["is_greeting"])
     return {"response": response, "steps": state["steps"] + 1}
 
 

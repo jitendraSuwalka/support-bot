@@ -1130,9 +1130,17 @@ def begin_turn(messages) -> bool:
     return is_pleasantry(last_message)
 
 
-def call_model(messages):
-    """One main-model call with tools; the reply is appended to the conversation."""
-    response = _main_call(messages, use_tools=True)
+def call_model(messages, use_tools=True):
+    """One main-model call, with the tools unless the turn is a greeting; the
+    reply is appended to the conversation.
+
+    A greeting is answered in prose. The second evaluation run found the
+    model declining 'Thanks a lot' through decline_out_of_scope the moment
+    that tool existed -- a thank-you is 'chit-chat beyond a greeting' if you
+    squint. A recognised greeting needs no tool, so none is offered, and the
+    only thing the model can do is reply.
+    """
+    response = _main_call(messages, use_tools=use_tools)
     messages.append({"role": "assistant", "content": response.content})
     return response
 
@@ -1297,7 +1305,7 @@ def _run_turn(messages, state, trace) -> AgentResult:
     guard_retries = 0
 
     for _step in range(MAX_STEPS):
-        response = call_model(messages)
+        response = call_model(messages, use_tools=not is_greeting)
 
         if response.stop_reason == "tool_use":
             run = run_tool_calls(response, messages, evidence_parts, tools_used)
