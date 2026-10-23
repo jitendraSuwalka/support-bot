@@ -33,6 +33,7 @@ exception: the log line has the type, the client gets a reference to quote.
 
 from __future__ import annotations
 
+import logging
 import re
 import threading
 import time
@@ -52,6 +53,7 @@ from config import Settings
 
 VERSION = "2.0.0-dev"
 REQUEST_ID_HEADER = "X-Request-ID"
+HTTP_LOGGER = f"{observability.LOGGER_NAME}.http"
 _REQUEST_ID = re.compile(r"^[A-Za-z0-9._-]{8,64}$")
 _SESSION_ID = r"^[0-9a-f]{32}$"
 
@@ -225,13 +227,38 @@ def create_app(
     )
     app.state.sessions = sessions
 
+    http_log = logging.getLogger(HTTP_LOGGER)
+
     @app.middleware("http")
-    async def request_id(request: Request, call_next):
+    async def request_id_and_access_log(request: Request, call_next):
         given = request.headers.get(REQUEST_ID_HEADER, "")
-        request.state.request_id = given if _REQUEST_ID.match(given) else uuid.uuid4().hex
-        response = await call_next(request)
-        response.headers[REQUEST_ID_HEADER] = request.state.request_id
-        return response
+        rid = given if _REQUEST_ID.match(given) else uuid.uuid4().hex
+        request.state.request_id = rid
+        started = time.perf_counter()
+        status = 500  # what the client gets if the handler raises past every handler
+        try:
+            response = await call_next(request)
+            status = response.status_code
+            response.headers[REQUEST_ID_HEADER] = rid
+            return response
+        finally:
+            # One JSON line per request, in the same stream and format as the
+            # turn log, so refusals (422, 404, 409) are visible too. Liveness
+            # probes arrive every few seconds and say nothing; they are not
+            # logged. uvicorn's own plain-text access log is switched off in
+            # the container (--no-access-log), so the stream stays parseable.
+            if request.url.path != "/health":
+                fields = {
+                    "event": "request",
+                    "ts": observability.utc_now(),
+                    "request_id": rid,
+                    "method": request.method,
+                    "path": request.url.path,
+                    "status": status,
+                    "latency_ms": round((time.perf_counter() - started) * 1000),
+                }
+                level = logging.ERROR if status >= 500 else logging.INFO
+                http_log.log(level, "request", extra={"fields": fields})
 
     @app.post(
         "/chat",

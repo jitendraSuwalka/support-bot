@@ -61,7 +61,11 @@ def log_stream():
     stream = io.StringIO()
     observability.configure_logging(Settings(), stream=stream)
     yield stream
-    observability.configure_logging(Settings(), stream=io.StringIO())
+    observability.reset_logging()
+
+
+def log_lines(stream):
+    return [json.loads(x) for x in stream.getvalue().splitlines() if x.strip()]
 
 
 def client_for(runner=None, **settings):
@@ -128,7 +132,7 @@ def test_a_first_message_starts_a_conversation_and_reports_the_outcome(log_strea
     assert body["request_id"] == response.headers[api.REQUEST_ID_HEADER]
     assert runner.seen == [["How much can I pay into an ISA?"]]  # stripped
     # One log line, with the ids the client was given.
-    [line] = [json.loads(x) for x in log_stream.getvalue().splitlines()]
+    [line] = [x for x in log_lines(log_stream) if x["event"] == "turn"]
     assert (line["session_id"], line["request_id"]) == (body["session_id"], body["request_id"])
 
 
@@ -228,7 +232,7 @@ def test_a_failing_turn_is_a_502_that_leaks_nothing_and_leaves_the_conversation_
     assert "secret" not in response.text and response.json()["request_id"]
     [session] = app.state.sessions._sessions.values()
     assert session.messages == [] and session.turns == 0  # the message was taken back off
-    [line] = [json.loads(x) for x in log_stream.getvalue().splitlines()]
+    [line] = [x for x in log_lines(log_stream) if x["event"] == "turn"]
     assert line["behaviour"] == "error" and line["error"]["type"] == "RuntimeError"
     # The customer can simply try again in the same conversation.
     runner.error = None
@@ -348,3 +352,38 @@ def test_the_bare_address_leads_to_the_documentation():
     assert response.status_code == 307 and response.headers["location"] == "/docs"
     assert client.get("/").status_code == 200  # followed, it is the docs page
     assert "/" not in client.get("/openapi.json").json()["paths"]  # not part of the API
+
+
+# --- one JSON line per request ------------------------------------------------------------
+
+
+def test_every_request_but_the_liveness_probe_is_logged_as_json(log_stream):
+    client, _ = client_for()
+    client.get("/health")
+    ok = client.post(
+        "/chat", json={"message": "hi"}, headers={api.REQUEST_ID_HEADER: "req-00000001"}
+    )
+    client.post("/chat", json={"message": ""})
+    client.get("/ready")
+    requests = [x for x in log_lines(log_stream) if x["event"] == "request"]
+    assert [(r["method"], r["path"], r["status"]) for r in requests] == [
+        ("POST", "/chat", 200),
+        ("POST", "/chat", 422),
+        ("GET", "/ready", requests[2]["status"]),
+    ]
+    assert requests[0]["request_id"] == "req-00000001" == ok.json()["request_id"]
+    assert all(r["latency_ms"] >= 0 and r["ts"].endswith("Z") for r in requests)
+    # The turn line and the request line of one call share the request id.
+    turn = next(x for x in log_lines(log_stream) if x["event"] == "turn")
+    assert turn["request_id"] == requests[0]["request_id"]
+
+
+def test_the_text_format_shows_a_request_on_one_line():
+    stream = io.StringIO()
+    observability.configure_logging(Settings(log_format="text"), stream=stream)
+    try:
+        client, _ = client_for()
+        client.post("/chat", json={"message": ""}, headers={api.REQUEST_ID_HEADER: "abcdef123456"})
+    finally:
+        observability.reset_logging()
+    assert "INFO POST /chat 422" in stream.getvalue() and "request=abcdef12" in stream.getvalue()

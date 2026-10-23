@@ -165,14 +165,25 @@ def run_logged_turn(
     return result, record
 
 
+def structured(record: logging.LogRecord) -> dict | None:
+    """The structured payload a log call carried, if any: a turn record
+    (``extra={"turn": ...}``) or an HTTP request record (``extra={"fields": ...}``)."""
+    for name in ("turn", "fields"):
+        value = getattr(record, name, None)
+        if isinstance(value, dict):
+            return value
+    return None
+
+
 class JsonFormatter(logging.Formatter):
-    """One JSON object per line. A turn record is written as it is; any other
-    log message becomes {"ts", "level", "logger", "message"}."""
+    """One JSON object per line. A structured record (a turn, an HTTP request)
+    is written as it is; any other log message becomes {"ts", "level",
+    "logger", "message"}."""
 
     def format(self, record: logging.LogRecord) -> str:
-        turn = getattr(record, "turn", None)
-        if isinstance(turn, dict):
-            payload = dict(turn, level=record.levelname)
+        turn = structured(record)
+        if turn is not None:
+            payload = {"ts": utc_now(), **turn, "level": record.levelname}
         else:
             payload = {
                 "event": "log",
@@ -190,8 +201,13 @@ class TextFormatter(logging.Formatter):
     """A readable line for a terminal: the essentials of a turn, or the message."""
 
     def format(self, record: logging.LogRecord) -> str:
-        turn = getattr(record, "turn", None)
-        if not isinstance(turn, dict):
+        turn = structured(record)
+        if turn is not None and turn.get("event") == "request":
+            return (
+                f"{record.levelname} {turn['method']} {turn['path']} {turn['status']} "
+                f"{turn['latency_ms']} ms request={str(turn['request_id'])[:8]}"
+            )
+        if turn is None:
             return f"{record.levelname} {record.name}: {record.getMessage()}"
         cost = (turn.get("cost") or {}).get("usd")
         return (
@@ -202,6 +218,15 @@ class TextFormatter(logging.Formatter):
             + f" session={str(turn.get('session_id'))[:8]}"
             + f" request={str(turn.get('request_id'))[:8]}"
         )
+
+
+def reset_logging() -> None:
+    """Remove the handlers configure_logging added (used by tests)."""
+    logger = logging.getLogger(LOGGER_NAME)
+    for handler in [h for h in logger.handlers if getattr(h, _HANDLER_MARK, False)]:
+        logger.removeHandler(handler)
+        handler.close()
+    logger.propagate = True
 
 
 def configure_logging(settings: Settings | None = None, stream=None) -> logging.Logger:

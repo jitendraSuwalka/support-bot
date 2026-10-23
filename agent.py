@@ -64,6 +64,7 @@ from __future__ import annotations
 import atexit
 import contextvars
 import json
+import logging
 import re
 from dataclasses import dataclass, field
 
@@ -154,14 +155,21 @@ _CURRENT_TRACE: contextvars.ContextVar[Trace | None] = contextvars.ContextVar(
 def log(kind: str, message: str, **data) -> None:
     """Record an event on the current turn's trace.
 
-    Outside a run (for example a function called directly from the terminal)
-    there is no trace, so the event is printed instead — nothing is lost.
+    Outside a run there is no trace. In a service that has configured the
+    project's logging (the app, the API, the container) the event becomes a
+    log line in the same structured stream as the turns, so the stream stays
+    one format; anywhere else (a function called from the terminal) it is
+    printed. Nothing is lost either way.
     """
     trace = _CURRENT_TRACE.get()
-    if trace is None:
-        print(f"  [{kind}] {message}")
-    else:
+    if trace is not None:
         trace.log(kind, message, **data)
+        return
+    if logging.getLogger("support_bot").handlers:
+        fields = {"event": kind, "message": message, **data}
+        logging.getLogger("support_bot.agent").info(message, extra={"fields": fields})
+    else:
+        print(f"  [{kind}] {message}")
 
 
 # The trace events that mean a guard or a policy acted, under the short names

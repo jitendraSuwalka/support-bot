@@ -19,7 +19,7 @@ a hope.
 python app.py          # web interface
 uvicorn api:app        # the same agent as an HTTP service; docs at /docs
 python agent.py        # same agent, in the terminal
-pytest                 # 399 tests, under fifteen seconds, no API calls, no network
+pytest                 # 403 tests, under fifteen seconds, no API calls, no network
 ```
 
 > **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
@@ -277,6 +277,9 @@ answer. The choices that make it a service rather than a demo:
   well-formed one, and the same id is in the turn's log line.
 - **No new dependencies.** FastAPI and uvicorn were already in the lockfile
   through Gradio; pinning them added nothing.
+- **Every request is a JSON log line too** — method, path, status, latency
+  and the request id — except liveness probes, so refusals show up in the
+  same stream as turns, and a turn's line and its request's line share an id.
 
 ### One log line per turn
 
@@ -621,7 +624,7 @@ Caching cut the cost of an answer by 58%, from $0.0154 to $0.0064.
 
 ## Testing strategy
 
-`tests/` — **399 tests, under fifteen seconds, no API calls, no network.** Run with `pytest`.
+`tests/` — **403 tests, under fifteen seconds, no API calls, no network.** Run with `pytest`.
 Eight further tests call the real API and run only on request: `pytest -m live`;
 two download and run the real embedding model: `pytest -m model`.
 
@@ -828,7 +831,7 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `rag/` | `corpus.py` chunker, `embeddings.py`, `store.py` (Qdrant), `lexical.py` (BM25), `retrieval.py` (fusion), `index.py` (CLI) |
 | `eval/` | `questions.yaml` (169 labelled cases), `dataset.py` validator, `retrieval.py` metrics and sweep, `live.py` end-to-end scorer, `report.py` README tables |
 | `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json` |
-| `tests/` | 399 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
+| `tests/` | 403 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `api.py` | FastAPI service — `/chat`, `/sessions/{id}`, `/health`, `/ready`, OpenAPI docs at `/docs` |
 | `requirements.txt` / `requirements.lock` | Direct dependencies / every resolved dependency |

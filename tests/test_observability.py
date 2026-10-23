@@ -53,7 +53,7 @@ def captured():
     stream = io.StringIO()
     observability.configure_logging(Settings(log_format="json"), stream=stream)
     yield stream
-    observability.configure_logging(Settings(), stream=io.StringIO())  # detach from the buffer
+    observability.reset_logging()
 
 
 def lines(stream):
@@ -208,7 +208,7 @@ def test_configuring_twice_does_not_write_every_line_twice(conversation):
     logger = logging.getLogger(observability.LOGGER_NAME)
     ours = [h for h in logger.handlers if getattr(h, observability._HANDLER_MARK, False)]
     assert logger.propagate is False and len(ours) == 1  # pytest adds its own capture handlers
-    observability.configure_logging(Settings(), stream=io.StringIO())
+    observability.reset_logging()
 
 
 def test_the_turn_log_file_gets_json_even_when_the_console_gets_text(conversation, tmp_path):
@@ -222,7 +222,7 @@ def test_the_turn_log_file_gets_json_even_when_the_console_gets_text(conversatio
             conversation, {}, session_id="abcdef123456", runner=lambda m, s: status_result()
         )
     finally:
-        observability.configure_logging(Settings(), stream=io.StringIO())  # closes the file
+        observability.reset_logging()
     [record] = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
     assert record["behaviour"] == "answer"
     text = console.getvalue()
@@ -285,3 +285,15 @@ def test_a_rewrite_in_an_earlier_turn_does_not_inflate_the_turn_count(monkeypatc
     messages.append({"role": "user", "content": "And FW-1001 again?"})
     observability.run_logged_turn(messages, state, session_id="s")
     assert [line["turn"] for line in lines(captured)] == [1, 2]
+
+
+def test_an_agent_event_outside_a_turn_joins_the_structured_stream(captured):
+    agent.log("index", "index ready: 129 chunks", chunks=129)
+    [line] = lines(captured)
+    assert line["event"] == "index" and line["chunks"] == 129 and line["ts"].endswith("Z")
+
+
+def test_an_agent_event_outside_a_turn_is_printed_when_nothing_is_configured(capsys):
+    observability.reset_logging()
+    agent.log("index", "index ready")
+    assert "[index] index ready" in capsys.readouterr().out
