@@ -146,3 +146,13 @@ def test_the_cli_can_include_the_sweep(tmp_path, monkeypatch, capsys):
     report = json.loads(out.read_text(encoding="utf-8"))
     assert len(report["sweep"]) == 10
     assert "sweep (lexical weight 1.0)" in capsys.readouterr().out
+
+
+def test_the_report_records_the_guarantee_depth_and_the_sweep_honours_it(parts, tmp_path):
+    chunks, store, cases = parts
+    rows = metrics.sweep(BM25Index(chunks), store, cases[:10], pool=6, lexical_first_within=6)
+    assert len(rows) == len(metrics.SWEEP_RRF_KS) * len(metrics.SWEEP_DENSE_WEIGHTS)
+    settings = Settings(embedder="hash", index_path=str(tmp_path / "idx"))
+    report = metrics.run(settings, modes=("hybrid",), pool=5)
+    assert report["lexical_first_within"] == settings.candidates == 6
+    assert "lexical first within 6" in metrics.render(report)

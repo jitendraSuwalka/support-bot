@@ -136,13 +136,24 @@ def evaluate_mode(retriever: HybridRetriever, cases: list[Case], pool: int) -> d
     return report
 
 
-def sweep(lexical: BM25Index, store, cases: list[Case], pool: int) -> list[dict]:
+def sweep(
+    lexical: BM25Index,
+    store,
+    cases: list[Case],
+    pool: int,
+    lexical_first_within: int | None = None,
+) -> list[dict]:
     """Hybrid retrieval under each fusion setting: dense weight and rank constant."""
     rows = []
     for rrf_k in SWEEP_RRF_KS:
         for dense_weight in SWEEP_DENSE_WEIGHTS:
             retriever = HybridRetriever(
-                lexical, store, rrf_k=rrf_k, lexical_weight=1.0, dense_weight=dense_weight
+                lexical,
+                store,
+                rrf_k=rrf_k,
+                lexical_weight=1.0,
+                dense_weight=dense_weight,
+                lexical_first_within=lexical_first_within,
             )
             with_gold = [case for case in cases if case.gold]
             outcomes = [evaluate_case(retriever, case, pool) for case in with_gold]
@@ -174,13 +185,19 @@ def run(
         lexical = BM25Index(chunks)
         results = {
             mode: evaluate_mode(
-                HybridRetriever(lexical, store, rrf_k=settings.rrf_k, **weights_for(mode)),
+                HybridRetriever(
+                    lexical,
+                    store,
+                    rrf_k=settings.rrf_k,
+                    lexical_first_within=settings.candidates,
+                    **weights_for(mode),
+                ),
                 cases,
                 pool,
             )
             for mode in modes
         }
-        sweep_rows = sweep(lexical, store, cases, pool) if with_sweep else None
+        sweep_rows = sweep(lexical, store, cases, pool, settings.candidates) if with_sweep else None
     finally:
         store.close()
     report = {
@@ -192,6 +209,7 @@ def run(
         "dense_floor": settings.dense_floor,
         "relevance_floor": settings.relevance_floor,
         "rrf_k": settings.rrf_k,
+        "lexical_first_within": settings.candidates,
         "modes": results,
         "seconds": round(time.perf_counter() - started, 1),
     }
@@ -203,7 +221,8 @@ def run(
 def render(report: dict) -> str:
     lines = [
         f"{report['cases_with_gold']} cases with gold of {report['cases']}, "
-        f"{report['chunks']} chunks, embedder {report['embedder']}, fusion k {report['rrf_k']}",
+        f"{report['chunks']} chunks, embedder {report['embedder']}, fusion k {report['rrf_k']}, "
+        f"lexical first within {report.get('lexical_first_within')}",
         f"{'mode':8} {'recall@1':>9} {'recall@3':>9} {'recall@6':>9} {'MRR':>6}  misses",
     ]
     for mode, summary in report["modes"].items():

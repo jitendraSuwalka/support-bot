@@ -106,7 +106,8 @@ user question
      │    ├─ LLM query expansion                          (widens the lexical side only)
      │    ├─ BM25 over chunks, normalised to the query ceiling   (exact strings: numbers, references)
      │    ├─ dense search: local ONNX embeddings, Qdrant  (meaning: "pay into" finds "allowance")
-     │    ├─ reciprocal rank fusion, k = 20                (agreement outranks either favourite)
+     │    ├─ reciprocal rank fusion, k = 20                (agreement outranks either favourite,
+     │    │                                                 but BM25's first choice keeps a seat)
      │    ├─ relevance floors: lexical 0.15 or cosine 0.50 (noise gates, set from the labelled set)
      │    └─ LLM rerank of the top 6                       (reading beats counting)
      │
@@ -143,6 +144,17 @@ pay into an ISA this tax year?"*, both methods ranked the ISA allowance first.
 The labelled set says the same at scale ([Evaluation](#evaluation)): on its
 own the lexical side misses eleven answers in 135 and the dense side five;
 fused, four.
+
+Fusion has one blind spot, and the evaluation found it: a chunk only one
+method can see scores below chunks both methods rank moderately. Asked about
+*a missed call from 0161 496 0170*, BM25 put the Manchester office first (it
+holds the number) and the vector index never returned it (a phone number means
+nothing to an embedding), while both matched the security guidance on
+*unexpected calls*; fused, the one chunk with the answer fell to sixth and out
+of the candidates once the lexical query was widened. So BM25's first choice
+is guaranteed a place among the candidates the reranker reads: an exact string
+— a number, a reference, a postcode — is the one thing fusion can lose, and
+the reranker still decides whether it stays.
 
 Embeddings come from `BAAI/bge-small-en-v1.5` run on the CPU through ONNX
 Runtime (no PyTorch, no GPU, no API key; the 67 MB model downloads once into

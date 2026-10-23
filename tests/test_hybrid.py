@@ -145,3 +145,61 @@ def test_the_pool_is_wider_than_k_so_fusion_has_something_to_fuse(chunks, store,
 def test_an_empty_corpus_gives_no_results():
     empty = HybridRetriever(BM25Index([]), VectorStore(HashEmbedder(dimension=32)))
     assert empty.search("anything") == []
+
+
+# --- BM25's first choice is guaranteed a place -------------------------------------------
+# Found by the evaluation (exact-06): asked about a missed call from 0161 496
+# 0170, BM25 put the Manchester office first and the vector index never
+# returned it, so chunks both methods ranked moderately outvoted the one
+# chunk with the answer.
+
+
+def dense_order(store, chunks, order):
+    """Make the vector store return `order` (indexes into chunks) whatever the query."""
+    from rag.store import Hit
+
+    def fake_search(query, k=5, doc_id=None):
+        return [Hit(chunk=chunks[i], score=0.9 - 0.1 * n) for n, i in enumerate(order[:k])]
+
+    store.search = fake_search
+
+
+def test_bm25s_first_choice_is_guaranteed_a_place_among_the_candidates(chunks, store):
+    dense_order(store, chunks, [1, 4, 2, 3, 0])  # Manchester last for the vector side
+    query = "missed call 0161 496 0170"
+    plain = HybridRetriever(BM25Index(chunks), store).search(query, k=2)
+    assert all(
+        r.chunk != chunks[0] for r in plain
+    )  # outvoted: both methods like Bristol/complaints
+
+    guarded = HybridRetriever(BM25Index(chunks), store, lexical_first_within=2).search(query, k=2)
+    assert guarded[1].chunk == chunks[0] and guarded[1].lexical_rank == 1
+    assert len(guarded) == 2 and guarded[0] == plain[0]  # the rest of the order is untouched
+
+    first = HybridRetriever(BM25Index(chunks), store, lexical_first_within=1).search(query, k=3)
+    assert first[0].chunk == chunks[0]
+
+
+def test_the_guarantee_changes_nothing_when_fusion_already_agrees(chunks, store):
+    dense_order(store, chunks, [0, 1, 2, 3, 4])
+    guarded = HybridRetriever(BM25Index(chunks), store, lexical_first_within=3)
+    plain = HybridRetriever(BM25Index(chunks), store)
+    query = "0161 496 0170"
+    assert [r.chunk for r in guarded.search(query, k=3)] == [
+        r.chunk for r in plain.search(query, k=3)
+    ]
+
+
+def test_the_guarantee_only_applies_when_both_methods_ran(chunks, store):
+    dense_order(store, chunks, [1, 4, 2, 3, 0])
+    lexical_only = HybridRetriever(BM25Index(chunks), store, dense_weight=0, lexical_first_within=1)
+    assert lexical_only.search("call 0161 496 0170", k=2)[0].chunk == chunks[0]  # its own order
+    dense_only = HybridRetriever(BM25Index(chunks), store, lexical_weight=0, lexical_first_within=1)
+    assert dense_only.search("call 0161 496 0170", k=2)[0].chunk == chunks[1]  # untouched
+    nothing_lexical = HybridRetriever(BM25Index(chunks), store, lexical_first_within=1)
+    assert nothing_lexical.search("zzz qqq", k=2)[0].chunk == chunks[1]  # no BM25 hit to promote
+
+
+def test_the_guarantee_depth_must_be_at_least_one(chunks, store):
+    with pytest.raises(ValueError, match="lexical_first_within"):
+        HybridRetriever(BM25Index(chunks), store, lexical_first_within=0)
