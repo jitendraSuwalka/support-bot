@@ -21,9 +21,12 @@ ARCHITECTURE NOTE
 Run:  python app.py      then open the local URL it prints
 """
 
+import uuid
+
 import gradio as gr
 
 import agent
+import observability
 
 TOOL_LABELS = {
     "search_knowledge_base": "Searched knowledge base",
@@ -108,8 +111,11 @@ def respond(question, history, conversation, state):
     history = history + [{"role": "user", "content": question}]
     conversation.append({"role": "user", "content": question})
 
+    # The policy state lives for the conversation, so it carries the session id
+    # the turn log groups turns by; Reset starts a new state and a new session.
+    session_id = state.setdefault("session_id", uuid.uuid4().hex)
     try:
-        result = agent.run_agent(conversation, state)
+        result, _ = observability.run_logged_turn(conversation, state, session_id=session_id)
     except Exception as error:
         history.append(
             {
@@ -298,6 +304,7 @@ if __name__ == "__main__":
     # Open the document index before serving, so the first question is not
     # the one that pays for loading (and, on a new machine, downloading) the
     # embedding model. The trace line it logs is printed, as there is no run.
+    observability.configure_logging(agent.SETTINGS)
     print("Preparing the document index (first run: downloads the embedding model, about 70 MB)")
     agent.get_retriever()
     demo.queue(default_concurrency_limit=4).launch(theme=THEME, css=CSS)

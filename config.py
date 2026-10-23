@@ -20,6 +20,8 @@ EFFORT_LEVELS = ("low", "medium", "high", "xhigh", "max")
 EMBEDDERS = ("local", "hash")
 RETRIEVAL_MODES = ("hybrid", "lexical", "dense")
 AGENT_IMPLS = ("loop", "graph")
+LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR")
+LOG_FORMATS = ("json", "text")
 
 
 @dataclass(frozen=True)
@@ -86,6 +88,18 @@ class Settings:
     index_path: str = ".index"
     qdrant_url: str = ""
 
+    # Structured logging (observability.py). Every turn is one JSON line on
+    # stderr — what it did, which guards fired, latency, tokens and cost —
+    # and, if turn_log_path is set, the same line appended to that file.
+    # The customer's words and the answer are NOT logged unless log_content
+    # is switched on: a support log for a regulated firm records what
+    # happened, not what was said; lengths and a hash are kept instead, so a
+    # turn can still be matched to a complaint without storing the text.
+    log_level: str = "INFO"
+    log_format: str = "json"
+    turn_log_path: str = ""
+    log_content: bool = False
+
     @classmethod
     def from_env(cls, env: dict[str, str] | None = None) -> Settings:
         """Build settings from SUPPORT_BOT_* variables, validating each one."""
@@ -129,6 +143,10 @@ class Settings:
         for name in ("embedding_model", "model_cache", "index_path"):
             if not getattr(self, name).strip():
                 raise ValueError(f"{name} must not be blank")
+        if self.log_level not in LOG_LEVELS:
+            raise ValueError(f"log_level must be one of {LOG_LEVELS}")
+        if self.log_format not in LOG_FORMATS:
+            raise ValueError(f"log_format must be one of {LOG_FORMATS}")
 
     def describe(self) -> dict[str, object]:
         """A plain dictionary, attached to every result for auditability."""

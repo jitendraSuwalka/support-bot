@@ -18,7 +18,7 @@ a hope.
 ```
 python app.py          # web interface
 python agent.py        # same agent, in the terminal
-pytest                 # 332 tests, under fifteen seconds, no API calls, no network
+pytest                 # 356 tests, under fifteen seconds, no API calls, no network
 ```
 
 > **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
@@ -118,7 +118,7 @@ user question
      ├─ CHECK 2: groundedness — independent LLM           (semantic drift; any rewrite meets CHECK 1 again)
      ├─ CHECK 3: escalation policy — deterministic        (clarify once, then escalate)
      │
-     └─ answer + audit trail of raw evidence
+     └─ answer + audit trail of raw evidence + one JSON log line (behaviour, guards, latency, cost)
 ```
 
 Checks run cheapest-and-most-certain first. The deterministic citation guard
@@ -227,6 +227,37 @@ graph TD;
 The model is still called through the Anthropic SDK directly, because the
 guards need the raw response blocks and the request needs the effort setting;
 a chat-model wrapper would hide the first and lag the second.
+
+### One log line per turn
+
+Every turn the web interface serves is written as one JSON line to stderr
+(`observability.py`), and optionally appended to a file
+(`SUPPORT_BOT_TURN_LOG_PATH=logs/turns.jsonl`). The shape, with illustrative values:
+
+```json
+{"event":"turn","ts":"2026-10-24T09:12:03.512Z","request_id":"9f3c…","session_id":"41ab…",
+ "turn":2,"behaviour":"answer","escalated":false,"tools":["search_knowledge_base"],
+ "guards":["citation_rewrite"],"warnings":[],"evidence_parts":1,"latency_ms":8412,
+ "message":{"chars":44,"sha256":"5d1e0c7a9b2f4e31"},"answer":{"chars":312,"sha256":"…"},
+ "cost":{"usd":0.0121,"input_tokens":4211,"output_tokens":388,"cache_read_tokens":0,
+ "cache_write_tokens":0,"calls":4,"unpriced_models":[]},"level":"INFO"}
+```
+
+That is what an on-call engineer, a cost report or a complaints reviewer needs
+about a turn, and it says nothing about what the customer wrote. The message
+and the answer are kept as a length and the first sixteen hex digits of a
+SHA-256 hash: hash a complainant's words and the turn can be found, without
+the log becoming a second copy of every conversation. `SUPPORT_BOT_LOG_CONTENT=true`
+records the text for a deployment that has decided it may. A turn with a
+`WARNING` note is logged at warning level, a turn that fails at error level
+with the exception's type, so alerting needs no parsing.
+
+Cost comes from `pricing.py`: the Claude API's per-million-token prices for
+the two models, with the page and the date they were read, applied to every
+call's input, cache and output tokens. A model the table does not know makes
+the turn *unpriced*, never free, and the line names it.
+`SUPPORT_BOT_LOG_FORMAT=text` prints one readable line per turn instead, for a
+terminal.
 
 ---
 
@@ -501,7 +532,7 @@ Behaviour accuracy: the agent did what the label expects (answer, escalate, clar
 
 ## Testing strategy
 
-`tests/` — **332 tests, under fifteen seconds, no API calls, no network.** Run with `pytest`.
+`tests/` — **356 tests, under fifteen seconds, no API calls, no network.** Run with `pytest`.
 Eight further tests call the real API and run only on request: `pytest -m live`;
 two download and run the real embedding model: `pytest -m model`.
 
@@ -586,6 +617,11 @@ models produced it.
 
 **Auditability over polish.** Every answer carries its raw evidence. Terse and
 traceable beats fluent and unverifiable.
+
+**Log what happened, not what was said.** The turn log records behaviour,
+guards, latency and cost for every turn, and a hash of the words instead of
+the words. A log is copied, shipped and kept longer than anyone intends; it
+should not be the place customer conversations accumulate by default.
 
 ---
 
@@ -689,11 +725,13 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `agent.py` | The agent — tools, retrieval, guards, policy, loop; returns a structured `AgentResult` |
 | `agent_graph.py` | The same turn as a LangGraph state graph, selectable by `SUPPORT_BOT_AGENT_IMPL=graph`; `python agent_graph.py --mermaid` draws it |
 | `config.py` | Every runtime setting, read from the environment with validation |
+| `observability.py` | One JSON log line per turn: behaviour, guards, latency, tokens, cost; content hashed unless enabled |
+| `pricing.py` | Claude API prices per million tokens, with source and date; the cost of a turn from its calls |
 | `corpus/` | 18 documents for the fictional firm, with front matter; `corpus/README.md` sources every public figure |
 | `rag/` | `corpus.py` chunker, `embeddings.py`, `store.py` (Qdrant), `lexical.py` (BM25), `retrieval.py` (fusion), `index.py` (CLI) |
 | `eval/` | `questions.yaml` (169 labelled cases), `dataset.py` validator, `retrieval.py` metrics and sweep, `live.py` end-to-end scorer, `report.py` README tables |
 | `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json` |
-| `tests/` | 332 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
+| `tests/` | 356 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `requirements.txt` / `requirements.lock` | Direct dependencies / every resolved dependency |
 

@@ -164,6 +164,26 @@ def log(kind: str, message: str, **data) -> None:
         trace.log(kind, message, **data)
 
 
+# The trace events that mean a guard or a policy acted, under the short names
+# the evaluation and the structured log both report them by.
+GUARD_EVENTS = {
+    "evidence_guard": "evidence_retry",
+    "evidence_guard_failed": "evidence_failed",
+    "citation_violation": "citation_rewrite",
+    "citations_remaining": "citation_remaining",
+    "unsupported": "factcheck_rewrite",
+    "verification_unavailable": "factcheck_unavailable",
+    "policy_escalate": "policy_escalation",
+    "policy_clarify": "policy_clarify",
+    "reference_not_given": "reference_refused",
+    "tool_skipped": "tool_skipped",
+    "rerank_rejected_all": "rerank_rejected_all",
+    "no_candidates": "no_candidates",
+    "helper_failed": "helper_failed",
+    "max_steps": "step_limit",
+}
+
+
 @dataclass
 class AgentResult:
     """What one turn produces. `answer` is the only part a customer sees."""
@@ -200,6 +220,11 @@ class AgentResult:
         if unresolved and "?" in self.answer:
             return "clarify"
         return "answer"
+
+    def guards(self) -> list[str]:
+        """The guards and policies that acted this turn, by short name."""
+        kinds = set(self.trace.kinds())
+        return sorted({label for event, label in GUARD_EVENTS.items() if event in kinds})
 
     def cost(self) -> TurnCost:
         """Tokens and dollars for every model call in the turn (pricing.py)."""

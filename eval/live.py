@@ -56,20 +56,7 @@ DEFAULT_REPORT = Path(__file__).resolve().parent.parent / "reports" / "live.json
 
 Runner = Callable[[list, dict], agent.AgentResult]
 
-GUARD_EVENTS = {
-    "evidence_guard": "evidence_retry",
-    "evidence_guard_failed": "evidence_failed",
-    "citation_violation": "citation_rewrite",
-    "citations_remaining": "citation_remaining",
-    "unsupported": "factcheck_rewrite",
-    "verification_unavailable": "factcheck_unavailable",
-    "policy_escalate": "policy_escalation",
-    "policy_clarify": "policy_clarify",
-    "rerank_rejected_all": "rerank_rejected_all",
-    "no_candidates": "no_candidates",
-    "helper_failed": "helper_failed",
-    "max_steps": "step_limit",
-}
+GUARD_EVENTS = agent.GUARD_EVENTS  # one vocabulary for the evaluation and the log
 
 
 @dataclass
@@ -131,8 +118,7 @@ def observe(case: Case, result: agent.AgentResult, seconds: float) -> Observatio
     observed = observe_behaviour(result)
     answer_lower = result.answer.lower()
     missing = [needle for needle in case.must_contain if needle.lower() not in answer_lower]
-    kinds = result.trace.kinds()
-    guards = sorted({label for event, label in GUARD_EVENTS.items() if event in kinds})
+    guards = result.guards()
     tokens_in, tokens_out = tokens_used(result)
     cost = result.cost()
     return Observation(
