@@ -95,6 +95,10 @@ class Observation:
     # The URLs and numbers the citation guard still could not find in the
     # evidence when the turn ended, so a warning can be read without rerunning it.
     unverified: list[str] = field(default_factory=list)
+    # Added with the cost model; reports written before it load with the defaults.
+    cache_read_tokens: int = 0
+    cache_write_tokens: int = 0
+    cost_usd: float | None = None
 
 
 # =========================================================
@@ -130,6 +134,7 @@ def observe(case: Case, result: agent.AgentResult, seconds: float) -> Observatio
     kinds = result.trace.kinds()
     guards = sorted({label for event, label in GUARD_EVENTS.items() if event in kinds})
     tokens_in, tokens_out = tokens_used(result)
+    cost = result.cost()
     return Observation(
         id=case.id,
         kind=case.kind,
@@ -153,6 +158,9 @@ def observe(case: Case, result: agent.AgentResult, seconds: float) -> Observatio
             for event in result.trace.find("citations_remaining")
             for violation in event.data.get("violations", [])
         ],
+        cache_read_tokens=cost.cache_read_tokens,
+        cache_write_tokens=cost.cache_write_tokens,
+        cost_usd=None if cost.usd is None else round(cost.usd, 6),
     )
 
 
@@ -318,7 +326,25 @@ def summarise(rows: list[Observation]) -> dict:
             )
             if scored
             else None,
+            "cache_read": sum(row.cache_read_tokens for row in scored),
+            "cache_write": sum(row.cache_write_tokens for row in scored),
         },
+        "cost_usd": cost_summary(scored),
+    }
+
+
+def cost_summary(rows: list[Observation]) -> dict:
+    """Dollars per run and per case; None where a row could not be priced.
+
+    Rows from a report written before the cost model have no cost and are
+    counted as unpriced, never as free.
+    """
+    priced = [row.cost_usd for row in rows if row.cost_usd is not None]
+    return {
+        "total": round(sum(priced), 4) if priced else None,
+        "per_case_mean": round(sum(priced) / len(priced), 5) if priced else None,
+        "priced_cases": len(priced),
+        "unpriced_cases": len(rows) - len(priced),
     }
 
 
@@ -344,6 +370,14 @@ def render(summary: dict) -> str:
         f"median {summary['latency_seconds']['median']}s; "
         f"tokens in {summary['tokens']['input']}, out {summary['tokens']['output']}"
     )
+    cost = summary.get("cost_usd") or {}
+    if cost.get("total") is not None:
+        lines.append(
+            f"cost ${cost['total']:.2f} for {cost['priced_cases']} cases, "
+            f"${cost['per_case_mean']:.4f} a case; "
+            f"cache {summary['tokens'].get('cache_read', 0)} read / "
+            f"{summary['tokens'].get('cache_write', 0)} written"
+        )
     if summary["wrong_behaviour"]:
         lines.append("wrong behaviour:")
         lines.extend(f"  {cid}: {why}" for cid, why in summary["wrong_behaviour"].items())

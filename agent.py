@@ -71,6 +71,7 @@ from anthropic import Anthropic
 from dotenv import load_dotenv
 
 from config import Settings
+from pricing import TurnCost, turn_cost, usage_from_events
 from rag.lexical import tokenize
 from rag.retrieval import HybridRetriever, RetrievedChunk, open_retriever
 
@@ -200,6 +201,10 @@ class AgentResult:
             return "clarify"
         return "answer"
 
+    def cost(self) -> TurnCost:
+        """Tokens and dollars for every model call in the turn (pricing.py)."""
+        return turn_cost(usage_from_events(self.trace.find("usage")))
+
     def render(self) -> str:
         """Terminal view: the answer, then the notes and the raw evidence."""
         text = self.answer
@@ -272,13 +277,21 @@ def record_usage(response, role: str) -> None:
     usage = getattr(response, "usage", None)
     if usage is None:
         return
+    # input_tokens counts only input that was neither written to nor read from
+    # the prompt cache; the two cache counts are reported separately and priced
+    # differently, so all three are kept.
+    cache_write = getattr(usage, "cache_creation_input_tokens", None) or 0
+    cache_read = getattr(usage, "cache_read_input_tokens", None) or 0
     log(
         "usage",
-        f"{role}: {usage.input_tokens} in, {usage.output_tokens} out",
+        f"{role}: {usage.input_tokens} in, {usage.output_tokens} out, "
+        f"cache {cache_read} read / {cache_write} written",
         role=role,
         model=getattr(response, "model", None),
         input_tokens=usage.input_tokens,
         output_tokens=usage.output_tokens,
+        cache_write_tokens=cache_write,
+        cache_read_tokens=cache_read,
     )
 
 
