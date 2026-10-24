@@ -4,8 +4,9 @@ Retrieval metrics over the labelled set, for each search mode, offline.
 For every case with gold sections, each mode (hybrid, lexical, dense) is asked
 for its top results and the rank of the first gold chunk is recorded. From
 those ranks: recall@k (did a gold chunk appear in the top k) for k = 1, 3, 6,
-and MRR (the mean of 1/rank, 0 for a miss). The misses are listed by id, so a
-number is never the end of the story.
+and MRR (the mean of 1/rank within the pool, 0 if absent). A miss is a case
+whose gold chunk is not in the top six, the most the agent uses; misses are
+listed by id, so a number is never the end of the story.
 
 No model call is made: the metrics are about retrieval alone, before query
 expansion and before the reranker, and they take seconds. They are also the
@@ -82,6 +83,15 @@ def evaluate_case(retriever: HybridRetriever, case: Case, pool: int) -> CaseOutc
     )
 
 
+def missed(outcome: CaseOutcome) -> bool:
+    """Not among the six results the agent goes on to use (the deepest k).
+
+    The pool is searched deeper, for MRR; a gold chunk at rank 8 counts
+    towards MRR but is a miss, because the agent would never see it.
+    """
+    return outcome.gold_rank is None or outcome.gold_rank > max(KS)
+
+
 def summarise_ranks(outcomes: list[CaseOutcome]) -> dict:
     """recall@k and MRR over outcomes that have gold (gold_rank is None for a miss)."""
     if not outcomes:
@@ -123,7 +133,7 @@ def evaluate_mode(retriever: HybridRetriever, cases: list[Case], pool: int) -> d
         **summarise_ranks(outcomes),
         "pool": pool,
         "by_kind": {kind: summarise_ranks(group) for kind, group in sorted(by_kind.items())},
-        "misses": sorted(o.id for o in outcomes if o.gold_rank is None),
+        "misses": sorted(o.id for o in outcomes if missed(o)),
         "outcomes": [asdict(o) for o in outcomes],
     }
     if retriever.dense_weight > 0:
@@ -165,7 +175,7 @@ def sweep(
                     "recall@1": summary["recall@1"],
                     "recall@6": summary["recall@6"],
                     "mrr": summary["mrr"],
-                    "misses": sum(1 for o in outcomes if o.gold_rank is None),
+                    "misses": sum(1 for o in outcomes if missed(o)),
                 }
             )
     return rows

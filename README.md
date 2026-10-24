@@ -30,7 +30,7 @@ rendered from the reports in `reports/` ([Evaluation](#evaluation)):
 <!-- headline:start -->
 - **98.8%** of 169 labelled customer questions handled as the label says — answered, escalated, clarified or declined (the first measurement: 88.8%).
 - **96.2%** of escalations were wanted, and **96.2%** of the questions that needed a person reached one.
-- **97.0%** of answerable questions have the passage that answers them among the six retrieved (hybrid BM25 and vector search).
+- **97.0%** of the 135 labelled questions with a known answering passage have it among the six retrieved (hybrid BM25 and vector search).
 - **$0.0064** an answer with prompt caching, **58%** less than without.
 <!-- headline:end -->
 
@@ -48,7 +48,7 @@ python app.py                  # web interface, as in the recording above
 uvicorn api:app                # the same agent as an HTTP service; docs at /docs
 docker build -t support-bot .  # the service as a container (CI builds and tests it)
 python agent.py                # same agent, in the terminal
-pytest                         # 436 tests, under twenty seconds, no API calls, no network
+pytest                         # 440 tests, under twenty seconds, no API calls, no network
 ```
 
 > **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
@@ -176,8 +176,8 @@ office **fifth** — a phone number means nothing to a meaning model — while
 BM25 ranked it first, and fusion put it first overall. Asked *"How much can I
 pay into an ISA this tax year?"*, both methods ranked the ISA allowance first.
 The labelled set says the same at scale ([Evaluation](#evaluation)): on its
-own the lexical side misses eleven answers in 135 and the dense side five;
-fused, four.
+own the lexical side leaves the answering passage out of its top six for
+fourteen questions in 135 and the dense side for nine; fused, four.
 
 Fusion has one blind spot, and the evaluation found it: a chunk only one
 method can see scores below chunks both methods rank moderately. Asked about
@@ -627,7 +627,8 @@ Enforced in code; the prompt also says never to suggest a reference.
 
 ### 13. MUST rules that escalated the FAQ
 
-**Symptom.** Eleven answerable questions in the baseline went to an adviser.
+**Symptom.** Eleven questions labelled *answer* in the baseline went to an
+adviser (eight once three labels were corrected; see [Evaluation](#evaluation)).
 *"How do I register a power of attorney?"* and *"Can my son speak to you on my
 behalf?"* were handed over although the documents answer both; *"Can I keep my
 account if I move to Spain?"* was escalated after the model had found and
@@ -700,7 +701,8 @@ reviewer and again after the first end-to-end run, and the validator
 harnesses score the agent against it:
 
 - `python -m eval.retrieval` — retrieval alone, offline, in seconds: recall@k
-  and MRR per search mode, the misses by id, the dense-floor calibration, and
+  and MRR per search mode, each question whose passage is not in the top six by
+  id, the dense-floor calibration, and
   `--sweep` for the fusion weights and rank constant.
 - `python -m eval.live` — every case through the real agent, about four model
   calls each: behaviour accuracy, escalation precision and recall, answer
@@ -708,8 +710,8 @@ harnesses score the agent against it:
 
 The numbers below are rendered from the reports in `reports/` by
 `python -m eval.report`, and a test fails if the README and the reports
-disagree. The baseline is the first end-to-end run. Reading its 22 failures
-one by one, three labels were wrong on reflection and the agent was right — a
+disagree. The baseline is the first end-to-end run. Reading its 22 wrong
+behaviours as first scored one by one, three labels were wrong on reflection and the agent was right — a
 customer who has just paid a scammer needs a person on the case, not only the
 fraud number; a customer disclosing financial difficulty is handed to their
 adviser; an instruction to sell £10,000 wants action, not a description of the
@@ -721,26 +723,27 @@ disagreed, and the rule is the policy. Each change carries its reason in
 `eval/questions.yaml`, and every run is re-scored against the labels as they
 now stand (`python -m eval.live --rescore`), so the rows below are measured
 against one set of labels and the improvement is not the relabelling. The
-other eighteen baseline failures stood, and failure modes 10–13 above are what
-they turned out to be.
+other eighteen stood, and failure modes 10–13 above are what they turned out
+to be. (Re-scored against the corrected labels the baseline has 19 wrong
+behaviours, which is why its row reads 88.8%.)
 
 <!-- eval:start -->
-Retrieval alone, before expansion and reranking: the 135 cases with gold sections of 169, 129 chunks, embedder `BAAI/bge-small-en-v1.5-384`, fusion k = 20, dense floor 0.5 (`python -m eval.retrieval`, 2026-10-23).
+Retrieval alone, before expansion and reranking: the 135 cases with gold sections of 169, 129 chunks, embedder `BAAI/bge-small-en-v1.5` (384-d), fusion k = 20, dense floor 0.5 (`python -m eval.retrieval`, 2026-10-23).
 
-| Mode | recall@1 | recall@3 | recall@6 | MRR | misses |
+| Mode | recall@1 | recall@3 | recall@6 | MRR | not in the top six |
 |---|---:|---:|---:|---:|---:|
 | hybrid | 0.644 | 0.896 | 0.970 | 0.772 | 4 of 135 |
-| lexical | 0.600 | 0.785 | 0.896 | 0.710 | 11 of 135 |
-| dense | 0.726 | 0.867 | 0.933 | 0.806 | 5 of 135 |
+| lexical | 0.600 | 0.785 | 0.896 | 0.710 | 14 of 135 |
+| dense | 0.726 | 0.867 | 0.933 | 0.806 | 9 of 135 |
 
 End to end: every case through the real agent (`claude-sonnet-5-5` answering, `claude-haiku-5-5` for expansion, reranking and fact-checking), scored against its label (`python -m eval.live`).
 
-| Run | Date | Cases | Behaviour accuracy | Answers correct | Escalation precision | Escalation recall | Untouched by guards | Median latency | Tokens per case |
+| Run | Date | Cases | Behaviour accuracy | Answers correct | Escalation precision | Escalation recall | Untouched by guards | Median latency | Tokens per case, all |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|
 | baseline | 2026-10-22 | 169 | 88.8% | 91.6% | 65.8% | 96.2% | 74.4% | 9.1 s | 6,335 |
-| current | 2026-10-23 | 169 | 98.8% | 99.2% | 96.2% | 96.2% | 75.6% | 8.2 s | 2,370 |
+| current | 2026-10-23 | 169 | 98.8% | 99.2% | 96.2% | 96.2% | 75.6% | 8.2 s | 8,269 |
 
-Behaviour accuracy: the agent did what the label expects (answer, escalate, clarify, decline, greeting). Answers correct: answerable questions answered with every required fact. Escalation precision: escalations that were wanted; recall: wanted escalations that happened. Untouched: answers that passed the citation guard and the fact-check without a rewrite. Every failure is listed by id in the report.
+Behaviour accuracy: the agent did what the label expects (answer, escalate, clarify, decline, greeting). Answers correct: answerable questions answered with every required fact. Escalation precision: escalations that were wanted; recall: wanted escalations that happened. Untouched: answers that passed the citation guard and the fact-check without a rewrite. Tokens per case counts every token processed, cache reads and writes included: prompt caching makes most of them cheaper, not fewer (the caching table below shows the cost). Every failure is listed by id in the report.
 
 Prompt caching, measured: the same cases through the real agent with caching off, then on (`SUPPORT_BOT_PROMPT_CACHING`, `python -m eval.live --limit … --out …`).
 
@@ -756,7 +759,7 @@ Caching cut the cost of an answer by 58%, from $0.0154 to $0.0064.
 
 ## Testing strategy
 
-`tests/` — **436 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
+`tests/` — **440 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
 Eight further tests call the real API and run only on request: `pytest -m live`;
 two download and run the real embedding model: `pytest -m model`.
 
@@ -967,7 +970,7 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `rag/` | `corpus.py` chunker, `embeddings.py`, `store.py` (Qdrant), `lexical.py` (BM25), `retrieval.py` (fusion), `index.py` (CLI) |
 | `eval/` | `questions.yaml` (169 labelled cases), `dataset.py` validator, `retrieval.py` metrics and sweep, `live.py` end-to-end scorer, `report.py` README tables |
 | `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json`, `caching-off.json`, `caching-on.json` |
-| `tests/` | 436 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
+| `tests/` | 440 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `api.py` | FastAPI service — `/chat`, `/sessions/{id}`, `/health`, `/ready`, OpenAPI docs at `/docs` |
 | `Dockerfile` / `.dockerignore` | The service as a container: model and index baked in, non-root, health-checked, allow-listed contents |

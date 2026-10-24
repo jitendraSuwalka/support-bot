@@ -232,6 +232,15 @@ def test_summary_arithmetic():
     }
 
 
+def test_tokens_per_case_count_the_cached_tokens_too():
+    """The API's input count leaves cache reads and writes out; a cached run
+    processes them all the same, so the mean includes them."""
+    cached = [obs("a1", "factual", "answer", "answer", cache_read_tokens=80, cache_write_tokens=9)]
+    tokens = summarise(cached)["tokens"]
+    assert tokens["per_case_mean"] == 10 + 1 + 80 + 9
+    assert (tokens["input"], tokens["cache_read"], tokens["cache_write"]) == (10, 80, 9)
+
+
 def test_render_lists_the_failures():
     text = live.render(summarise(rows()))
     assert "wrong behaviour:" in text and "a2: expected answer, observed escalate" in text

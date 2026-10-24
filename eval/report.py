@@ -102,21 +102,45 @@ def _pct(value: float) -> str:
     return f"{100 * value:.1f}%"
 
 
+def _misses(summary: dict) -> int:
+    """Gold chunks not in the top six. Computed from the per-case ranks, so a
+    report written when misses meant "not in the pool of ten" reads the same."""
+    outcomes = summary.get("outcomes")
+    if outcomes is None:
+        return len(summary["misses"])
+    with_gold = outcomes[: summary["n"]]  # gold cases come first; the rest have none
+    deepest = 6
+    return sum(1 for o in with_gold if o["gold_rank"] is None or o["gold_rank"] > deepest)
+
+
+def _embedder(name: str) -> str:
+    """'BAAI/bge-small-en-v1.5-384' reads like a model id; show the dimension apart."""
+    model, _, dims = name.rpartition("-")
+    return f"`{model}` ({dims}-d)" if model and dims.isdigit() else f"`{name}`"
+
+
+def _all_tokens_per_case(summary: dict) -> int:
+    """Every token processed per case, cache reads and writes included."""
+    tokens = summary["tokens"]
+    total = sum(tokens.get(key, 0) for key in ("input", "output", "cache_read", "cache_write"))
+    return round(total / (summary["cases"] or 1))
+
+
 def retrieval_table(report: dict) -> str:
     lines = [
         f"Retrieval alone, before expansion and reranking: the {report['cases_with_gold']} cases "
         f"with gold sections of {report['cases']}, {report['chunks']} chunks, embedder "
-        f"`{report['embedder']}`, fusion k = {report.get('rrf_k', 60)}, dense floor "
+        f"{_embedder(report['embedder'])}, fusion k = {report.get('rrf_k', 60)}, dense floor "
         f"{report['dense_floor']} (`python -m eval.retrieval`, {report['generated'][:10]}).",
         "",
-        "| Mode | recall@1 | recall@3 | recall@6 | MRR | misses |",
+        "| Mode | recall@1 | recall@3 | recall@6 | MRR | not in the top six |",
         "|---|---:|---:|---:|---:|---:|",
     ]
     for mode, summary in report["modes"].items():
         lines.append(
             f"| {mode} | {summary['recall@1']:.3f} | {summary['recall@3']:.3f} | "
             f"{summary['recall@6']:.3f} | {summary['mrr']:.3f} | "
-            f"{len(summary['misses'])} of {summary['n']} |"
+            f"{_misses(summary)} of {summary['n']} |"
         )
     return "\n".join(lines)
 
@@ -130,7 +154,7 @@ def live_table(runs: dict[str, dict]) -> str:
         "its label (`python -m eval.live`).",
         "",
         "| Run | Date | Cases | Behaviour accuracy | Answers correct | Escalation precision | "
-        "Escalation recall | Untouched by guards | Median latency | Tokens per case |",
+        "Escalation recall | Untouched by guards | Median latency | Tokens per case, all |",
         "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for label, report in runs.items():
@@ -140,7 +164,7 @@ def live_table(runs: dict[str, dict]) -> str:
             f"{_pct(s['behaviour_accuracy'])} | {_pct(s['answers']['correct'])} | "
             f"{_pct(s['escalation']['precision'])} | {_pct(s['escalation']['recall'])} | "
             f"{_pct(s['answers']['untouched_by_guards'])} | "
-            f"{s['latency_seconds']['median']:.1f} s | {s['tokens']['per_case_mean']:,} |"
+            f"{s['latency_seconds']['median']:.1f} s | {_all_tokens_per_case(s):,} |"
         )
     lines += [
         "",
@@ -148,7 +172,9 @@ def live_table(runs: dict[str, dict]) -> str:
         "decline, greeting). Answers correct: answerable questions answered with every required "
         "fact. Escalation precision: escalations that were wanted; recall: wanted escalations "
         "that happened. Untouched: answers that passed the citation guard and the fact-check "
-        "without a rewrite. Every failure is listed by id in the report.",
+        "without a rewrite. Tokens per case counts every token processed, cache reads and "
+        "writes included: prompt caching makes most of them cheaper, not fewer (the caching "
+        "table below shows the cost). Every failure is listed by id in the report.",
     ]
     return "\n".join(lines)
 
@@ -176,8 +202,9 @@ def headline(
     if retrieval and "hybrid" in retrieval["modes"]:
         hybrid = retrieval["modes"]["hybrid"]
         lines.append(
-            f"- **{_pct(hybrid['recall@6'])}** of answerable questions have the passage that "
-            "answers them among the six retrieved (hybrid BM25 and vector search)."
+            f"- **{_pct(hybrid['recall@6'])}** of the {hybrid['n']} labelled questions with a "
+            "known answering passage have it among the six retrieved (hybrid BM25 and vector "
+            "search)."
         )
     if caching and "off" in caching and "on" in caching:
         off = (caching["off"]["summary"].get("cost_usd") or {}).get("per_case_mean")
