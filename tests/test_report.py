@@ -46,7 +46,7 @@ def live(generated, accuracy):
             "answers": {"correct": 0.9, "untouched_by_guards": 0.75},
             "escalation": {"precision": 0.6, "recall": 0.95},
             "latency_seconds": {"median": 9.06},
-            "tokens": {"per_case_mean": 6335},
+            "tokens": {"input": 169 * 6000, "output": 169 * 335, "per_case_mean": 6335},
         },
     }
 
@@ -180,7 +180,7 @@ def test_the_headline_states_the_numbers_a_reader_sees_first():
         "- **60.0%** of escalations were wanted, and **95.0%** of the questions that needed "
         "a person reached one."
     )
-    assert "**100.0%** of answerable questions" in lines[2]
+    assert "**100.0%** of the 8 labelled questions with a gold passage" in lines[2]
     assert lines[3] == "- **$0.0064** an answer with prompt caching, **58%** less than without."
     assert report.headline(None, {}, {}) == "_No reports yet._"
 
@@ -201,6 +201,37 @@ def test_write_updates_both_blocks_even_when_they_start_empty(tmp_path):
     )
     assert report.main(["--reports", str(tmp_path), "--readme", str(readme), "--write"]) == 0
     text = readme.read_text(encoding="utf-8")
-    assert "of answerable questions" in text.split("<!-- headline:end -->")[0]
+    assert "with a gold passage" in text.split("<!-- headline:end -->")[0]
     assert "| hybrid |" in text.split("<!-- eval:start -->")[1]
     assert report.readme_block("a\n<!-- eval:start -->\n<!-- eval:end -->\n") == ""
+
+
+def test_misses_are_counted_at_six_from_the_ranks_whatever_the_report_called_a_miss():
+    # Written when a miss meant "not in the pool of ten": gold at rank 8 was not
+    # listed as a miss, but the agent, which reads six, would never see it.
+    summary = {
+        "n": 3,
+        "misses": ["c"],
+        "outcomes": [
+            {"id": "a", "gold_rank": 1},
+            {"id": "b", "gold_rank": 8},
+            {"id": "c", "gold_rank": None},
+            {"id": "no-gold", "gold_rank": None},  # cases without gold come after the n
+        ],
+    }
+    assert report._misses(summary) == 2
+    assert report._misses({"n": 3, "misses": ["c"]}) == 1  # no ranks kept: the list it has
+
+
+def test_the_embedder_dimension_is_shown_apart_from_the_model_id():
+    assert report._embedder("BAAI/bge-small-en-v1.5-384") == "`BAAI/bge-small-en-v1.5` (384-d)"
+    assert report._embedder("hash-256") == "`hash` (256-d)"
+    assert report._embedder("local") == "`local`"
+
+
+def test_tokens_per_case_include_the_cache():
+    summary = {
+        "cases": 2,
+        "tokens": {"input": 100, "output": 20, "cache_read": 300, "cache_write": 80},
+    }
+    assert report._all_tokens_per_case(summary) == 250

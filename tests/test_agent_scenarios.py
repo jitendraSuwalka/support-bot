@@ -613,3 +613,75 @@ def test_a_number_from_an_earlier_customer_message_counts_as_theirs(run_scenario
         helper={"rerank": '{"relevant": [0]}'},
     )
     assert "rewritten after citation check" not in results[1].notes
+
+
+# --- the last-line check: replies no other guard reads -------------------------
+# An independent review found the rewrite after a policy escalation reaching
+# the customer with an invented phone number, unchecked; a greeting and a
+# clarifying question were unchecked in the same way. Each is now checked,
+# and a reply that fails is replaced by a fixed one.
+
+INVENTED_LINE = "Our mortgage desk is on 0999 123 4567."
+
+
+def test_an_escalation_rewrite_with_an_invented_number_is_replaced(run_scenario):
+    script = QUIZ_SCRIPT[:-1] + [
+        text_reply(f"I've passed this to an adviser. {INVENTED_LINE}"),
+    ]
+    results, _, _ = run_scenario(script, QUIZ_TURNS, helper=QUIZ_HELPER)
+    second = results[1]
+    assert second.escalated is True and "escalated by policy" in second.notes
+    assert second.answer == agent.SAFE_REPLIES["escalation"]
+    assert "0999" not in second.answer and agent.SWITCHBOARD in second.answer
+    assert "escalation replaced with a fixed reply after citation check" in second.notes
+    assert "citation_fallback" in second.guards()
+
+
+def test_an_escalation_rewrite_that_only_gives_the_switchboard_stands(run_scenario):
+    results, _, _ = run_scenario(QUIZ_SCRIPT, QUIZ_TURNS, helper=QUIZ_HELPER)
+    assert results[1].answer.startswith("I don't have information about that.")
+    assert "citation_fallback" not in results[1].guards()
+
+
+def test_a_greeting_that_states_a_number_is_replaced(run_scenario):
+    results, _, fake = run_scenario(
+        script=[text_reply("Hello! Our helpline is open 24/7 on 0800 000 0000.")],
+        user_messages=["hello"],
+    )
+    assert results[0].answer == agent.SAFE_REPLIES["greeting"]
+    assert "citation_fallback" in results[0].guards() and len(fake.calls) == 1
+
+
+def test_a_clarifying_question_with_an_invented_figure_is_replaced(run_scenario):
+    results, state, _ = run_scenario(
+        script=[
+            tool_reply(
+                "ask_for_clarification",
+                {"question": "Do you mean the £35,000 bonus ISA?"},
+            )
+        ],
+        user_messages=["quiz"],
+    )
+    assert results[0].answer == agent.SAFE_REPLIES["clarification"]
+    assert results[0].clarified is True and state["unclear_turns"] == 1
+
+
+def test_a_reference_must_be_given_whole():
+    said = [{"role": "user", "content": "any news on FW-10021?"}]
+    assert agent.reference_was_given("FW-1002", said) is False
+    said = [{"role": "user", "content": "it's fw1002"}]
+    assert agent.reference_was_given("FW-1002", said) is True
+    assert agent.reference_was_given("1002", said) is False  # not a reference at all
+    for layout in ("FW \u2013 1002", "fw - 1002", "FW\u20141002"):
+        assert agent.reference_was_given("FW-1002", [{"role": "user", "content": layout}])
+
+
+def test_without_the_evidence_guard_an_unevidenced_figure_is_not_answered_as_a_greeting(
+    run_scenario, monkeypatch
+):
+    monkeypatch.setattr(agent, "REQUIRE_EVIDENCE", False)
+    results, _, _ = run_scenario(
+        script=[text_reply("The ISA allowance is £25,000.")],
+        user_messages=["What is the ISA allowance?"],
+    )
+    assert results[0].answer == agent.SAFE_REPLIES["unevidenced reply"]

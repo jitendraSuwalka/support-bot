@@ -240,6 +240,29 @@ def test_a_failing_turn_is_a_502_that_leaks_nothing_and_leaves_the_conversation_
     assert again.status_code == 200 and again.json()["turn"] == 1
 
 
+def test_a_turn_that_fails_after_a_tool_call_leaves_nothing_behind(log_stream):
+    """The agent extends the conversation in place. A failure after a tool
+    call must not leave its tool request without a result, which the API
+    would reject on every later turn."""
+
+    def fails_after_a_tool_call(messages, state):
+        messages.append(
+            {
+                "role": "assistant",
+                "content": [{"type": "tool_use", "id": "t1", "name": "search_knowledge_base"}],
+            }
+        )
+        state["unclear_turns"] = 1
+        raise ConnectionError("the model went away mid-turn")
+
+    client, app = client_for(fails_after_a_tool_call)
+    first = client.post("/chat", json={"message": "How much can I pay into an ISA?"})
+    assert first.status_code == 502
+    [session] = app.state.sessions._sessions.values()
+    assert session.messages == [] and session.state == {"unclear_turns": 0}
+    assert session.turns == 0
+
+
 # --- ending a conversation ---------------------------------------------------------------
 
 

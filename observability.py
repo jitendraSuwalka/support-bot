@@ -95,10 +95,13 @@ def turn_record(
     if settings.log_content:
         record["message"]["text"] = message
     if result is None:
-        record.update(
-            behaviour="error",
-            error={"type": type(error).__name__, "detail": str(error)[:500]} if error else None,
-        )
+        # The exception's type only: its text can carry what the customer wrote
+        # (or a secret) as easily as anything else, so it is logged only where
+        # content logging has been switched on.
+        error_record = {"type": type(error).__name__} if error else None
+        if error and settings.log_content:
+            error_record["detail"] = str(error)[:500]
+        record.update(behaviour="error", error=error_record)
         return record
 
     cost = result.cost()

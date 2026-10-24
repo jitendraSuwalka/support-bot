@@ -9,8 +9,8 @@ omitted rather than invented, so they cannot collide with a real firm's.
 
 The content is modelled on how UK wealth-management firms present their
 services, so that retrieval and evaluation are tested against realistic
-material. The first draft was reviewed by an independent compliance-style
-reviewer against primary sources; that review found factual, terminology and
+material. The first draft was reviewed against primary sources by a separate
+AI reviewer briefed as a compliance officer; that review found factual, terminology and
 consistency faults which were corrected on 20 October 2026, and three documents
 were added for topics clients commonly ask about (tax outside wrappers,
 becoming a client, cash and dealing).

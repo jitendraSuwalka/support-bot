@@ -1,12 +1,21 @@
 # Grounded Support Agent
 
 [![CI](https://github.com/jitendraSuwalka/support-bot/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jitendraSuwalka/support-bot/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/jitendraSuwalka/support-bot?sort=semver)](https://github.com/jitendraSuwalka/support-bot/releases/latest)
+[![Container](https://img.shields.io/badge/container-ghcr.io-blue?logo=docker&logoColor=white)](https://github.com/jitendraSuwalka/support-bot/pkgs/container/support-bot)
+[![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue?logo=python&logoColor=white)](pyproject.toml)
+[![Licence: MIT](https://img.shields.io/badge/licence-MIT-green)](LICENSE)
 
-![The agent showing which checks each answer passed](screenshot.png)
+![The agent quoting a case status word for word, answering an ISA question with its sources, and handing a pension question to an adviser](docs/demo.gif)
 
-A customer support agent for Fernhill Wealth — a fictional UK wealth-management
-firm — built to answer only
-what it can evidence — and to prove, in code, that it does.
+*Three questions, three behaviours: a case status quoted word for word, an ISA
+question answered from the firm's documents with every figure checked, and a
+request for pension advice handed to a person. The labels under each reply are
+the checks it passed; the panel on the right is the evidence it used.*
+
+A customer support agent for Fernhill Wealth, a fictional UK wealth-management
+firm, built to answer only what it can evidence — and to prove, in code, that
+it does.
 
 The interesting part is not that an LLM can call tools. It is that a support
 assistant in a regulated industry must never invent a phone number, never
@@ -21,16 +30,26 @@ rendered from the reports in `reports/` ([Evaluation](#evaluation)):
 <!-- headline:start -->
 - **98.8%** of 169 labelled customer questions handled as the label says — answered, escalated, clarified or declined (the first measurement: 88.8%).
 - **96.2%** of escalations were wanted, and **96.2%** of the questions that needed a person reached one.
-- **97.0%** of answerable questions have the passage that answers them among the six retrieved (hybrid BM25 and vector search).
+- **97.0%** of the 135 labelled questions with a gold passage have it among the six retrieved (hybrid BM25 and vector search).
 - **$0.0064** an answer with prompt caching, **58%** less than without.
 <!-- headline:end -->
 
+Try the released service in one command, with your own Anthropic API key in a
+file `.env` (one line, `ANTHROPIC_API_KEY=sk-ant-...`), then open
+http://127.0.0.1:8000/docs:
+
+```bash
+docker run --env-file .env -p 127.0.0.1:8000:8000 ghcr.io/jitendrasuwalka/support-bot:latest
 ```
-python app.py                  # web interface
+
+Or from a clone ([Running it](#running-it) has the set-up):
+
+```
+python app.py                  # web interface, as in the recording above
 uvicorn api:app                # the same agent as an HTTP service; docs at /docs
 docker build -t support-bot .  # the service as a container (CI builds and tests it)
 python agent.py                # same agent, in the terminal
-pytest                         # 406 tests, under twenty seconds, no API calls, no network
+pytest                         # 450 tests, under twenty seconds, no API calls, no network
 ```
 
 > **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
@@ -38,7 +57,10 @@ pytest                         # 406 tests, under twenty seconds, no API calls, 
 > informed by my own experience working in the sector — but every policy,
 > address, client record and phone number is invented. The website lives on the
 > reserved `.example` domain and the phone numbers come from Ofcom's film-and-
-> drama ranges, so the agent can never direct a real customer to a real place.
+> drama ranges, so the agent can never direct a customer to a real firm. The
+> only real contact details in the documents are those of public bodies a
+> customer may genuinely need: the Financial Ombudsman, Report Fraud and the
+> FCA register.
 > The eighteen documents it answers from were reviewed against primary sources
 > (gov.uk, FSCS, the Financial Ombudsman) on 20 October 2026; `corpus/README.md`
 > lists every public figure with its source. A personal learning project; no
@@ -56,6 +78,9 @@ pytest                         # 406 tests, under twenty seconds, no API calls, 
 - [Design decisions and trade-offs](#design-decisions-and-trade-offs)
 - [Known limitations](#known-limitations)
 - [Running it](#running-it)
+- [What I would do next](#what-i-would-do-next)
+- [Licence](#licence)
+- [Changelog](CHANGELOG.md)
 
 ---
 
@@ -76,6 +101,13 @@ The answer, repeatedly, was **code**. Every hard guarantee here is enforced in
 Python, because a system prompt is a strong suggestion and nothing more —
 something demonstrated below by a model that broke a rule marked MUST, and was
 right to.
+
+The first version was a single agent with guards and offline checks. Version 2
+rebuilt it in four phases, each one pull request, and the README refers to
+them by number: **Phase 1** the engineering foundations, **Phase 2** the
+document corpus and hybrid retrieval, **Phase 3** the evaluation, **Phase 4**
+the service, its logs and its container. The [changelog](CHANGELOG.md) lists
+what each added.
 
 ---
 
@@ -129,6 +161,8 @@ user question
      ├─ CHECK 1: citation guard — deterministic           (URLs and numbers)
      ├─ CHECK 2: groundedness — independent LLM           (semantic drift; any rewrite meets CHECK 1 again)
      ├─ CHECK 3: escalation policy — deterministic        (clarify once, then escalate)
+     ├─ CHECK 4: last-line check — deterministic          (greetings, clarifying questions and the
+     │                                                     post-escalation rewrite; a fixed reply if they fail)
      │
      └─ answer + audit trail of raw evidence + one JSON log line (behaviour, guards, latency, cost)
 ```
@@ -154,16 +188,16 @@ office **fifth** — a phone number means nothing to a meaning model — while
 BM25 ranked it first, and fusion put it first overall. Asked *"How much can I
 pay into an ISA this tax year?"*, both methods ranked the ISA allowance first.
 The labelled set says the same at scale ([Evaluation](#evaluation)): on its
-own the lexical side misses eleven answers in 135 and the dense side five;
-fused, four.
+own the lexical side leaves the answering passage out of its top six for
+fourteen questions in 135 and the dense side for nine; fused, four.
 
 Fusion has one blind spot, and the evaluation found it: a chunk only one
 method can see scores below chunks both methods rank moderately. Asked about
 *a missed call from 0161 496 0170*, BM25 put the Manchester office first (it
 holds the number) and the vector index never returned it (a phone number means
 nothing to an embedding), while both matched the security guidance on
-*unexpected calls*; fused, the one chunk with the answer fell to sixth and out
-of the candidates once the lexical query was widened. So BM25's first choice
+*unexpected calls*; fused, once the lexical query was widened, the one chunk
+with the answer fell out of the six candidates the reranker reads. So BM25's first choice
 is guaranteed a place among the candidates the reranker reads: an exact string
 — a number, a reference, a postcode — is the one thing fusion can lose, and
 the reranker still decides whether it stays.
@@ -261,7 +295,7 @@ POST /chat  {"message": "How much can I pay into an ISA this tax year?"}
      "behaviour": "answer", "escalated": false,
      "sources": [{"title": "ISAs: a guide for clients", "section": "The allowance",
                   "url": "https://www.fernhillwealth.example/guides/isas/"}],
-     "warnings": [], "latency_ms": 8016, "cost": {"usd": 0.0146, …}}
+     "warnings": [], "latency_ms": 8016, "cost": {"usd": 0.0061, …}}
 ```
 
 A client gets the outcome as data — the behaviour, whether a person was
@@ -269,7 +303,7 @@ brought in, the sections the answer rests on, any guard warning, the cost —
 so a front end can show a hand-off banner or the sources without parsing the
 answer. The choices that make it a service rather than a demo:
 
-- **The server issues conversation ids** (128 random bits) and refuses an
+- **The server issues conversation ids** (128 random bits, from `secrets`) and refuses an
   unknown or expired one with a 404, instead of starting a conversation under
   an id the client picked: one customer cannot continue another's by
   guessing.
@@ -280,10 +314,13 @@ answer. The choices that make it a service rather than a demo:
 - **One turn at a time per conversation.** A turn extends the conversation it
   reads, so two requests for one conversation are answered in order; a test
   proves the lock, and fails without it.
-- **A failure leaks nothing.** An exception inside the agent is a 502 with a
-  request id to quote and none of the exception's text; the message is taken
-  back off the conversation so the customer can retry; the log line has the
-  exception type.
+- **A failure leaks nothing and breaks nothing.** An exception inside the
+  agent is a 502 with a request id to quote and none of the exception's text.
+  The conversation and its policy state are put back exactly as they were
+  before the turn — including any tool call the agent had already made, which
+  would otherwise leave a tool request without its result and fail every later
+  turn — so the customer can simply retry. The log line has the exception
+  type.
 - **Every response carries `X-Request-ID`**, the client's own if it sent a
   well-formed one, and the same id is in the turn's log line.
 - **No new dependencies.** FastAPI and uvicorn were already in the lockfile
@@ -296,8 +333,24 @@ answer. The choices that make it a service rather than a demo:
 
 ```bash
 docker build -t support-bot .
-docker run -p 8000:8000 -e ANTHROPIC_API_KEY=sk-ant-... support-bot
+docker run --env-file .env -p 127.0.0.1:8000:8000 support-bot
 ```
+
+The key comes from a file rather than the command line, so it stays out of
+shell history, and the port is published on this machine only: the service
+has no authentication of its own (see [Known limitations](#known-limitations)),
+so it should not be reachable from the network without a gateway in front.
+Docker reads `--env-file` values literally — no quotes, no trailing comments,
+which is why `.env.example` keeps every comment on its own line — and three
+settings need care in a container: leave `SUPPORT_BOT_MODEL_CACHE` and
+`SUPPORT_BOT_INDEX_PATH` unset (the image sets them), and point
+`SUPPORT_BOT_TURN_LOG_PATH` at a mounted volume
+(`-v "$PWD/logs:/logs" -e SUPPORT_BOT_TURN_LOG_PATH=/logs/turns.jsonl`), since
+the service cannot write beside its code.
+
+Or skip the build: every release publishes the image, so
+`docker pull ghcr.io/jitendrasuwalka/support-bot:2.0.0` fetches exactly what
+the release tested ([Releases](#releases)).
 
 The `Dockerfile` builds the HTTP service into an image, and CI builds that
 image and runs `scripts/container_smoke_test.sh` against it on every push, so
@@ -308,8 +361,9 @@ guarantees, and the smoke test checks:
   document index built at *build* time, then `HF_HUB_OFFLINE=1` is set: a
   container never reaches out to the model hub, its only outbound calls are
   to the Anthropic API, and `/ready` is green from the first second.
-- **It runs as an unprivileged user** (uid 10001), and nothing in it needs
-  root once built.
+- **It runs as an unprivileged user** (uid 10001) that cannot rewrite the
+  code it runs: the code is owned by root, and the user owns only the model
+  cache and the index directory.
 - **Only what it needs goes in.** `.dockerignore` is an allow-list — the
   service's modules, `rag/`, `corpus/` and the requirements — so a `.env`
   with a key in it, a local index, the tests or the git history can never be
@@ -325,10 +379,39 @@ guarantees, and the smoke test checks:
 
 The smoke test needs no secret and calls no model: health, readiness, the
 redirect and the docs, an empty message refused with 422, an unknown
-conversation with 404, a request id on every response, a non-root user, no
-tests or `.env` inside, the model and index present, Docker's health check
+conversation with 404, a request id on every response, a non-root user that
+cannot rewrite its code, no tests or `.env` inside, the model and index present, Docker's health check
 passing, and no traceback in the logs. Dependabot proposes base-image
 updates, which CI then builds and smoke-tests before anyone merges them.
+
+### Releases
+
+A release is a tag. Pushing `v2.0.0` runs `.github/workflows/release.yml`,
+which publishes nothing until every step before it has passed:
+
+1. **The tag is held to the code.** `scripts/release_notes.py` refuses unless
+   the tag is `v` plus the version in `pyproject.toml`, the service reports
+   the same version at `/health`, and `CHANGELOG.md` has a dated entry for it
+   with nothing left under *Unreleased*. A test runs the same check on every
+   commit, so a mismatch is caught long before anyone tags.
+2. **The tagged commit is linted and tested** again, from the lockfile.
+3. **The image is built from it and smoke-tested**, with one extra check: that
+   `/health` reports the version being released.
+4. **The image is pushed** to the GitHub Container Registry as
+   `ghcr.io/jitendrasuwalka/support-bot:<version>` and `:latest`, labelled with
+   the commit it was built from.
+5. **The GitHub Release is created**, its notes taken from the changelog entry
+   and followed by the headline numbers rendered from the committed reports, so
+   the release page carries measured numbers, never typed ones.
+
+Only GitHub's own short-lived token is used: no secret is stored in the
+repository. The registry makes a new package private whatever the
+repository's visibility, so after the first release the package is made
+public once by hand; the workflow's last step pulls the image as a stranger
+would and warns until it is. **Run workflow** on the workflow's page in the Actions tab is a
+rehearsal: every step above for the version in `pyproject.toml`, except
+pushing the image and creating the release, with the notes it would publish
+shown on the run's page.
 
 ### One log line per turn
 
@@ -341,7 +424,7 @@ Every turn the web interface serves is written as one JSON line to stderr
  "turn":2,"behaviour":"answer","escalated":false,"tools":["search_knowledge_base"],
  "guards":["citation_rewrite"],"warnings":[],"evidence_parts":1,"latency_ms":8412,
  "message":{"chars":44,"sha256":"5d1e0c7a9b2f4e31"},"answer":{"chars":312,"sha256":"…"},
- "cost":{"usd":0.0121,"input_tokens":4211,"output_tokens":388,"cache_read_tokens":0,
+ "cost":{"usd":0.0083,"input_tokens":1830,"output_tokens":388,"cache_read_tokens":7410,
  "cache_write_tokens":0,"calls":4,"unpriced_models":[]},"level":"INFO"}
 ```
 
@@ -349,21 +432,28 @@ That is what an on-call engineer, a cost report or a complaints reviewer needs
 about a turn, and it says nothing about what the customer wrote. The message
 and the answer are kept as a length and the first sixteen hex digits of a
 SHA-256 hash: hash a complainant's words and the turn can be found, without
-the log becoming a second copy of every conversation. `SUPPORT_BOT_LOG_CONTENT=true`
+the log becoming a second copy of every conversation. That is pseudonymised,
+not anonymous — a short or common message ("yes", "FW-1001") can be found by
+hashing guesses — so the log still deserves the care of personal data; a
+keyed hash would close that gap at the cost of a secret to manage. `SUPPORT_BOT_LOG_CONTENT=true`
 records the text for a deployment that has decided it may. A turn with a
 `WARNING` note is logged at warning level, a turn that fails at error level
-with the exception's type, so alerting needs no parsing.
+with the exception's type — not its text, which can carry the customer's
+words as easily as anything else — so alerting needs no parsing.
 
 **Prompt caching.** The tool definitions and the system prompt, about 2,500
-tokens, are identical on every main-model call of every conversation, and a
-turn makes two or three such calls. The system prompt carries a cache
+tokens, are identical on every main-model call that offers the tools, in every
+conversation, and a turn makes two or three such calls. The system prompt carries a cache
 breakpoint, which caches the tools with it (the API caches in the order
 tools, system, messages), and automatic caching adds a second breakpoint that
 moves to the end of the conversation, so the later calls in a turn read the
 conversation so far from the cache. A cached read is priced at a twentieth of
 fresh input; what it saved on the labelled set is measured in
 [Evaluation](#evaluation). `SUPPORT_BOT_PROMPT_CACHING=false` switches it off,
-which exists to make that measurement.
+which exists to make that measurement. Two kinds of call cannot use the cached
+prefix: a rewrite and a greeting are sent without the tools, so their prefix
+differs from the first token. Sending the tools with `tool_choice` set to
+`none` would let them read it, and is the next saving to measure.
 
 Cost comes from `pricing.py`: the Claude API's per-million-token prices for
 the two models, with the page and the date they were read, applied to every
@@ -508,7 +598,9 @@ offline suite it claims to be.
 
 **Fix.** Gradio analytics off in code; ONNX Runtime telemetry disabled before
 the model's first session, with a test. The suite now makes no outbound
-connection at all.
+connection at all, and an autouse fixture keeps it that way: any test that
+connects a socket to another machine fails. (It watches `socket.connect`; a
+DNS lookup or a datagram sent without connecting would pass it unseen.)
 
 ### 10. A number that swallowed its neighbour
 
@@ -559,14 +651,17 @@ countable, and impossible to half-do.*
 happen. The customer never typed `FW-1002`; the model did.
 
 **Fix.** `look_up_client_query` runs only for a reference the customer typed in
-full somewhere in the conversation, compared without case or punctuation.
-Otherwise it returns `REFERENCE_NOT_GIVEN`, which the policy treats as
+full somewhere in the conversation, matched whole whatever its case or
+punctuation: *fw 1002* is `FW-1002`, but *FW-10021* is not. (An independent AI
+review caught the first version accepting the reference anywhere inside a
+longer one.) Otherwise it returns `REFERENCE_NOT_GIVEN`, which the policy treats as
 unresolved: one question back is allowed, a declarative reply is escalated.
 Enforced in code; the prompt also says never to suggest a reference.
 
 ### 13. MUST rules that escalated the FAQ
 
-**Symptom.** Eleven answerable questions in the baseline went to an adviser.
+**Symptom.** Eleven questions labelled *answer* in the baseline went to an
+adviser (eight once three labels were corrected; see [Evaluation](#evaluation)).
 *"How do I register a power of attorney?"* and *"Can my son speak to you on my
 behalf?"* were handed over although the documents answer both; *"Can I keep my
 account if I move to Spain?"* was escalated after the model had found and
@@ -599,9 +694,31 @@ would have counted as things the customer said.
 
 **Fix.** The agent's instructions are now content blocks, so a plain string
 in the user role is by construction the customer's. Numbers the customer
-wrote may be repeated back; URLs they wrote may not, because repeating a link
-a customer pasted lends it the firm's authority. A test proves an instruction
-that names an unsupported number does not make it the customer's.
+wrote may be repeated back — an age, an amount, a year — but not a phone
+number or a URL, because repeating either lends the firm's authority to
+something a fraudster may have given the customer. (The first version
+allowed any number the customer wrote; an independent AI review showed it
+repeating a customer's "fraud line" back as genuine.) A test proves an
+instruction that names an unsupported number does not make it the
+customer's.
+
+### 15. Replies no guard read
+
+**Symptom.** An independent AI review scripted the rewrite that follows a policy
+escalation to say *"Our mortgage desk is on 0999 123 4567"*. It reached the
+customer with no warning.
+
+**Cause.** The citation guard and the fact-check read answers drawn from
+evidence. Three replies are written outside that path: the rewrite after a
+policy escalation, a clarifying question asked through the tool, and a
+greeting, which has no evidence, so the guard returned early with nothing to
+compare against.
+
+**Fix.** A last-line check runs the same exact-match test on all three,
+against the evidence, the switchboard number and what the customer wrote. A
+reply that fails is replaced by a fixed one rather than rewritten again,
+because a fixed reply cannot fail, and the web interface shows *Replaced with
+a fixed reply*. Tested on both implementations.
 
 ---
 
@@ -611,13 +728,15 @@ A labelled set of 169 questions (`eval/questions.yaml`) says what a correct
 turn looks like: the behaviour (answer, escalate, clarify, decline, greeting),
 the corpus sections that answer or signpost it, the strings a correct answer
 must copy, and the tools a correct turn uses. The questions are written the
-way customers write; the set was reviewed by an independent compliance-style
-reviewer and again after the first end-to-end run, and the validator
+way customers write; the set was reviewed by a separate AI reviewer briefed
+as a compliance officer, every failing label was read again after the first
+end-to-end run, and the validator
 (`python -m eval.dataset`) checks every label against the corpus. Two
 harnesses score the agent against it:
 
 - `python -m eval.retrieval` — retrieval alone, offline, in seconds: recall@k
-  and MRR per search mode, the misses by id, the dense-floor calibration, and
+  and MRR per search mode, each question whose passage is not in the top six by
+  id, the dense-floor calibration, and
   `--sweep` for the fusion weights and rank constant.
 - `python -m eval.live` — every case through the real agent, about four model
   calls each: behaviour accuracy, escalation precision and recall, answer
@@ -625,8 +744,8 @@ harnesses score the agent against it:
 
 The numbers below are rendered from the reports in `reports/` by
 `python -m eval.report`, and a test fails if the README and the reports
-disagree. The baseline is the first end-to-end run. Reading its 22 failures
-one by one, three labels were wrong on reflection and the agent was right — a
+disagree. The baseline is the first end-to-end run. Reading its 22 wrong
+behaviours as first scored one by one, three labels were wrong on reflection and the agent was right — a
 customer who has just paid a scammer needs a person on the case, not only the
 fraud number; a customer disclosing financial difficulty is handed to their
 adviser; an instruction to sell £10,000 wants action, not a description of the
@@ -638,26 +757,27 @@ disagreed, and the rule is the policy. Each change carries its reason in
 `eval/questions.yaml`, and every run is re-scored against the labels as they
 now stand (`python -m eval.live --rescore`), so the rows below are measured
 against one set of labels and the improvement is not the relabelling. The
-other eighteen baseline failures stood, and failure modes 10–13 above are what
-they turned out to be.
+other eighteen stood, and failure modes 10–13 above are what they turned out
+to be. (Re-scored against the corrected labels the baseline has 19 wrong
+behaviours, which is why its row reads 88.8%.)
 
 <!-- eval:start -->
-Retrieval alone, before expansion and reranking: the 135 cases with gold sections of 169, 129 chunks, embedder `BAAI/bge-small-en-v1.5-384`, fusion k = 20, dense floor 0.5 (`python -m eval.retrieval`, 2026-10-23).
+Retrieval alone, before expansion and reranking: the 135 cases with gold sections of 169, 129 chunks, embedder `BAAI/bge-small-en-v1.5` (384-d), fusion k = 20, dense floor 0.5 (`python -m eval.retrieval`, 2026-10-24).
 
-| Mode | recall@1 | recall@3 | recall@6 | MRR | misses |
+| Mode | recall@1 | recall@3 | recall@6 | MRR | not in the top six |
 |---|---:|---:|---:|---:|---:|
 | hybrid | 0.644 | 0.896 | 0.970 | 0.772 | 4 of 135 |
-| lexical | 0.600 | 0.785 | 0.896 | 0.710 | 11 of 135 |
-| dense | 0.726 | 0.867 | 0.933 | 0.806 | 5 of 135 |
+| lexical | 0.600 | 0.785 | 0.896 | 0.710 | 14 of 135 |
+| dense | 0.726 | 0.867 | 0.933 | 0.806 | 9 of 135 |
 
 End to end: every case through the real agent (`claude-sonnet-5-5` answering, `claude-haiku-5-5` for expansion, reranking and fact-checking), scored against its label (`python -m eval.live`).
 
-| Run | Date | Cases | Behaviour accuracy | Answers correct | Escalation precision | Escalation recall | Untouched by guards | Median latency | Tokens per case |
+| Run | Date | Cases | Behaviour accuracy | Answers correct | Escalation precision | Escalation recall | Untouched by guards | Median latency | Tokens per case, all |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|
 | baseline | 2026-10-22 | 169 | 88.8% | 91.6% | 65.8% | 96.2% | 74.4% | 9.1 s | 6,335 |
-| current | 2026-10-23 | 169 | 98.8% | 99.2% | 96.2% | 96.2% | 75.6% | 8.2 s | 2,370 |
+| current | 2026-10-24 | 169 | 98.8% | 99.2% | 96.2% | 96.2% | 82.4% | 8.1 s | 8,113 |
 
-Behaviour accuracy: the agent did what the label expects (answer, escalate, clarify, decline, greeting). Answers correct: answerable questions answered with every required fact. Escalation precision: escalations that were wanted; recall: wanted escalations that happened. Untouched: answers that passed the citation guard and the fact-check without a rewrite. Every failure is listed by id in the report.
+Behaviour accuracy: the agent did what the label expects (answer, escalate, clarify, decline, greeting). Answers correct: answerable questions answered with every required fact. Escalation precision: escalations that were wanted; recall: wanted escalations that happened. Untouched: answers that passed the citation guard and the fact-check without a rewrite. Tokens per case counts every token processed, cache reads and writes included: prompt caching makes most of them cheaper, not fewer (the caching table below shows the cost). Every failure is listed by id in the report.
 
 Prompt caching, measured: the same cases through the real agent with caching off, then on (`SUPPORT_BOT_PROMPT_CACHING`, `python -m eval.live --limit … --out …`).
 
@@ -673,7 +793,7 @@ Caching cut the cost of an answer by 58%, from $0.0154 to $0.0064.
 
 ## Testing strategy
 
-`tests/` — **406 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
+`tests/` — **450 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
 Eight further tests call the real API and run only on request: `pytest -m live`;
 two download and run the real embedding model: `pytest -m model`.
 
@@ -689,6 +809,7 @@ well-behaved model would never take.
 | Agent scenarios | Full turns against the fake model and an in-memory index of the real corpus, on **both** implementations: verbatim quoting, citation rewrites, forced escalation, greeting handling, crashed tools, a decline that runs nothing else, clarify once then escalate, a refused lookup | free |
 | Evaluation harness | The label validator against the corpus, retrieval metrics and the sweep with the hash embedder, the live scorer with an injectable runner, the README tables against the committed reports | free |
 | Service and logs | The HTTP API in-process (sessions, limits, refusals, a failing turn, one turn at a time), the turn log's fields and privacy, the cost model | free |
+| Release | The version agreeing across `pyproject.toml`, the service and the changelog; every refusal the release check makes; the notes carrying the measured headline | free |
 | Live tests (`-m live`) | Eight real questions through the real API, including a fact found by meaning and one found by exact string | opt-in |
 | Model tests (`-m model`) | The real embedding model: meaning beats wording; the dense floor's margin | opt-in |
 
@@ -716,8 +837,9 @@ vector store was compiled against the project's lockfile to count what it adds:
 | langgraph | +17 | langchain-core, langsmith (inert without a key), small utilities |
 
 Phase 1 chose reranking *instead of* embeddings on the grounds that embeddings
-would cost two gigabytes; measurement showed the right stack costs a few
-megabytes, so Phase 2 added them. Measuring first is the point.
+would cost two gigabytes; measurement showed the right stack costs about
+170 MB with the model (ONNX Runtime 69 MB of it), against about 2 GB for
+PyTorch, so Phase 2 added them. Measuring first is the point.
 
 **Two implementations of one agent.** The hand-written loop is the default and
 has the most live mileage; the LangGraph graph exists so the structure is
@@ -725,7 +847,8 @@ explicit and drawable, and both share one body of code so a reviewer can see the
 framework used for what it adds, not depended on.
 
 **No telemetry.** Gradio analytics and ONNX Runtime telemetry are switched off in
-code; the test suite makes no outbound connection, and that is checked.
+code; the test suite makes no outbound connection, and a fixture fails any test
+that connects a socket to another machine.
 
 **Selective staleness.** Case statuses expire from conversation history; FAQ
 content does not. Wiping static content would cost calls and latency for no
@@ -762,7 +885,7 @@ traceable beats fluent and unverifiable.
 
 **Log what happened, not what was said.** The turn log records behaviour,
 guards, latency and cost for every turn, and a hash of the words instead of
-the words. A log is copied, shipped and kept longer than anyone intends; it
+the words (pseudonymised, not anonymous: see above). A log is copied, shipped and kept longer than anyone intends; it
 should not be the place customer conversations accumulate by default.
 
 ---
@@ -796,7 +919,7 @@ one whose weaknesses are unknown.
 - **The fact-checker is itself a model.** It can be wrong in both directions.
   It is a second opinion, not a proof — which is why the deterministic guard
   runs first and independently. It rewrote 18% of the baseline's answers
-  and 23% of the second run's; how many of those rewrites were needed is not
+  and 21% of the current run's; how many of those rewrites were needed is not
   yet measured.
 - **Declining and clarifying are the model's judgement.** The code guarantees
   what happens once it decides — the turn ends, nothing else runs, the second
@@ -821,8 +944,10 @@ one whose weaknesses are unknown.
 Requires Python 3.11–3.13 and an Anthropic API key.
 
 ```bash
+git clone https://github.com/jitendraSuwalka/support-bot.git
+cd support-bot
 python -m venv .venv
-.venv\Scripts\activate          # Windows;  source .venv/bin/activate on macOS/Linux
+source .venv/bin/activate       # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
@@ -880,17 +1005,18 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `corpus/` | 18 documents for the fictional firm, with front matter; `corpus/README.md` sources every public figure |
 | `rag/` | `corpus.py` chunker, `embeddings.py`, `store.py` (Qdrant), `lexical.py` (BM25), `retrieval.py` (fusion), `index.py` (CLI) |
 | `eval/` | `questions.yaml` (169 labelled cases), `dataset.py` validator, `retrieval.py` metrics and sweep, `live.py` end-to-end scorer, `report.py` README tables |
-| `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json` |
-| `tests/` | 406 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
+| `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json`, `caching-off.json`, `caching-on.json` |
+| `tests/` | 450 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `api.py` | FastAPI service — `/chat`, `/sessions/{id}`, `/health`, `/ready`, OpenAPI docs at `/docs` |
 | `Dockerfile` / `.dockerignore` | The service as a container: model and index baked in, non-root, health-checked, allow-listed contents |
 | `scripts/container_smoke_test.sh` | Starts the image and checks the service in it, with no model call and no secret; run by CI |
+| `scripts/release_notes.py` | Holds a release tag to the code and the changelog, and writes the release notes with the measured headline |
+| `CHANGELOG.md` | Every release, newest first; the release notes are taken from it |
+| `docs/demo.gif` | The recording at the top of this README |
+| `.github/workflows/` | `ci.yml`: lint, tests and the container on every push; `release.yml`: a version tag published as an image and a release |
 | `requirements.txt` / `requirements.lock` | Direct dependencies / every resolved dependency |
 
-The intermediate build stages that show how each guard arose are preserved in the
-git history (commit `f662959`, folder `archive/`); they were removed from the
-working tree because nothing runs or tests them.
 
 ### Try these
 

@@ -1,6 +1,6 @@
 [project]
 name = "support-bot"
-version = "2.0.0.dev0"
+version = "2.0.0"
 description = "Grounded customer-support agent for a fictional UK wealth-management firm: retrieval, deterministic guards, independent fact-checking and policy-enforced escalation."
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
@@ -20,7 +20,7 @@ testpaths = ["tests"]
 addopts = "-q --strict-markers -m \"not live and not model\""
 markers = [
     "live: calls the real Anthropic API and costs money; run with -m live and an API key",
-    "model: downloads and runs the real embedding model (about 70 MB); run with -m model",
+    "model: downloads and runs the real embedding model (67 MB); run with -m model",
 ]
 filterwarnings = [
     # qdrant-client probes sqlite's thread safety through a throwaway in-memory
@@ -31,7 +31,7 @@ filterwarnings = [
 ]
 
 [tool.coverage.run]
-source = ["agent", "agent_graph", "api", "config", "app", "observability", "pricing", "rag", "eval"]
+source = ["agent", "agent_graph", "api", "config", "app", "observability", "pricing", "rag", "eval", "scripts"]
 
 [tool.coverage.report]
 show_missing = true

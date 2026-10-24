@@ -33,8 +33,10 @@ exception: the log line has the type, the client gets a reference to quote.
 
 from __future__ import annotations
 
+import copy
 import logging
 import re
+import secrets
 import threading
 import time
 import uuid
@@ -51,7 +53,7 @@ import agent
 import observability
 from config import Settings
 
-VERSION = "2.0.0-dev"
+VERSION = "2.0.0"
 REQUEST_ID_HEADER = "X-Request-ID"
 HTTP_LOGGER = f"{observability.LOGGER_NAME}.http"
 _REQUEST_ID = re.compile(r"^[A-Za-z0-9._-]{8,64}$")
@@ -106,7 +108,7 @@ class SessionStore:
             while len(self._sessions) >= self.max_sessions:
                 self._sessions.popitem(last=False)  # the least recently used goes first
             now = self.clock()
-            session = Session(id=uuid.uuid4().hex, created=now, last_seen=now)
+            session = Session(id=secrets.token_hex(16), created=now, last_seen=now)
             self._sessions[session.id] = session
             return session
 
@@ -291,6 +293,8 @@ def create_app(
                 raise HTTPException(
                     409, f"this conversation has reached {settings.max_turns} turns"
                 )
+            # What the conversation was before this turn, to put back if it fails.
+            before, saved_state = len(session.messages), copy.deepcopy(session.state)
             session.messages.append({"role": "user", "content": body.message})
             try:
                 result, record = observability.run_logged_turn(
@@ -302,9 +306,14 @@ def create_app(
                     settings=settings,
                 )
             except Exception:
-                # The turn failed: take the message back off, so the
-                # conversation is as it was and the customer can try again.
-                session.messages.pop()
+                # The turn failed: put the conversation back exactly as it was,
+                # so the customer can try again. The agent extends the
+                # conversation in place, so a failure after a tool call leaves
+                # more than the customer's message behind -- an assistant
+                # tool_use with no result would make every later turn fail.
+                del session.messages[before:]
+                session.state.clear()
+                session.state.update(saved_state)
                 raise HTTPException(502, "the agent could not complete that request") from None
             session.turns += 1
             cost = result.cost()

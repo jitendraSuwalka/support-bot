@@ -12,17 +12,18 @@ a chunk's fused score is the sum over rankings of 1 / (k + rank). Only the
 ranks are used, never the raw scores, so the two methods' incomparable
 scales (a BM25 share of ceiling; a cosine) never have to be reconciled, and
 a chunk that both methods rank highly rises above one that only one method
-likes. k = 60 is the value from the paper; it damps the advantage of rank 1
-over rank 2 so that agreement between methods matters more than either
-method's top pick.
+likes. k damps the advantage of rank 1 over rank 2 so that agreement between
+methods matters more than either method's top pick. The paper's k = 60 is
+the default here; the agent uses k = 20, chosen by a sweep on the labelled
+set (``rrf_k`` in config.py, reports/retrieval.json).
 
 Fusion has one blind spot, found by the evaluation: a chunk that only one
 method finds scores below chunks that both find weakly. Asked about a missed
 call from 0161 496 0170, BM25 put the Manchester office first -- it holds the
 number -- while the vector index, to which a phone number means nothing,
 returned the security guidance about unexpected calls, which BM25 also
-matched on "call". Fused, the one chunk with the answer fell to sixth and
-out of the candidates once the lexical side was widened. So the lexical
+matched on "call". Fused, once the lexical side was widened, the one chunk
+with the answer fell out of the six candidates. So the lexical
 side's first choice is guaranteed a place within the first
 ``lexical_first_within`` results: an exact string -- a number, a reference,
 a postcode -- is the one thing fusion can lose, and the reranker still

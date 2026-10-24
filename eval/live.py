@@ -307,9 +307,10 @@ def summarise(rows: list[Observation]) -> dict:
         "tokens": {
             "input": sum(row.input_tokens for row in scored),
             "output": sum(row.output_tokens for row in scored),
-            "per_case_mean": round(
-                sum(row.input_tokens + row.output_tokens for row in scored) / len(scored)
-            )
+            # Every token the run processed, cache reads and writes included:
+            # the API's input count leaves cached tokens out, so without them a
+            # cached run looks smaller than it is (they are cheaper, not fewer).
+            "per_case_mean": round(sum(_all_tokens(row) for row in scored) / len(scored))
             if scored
             else None,
             "cache_read": sum(row.cache_read_tokens for row in scored),
@@ -317,6 +318,10 @@ def summarise(rows: list[Observation]) -> dict:
         },
         "cost_usd": cost_summary(scored),
     }
+
+
+def _all_tokens(row) -> int:
+    return row.input_tokens + row.output_tokens + row.cache_read_tokens + row.cache_write_tokens
 
 
 def cost_summary(rows: list[Observation]) -> dict:

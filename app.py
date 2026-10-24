@@ -21,6 +21,7 @@ ARCHITECTURE NOTE
 Run:  python app.py      then open the local URL it prints
 """
 
+import copy
 import uuid
 
 import gradio as gr
@@ -74,6 +75,9 @@ def build_status(result):
     elif "citations_clean" in kinds:
         chips.append(("ok", "Figures verified"))
 
+    if "citation_fallback" in kinds:
+        chips.append(("warn", "Replaced with a fixed reply"))
+
     if "verified" in kinds:
         chips.append(("ok", "Grounded in evidence"))
     elif "unsupported" in kinds:
@@ -101,6 +105,10 @@ def build_status(result):
 # =========================================================
 
 EMPTY_EVIDENCE = "_Evidence appears here once the agent has looked something up._"
+REQUEST_FAILED_REPLY = (
+    "Sorry, something went wrong on our side and I could not answer that. "
+    f"Please try again, or call the switchboard on {agent.SWITCHBOARD}."
+)
 
 
 def respond(question, history, conversation, state):
@@ -109,20 +117,24 @@ def respond(question, history, conversation, state):
         return history, "", conversation, state, "", EMPTY_EVIDENCE, ""
 
     history = history + [{"role": "user", "content": question}]
-    conversation.append({"role": "user", "content": question})
-
     # The policy state lives for the conversation, so it carries the session id
     # the turn log groups turns by; Reset starts a new state and a new session.
     session_id = state.setdefault("session_id", uuid.uuid4().hex)
+    # What the conversation was before this turn, to put back if it fails.
+    before, saved_state = len(conversation), copy.deepcopy(state)
+    conversation.append({"role": "user", "content": question})
     try:
         result, _ = observability.run_logged_turn(conversation, state, session_id=session_id)
     except Exception as error:
-        history.append(
-            {
-                "role": "assistant",
-                "content": f"The agent could not complete that request. Details: `{error}`",
-            }
-        )
+        # Put the conversation back as it was (the agent extends it in place,
+        # so a failure after a tool call would leave a tool request without
+        # its result), and show a plain message. The trace panel, on the same
+        # page, names the exception's type; its text, which can carry anything,
+        # goes only to the turn log, and only where content logging is on.
+        del conversation[before:]
+        state.clear()
+        state.update(saved_state)
+        history.append({"role": "assistant", "content": REQUEST_FAILED_REPLY})
         return (
             history,
             "",
@@ -130,7 +142,7 @@ def respond(question, history, conversation, state):
             state,
             '<span class="chip chip-bad">Request failed</span>',
             EMPTY_EVIDENCE,
-            str(error),
+            f"```\nturn failed: {type(error).__name__}\n```",
         )
 
     history.append({"role": "assistant", "content": result.answer})
@@ -305,6 +317,6 @@ if __name__ == "__main__":
     # the one that pays for loading (and, on a new machine, downloading) the
     # embedding model. The trace line it logs is printed, as there is no run.
     observability.configure_logging(agent.SETTINGS)
-    print("Preparing the document index (first run: downloads the embedding model, about 70 MB)")
+    print("Preparing the document index (first run: downloads the embedding model, 67 MB)")
     agent.get_retriever()
     demo.queue(default_concurrency_limit=4).launch(theme=THEME, css=CSS)

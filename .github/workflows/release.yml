@@ -1,0 +1,175 @@
+# Release: pushing a version tag (v2.0.0) publishes that version.
+#
+#   git tag -a v2.0.0 -m "support-bot 2.0.0"
+#   git push origin v2.0.0
+#
+# Nothing is published unless every step before it passes: the tag must agree
+# with the code and the changelog, the tests must pass on the tagged commit,
+# and the image built from it must pass the same smoke test as CI, reporting
+# the tagged version. Then the image goes to the GitHub Container Registry as
+# ghcr.io/<owner>/support-bot:<version> and :latest, and the GitHub Release is
+# created with notes from CHANGELOG.md and the measured headline numbers.
+# Only GitHub's own token is used; no secret has to be added to the repository.
+#
+# Once, after the first release: the GitHub Container Registry makes a new
+# package private, whatever the repository's visibility. Open the package
+# (Packages on the repository page) > Package settings > Change visibility >
+# Public, or nobody else can pull the image. The last step below warns until
+# that is done.
+#
+# Run it from the Actions tab instead ("Run workflow") for a rehearsal: every
+# step for the version in pyproject.toml, except pushing the image and
+# creating the release. The notes it would publish appear on the run's page.
+
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Two runs for the same tag never publish at the same time.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Check the tag, lint and test
+    runs-on: ubuntu-latest
+    env:
+      PYTHONUTF8: "1"
+    outputs:
+      tag: ${{ steps.which.outputs.tag }}
+    steps:
+      - name: Check out the commit
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.lock
+
+      # A pushed tag is the version released; a rehearsal takes the version
+      # the code declares.
+      - name: Decide which version this run releases
+        id: which
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            tag="$GITHUB_REF_NAME"
+          else
+            tag="v$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Releasing $tag ($GITHUB_EVENT_NAME)"
+
+      # First, before installing anything: a tag that disagrees with the code
+      # or the changelog stops here, with every problem named.
+      - name: Hold the tag to the code and the changelog
+        env:
+          TAG: ${{ steps.which.outputs.tag }}
+        run: python -m scripts.release_notes "$TAG"
+
+      - name: Install the locked dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.lock
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Check formatting
+        run: ruff format --check .
+
+      - name: Run the test suite
+        run: pytest
+
+  publish:
+    name: Build, smoke-test and publish
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # create the GitHub Release
+      packages: write   # push to the GitHub Container Registry
+    env:
+      TAG: ${{ needs.verify.outputs.tag }}
+    steps:
+      - name: Check out the commit
+        uses: actions/checkout@v7
+
+      # Registry names must be lower case; the owner's GitHub name need not be.
+      - name: Name the image and the version
+        run: |
+          echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+          echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
+
+      - name: Write the release notes
+        run: |
+          python3 -m scripts.release_notes "$TAG" --image "$IMAGE" --out release-notes.md
+          cat release-notes.md >> "$GITHUB_STEP_SUMMARY"
+
+      # The labels link the package to this repository and record exactly
+      # which commit and version the image was built from.
+      - name: Build the image
+        run: |
+          docker build \
+            --label "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
+            --label "org.opencontainers.image.revision=${GITHUB_SHA}" \
+            --label "org.opencontainers.image.version=${VERSION}" \
+            --label "org.opencontainers.image.licenses=MIT" \
+            --label "org.opencontainers.image.description=Grounded customer-support agent as an HTTP service" \
+            --tag "${IMAGE}:${VERSION}" \
+            --tag "${IMAGE}:latest" \
+            .
+
+      - name: Smoke-test the image, expecting the version being released
+        run: EXPECT_VERSION="$VERSION" bash scripts/container_smoke_test.sh "${IMAGE}:${VERSION}"
+
+      - name: Log in to the GitHub Container Registry
+        if: github.event_name == 'push'
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$REGISTRY_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+
+      - name: Push the image
+        if: github.event_name == 'push'
+        run: |
+          docker push "${IMAGE}:${VERSION}"
+          docker push "${IMAGE}:latest"
+
+      - name: Create the GitHub Release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$TAG" \
+            --verify-tag \
+            --title "support-bot ${VERSION}" \
+            --notes-file release-notes.md
+
+      # A new package is private until its visibility is changed by hand (see
+      # the top of this file); check as a stranger would, and warn if it is.
+      - name: Check that anyone can pull the image
+        if: github.event_name == 'push'
+        run: |
+          docker logout ghcr.io
+          docker rmi "${IMAGE}:${VERSION}" "${IMAGE}:latest" > /dev/null
+          if docker pull "${IMAGE}:${VERSION}" > /dev/null 2>&1; then
+            echo "Anyone can pull ${IMAGE}:${VERSION}."
+          else
+            echo "::warning title=Image not public::Nobody else can pull ${IMAGE}:${VERSION} yet. Make the package public: Packages > support-bot > Package settings > Change visibility."
+          fi
+
+      - name: Say that a rehearsal published nothing
+        if: github.event_name != 'push'
+        run: |
+          {
+            echo ""
+            echo "---"
+            echo "Rehearsal: every check passed for ${TAG}. Nothing was pushed and no release was created."
+          } >> "$GITHUB_STEP_SUMMARY"
