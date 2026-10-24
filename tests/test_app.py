@@ -93,3 +93,8 @@ def test_a_failed_turn_puts_the_conversation_back_and_shows_no_error_text(monkey
     assert history[-1]["content"] == app.REQUEST_FAILED_REPLY
     assert "secret" not in history[-1]["content"] and "Request failed" in status
     assert "RuntimeError" in trace  # for whoever runs the app, in the trace panel
+
+
+def test_a_reply_replaced_by_the_last_line_check_says_so():
+    chips = labels(app.build_status(make_result(kinds=["citation_fallback"])))
+    assert ("warn", "Replaced with a fixed reply") in chips

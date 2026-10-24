@@ -179,6 +179,7 @@ GUARD_EVENTS = {
     "evidence_guard_failed": "evidence_failed",
     "citation_violation": "citation_rewrite",
     "citations_remaining": "citation_remaining",
+    "citation_fallback": "citation_fallback",
     "unsupported": "factcheck_rewrite",
     "verification_unavailable": "factcheck_unavailable",
     "policy_escalate": "policy_escalation",
@@ -402,6 +403,22 @@ def normalise_number(text):
     return re.sub(r"\D", "", text)
 
 
+def customer_numbers(text):
+    """The numbers a customer wrote that may be repeated back to them.
+
+    An age, an amount or a year the customer gave can be used in the answer
+    ("I'm 70. Does the cash ISA cap apply to me?"). A phone number cannot:
+    repeating it would lend the firm's authority to a number the customer
+    was given by someone else -- the classic way a fraudster's line is made
+    to look genuine. Anything that looks like a phone number (ten or more
+    digits, or seven or more starting with 0) is left out, as customer
+    links are.
+    """
+    return {
+        n for n in number_tokens(text) if len(n) < 10 and not (n.startswith("0") and len(n) >= 7)
+    }
+
+
 def number_tokens(text):
     """Every number in a text, as a set of digit strings.
 
@@ -451,7 +468,7 @@ def check_citations(answer, evidence, customer_text=""):
         else:
             violations.append(f"URL '{raw}' does not appear in the evidence at all.")
 
-    evidence_numbers = number_tokens(evidence) | number_tokens(customer_text)
+    evidence_numbers = number_tokens(evidence) | customer_numbers(customer_text)
     for raw in NUMBER_PATTERN.findall(answer):
         digits = normalise_number(raw)
         if not digits or digits in NUMBER_ALLOWLIST:
@@ -672,27 +689,30 @@ CLIENT_QUERIES = {
 }
 
 
-def _alnum(text):
-    return re.sub(r"[^A-Z0-9]", "", text.upper())
+# A case reference as a customer might type it: FW-1002, fw 1002, FW1002.
+REFERENCE_PATTERN = re.compile(r"\bFW[\s-]?(\d{4})\b", re.IGNORECASE)
+
+
+def references_in(text):
+    """Every complete case reference in a text, in the form FW-1002."""
+    return {f"FW-{digits}" for digits in REFERENCE_PATTERN.findall(text)}
 
 
 def reference_was_given(reference, messages):
     """Did the customer type this reference, in full, at any point?
 
-    The baseline evaluation (reports/live.json, status-06) had the model
-    complete 'any news on 1002?' to FW-1002 and read that case's status out.
-    A guessed reference is another client's status waiting to happen, so a
-    reference the customer did not give is not looked up, whatever the model
-    decides. Compared without punctuation or case: 'fw 1002' is FW-1002.
+    The baseline evaluation (reports/live-baseline.json, status-06) had the
+    model complete 'any news on 1002?' to FW-1002 and read that case's status
+    out. A guessed reference is another client's status waiting to happen, so
+    a reference the customer did not give is not looked up, whatever the
+    model decides. A reference is matched whole, whatever its punctuation or
+    case: 'fw 1002' is FW-1002, but 'FW-10021' is not FW-1002.
     """
-    wanted = _alnum(reference)
-    if not wanted:
+    wanted = references_in(reference.strip())
+    if len(wanted) != 1:
         return False
-    return any(
-        wanted in _alnum(m["content"])
-        for m in messages
-        if m.get("role") == "user" and isinstance(m.get("content"), str)
-    )
+    given = set().union(*(references_in(text) for text in customer_messages(messages)))
+    return wanted <= given
 
 
 REFERENCE_NOT_GIVEN = (
@@ -1434,8 +1454,55 @@ def groundedness_check(answer, messages, evidence) -> tuple[str, list[str]]:
     return answer, notes
 
 
+# Fixed replies for the last-line check: what the customer sees when a reply
+# that no other guard reads carries a number or link the evidence lacks.
+SAFE_REPLIES = {
+    "greeting": "Hello! How can I help you today?",
+    "clarification": (
+        "Could you tell me a little more about what you need, so I can find the right information?"
+    ),
+    "escalation": (
+        "I don't have the information to answer that, so I've passed your question to a "
+        "qualified adviser, who will be in touch. You can also call the switchboard on "
+        f"{SWITCHBOARD}."
+    ),
+}
+
+
+def last_line_check(answer, messages, evidence_parts, kind) -> tuple[str, list[str]]:
+    """The deterministic check on a reply the other guards never read.
+
+    The citation guard and the fact-check read an answer drawn from evidence.
+    Three replies are written by the model outside that path: a greeting
+    (no evidence, so the guard had nothing to compare against), a clarifying
+    question asked through the tool, and the rewrite after a policy
+    escalation. An independent review showed a rewrite that invented a phone
+    number reaching the customer unchecked. Each of the three now meets the
+    same exact-match check -- against the evidence, the switchboard number
+    and what the customer wrote -- and a reply that fails is replaced by a
+    fixed one rather than rewritten again, because a fixed reply cannot fail.
+    """
+    if not CHECK_CITATIONS:
+        return answer, []
+    evidence = "\n\n".join([*evidence_parts, SWITCHBOARD])
+    violations = check_citations(answer, evidence, "\n".join(customer_messages(messages)))
+    if not violations:
+        return answer, []
+    log(
+        "citation_fallback",
+        f"UNSUPPORTED DETAIL in the {kind} reply — replaced with a fixed reply",
+        violations=violations,
+        reply=kind,
+    )
+    safe = SAFE_REPLIES[kind]
+    if messages and messages[-1].get("role") == "assistant":
+        messages[-1] = {"role": "assistant", "content": [{"type": "text", "text": safe}]}
+    return safe, [f"{kind} replaced with a fixed reply after citation check"]
+
+
 def escalation_policy(answer, messages, evidence_parts, model_escalated, state, ended=None):
-    """Policy runs last, on the final wording, and cannot be overridden."""
+    """Policy runs last, on the final wording, and cannot be overridden; then
+    the last-line check reads any reply the other guards did not."""
     notes: list[str] = []
     answer, forced = enforce_escalation(answer, evidence_parts, model_escalated, state, ended)
     if forced:
@@ -1444,7 +1511,15 @@ def escalation_policy(answer, messages, evidence_parts, model_escalated, state, 
             messages[-1] = {"role": "assistant", "content": [{"type": "text", "text": answer}]}
         else:
             answer = rewrite_after_escalation(messages)
+            answer, more = last_line_check(answer, messages, evidence_parts, "escalation")
+            notes += more
         notes.append("escalated by policy")
+    elif ended == "clarified":
+        answer, more = last_line_check(answer, messages, evidence_parts, "clarification")
+        notes += more
+    elif ended is None and not evidence_parts:
+        answer, more = last_line_check(answer, messages, evidence_parts, "greeting")
+        notes += more
     return answer, notes, forced
 
 

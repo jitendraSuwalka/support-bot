@@ -48,7 +48,7 @@ python app.py                  # web interface, as in the recording above
 uvicorn api:app                # the same agent as an HTTP service; docs at /docs
 docker build -t support-bot .  # the service as a container (CI builds and tests it)
 python agent.py                # same agent, in the terminal
-pytest                         # 423 tests, under twenty seconds, no API calls, no network
+pytest                         # 435 tests, under twenty seconds, no API calls, no network
 ```
 
 > **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
@@ -149,6 +149,8 @@ user question
      ├─ CHECK 1: citation guard — deterministic           (URLs and numbers)
      ├─ CHECK 2: groundedness — independent LLM           (semantic drift; any rewrite meets CHECK 1 again)
      ├─ CHECK 3: escalation policy — deterministic        (clarify once, then escalate)
+     ├─ CHECK 4: last-line check — deterministic          (greetings, clarifying questions and the
+     │                                                     post-escalation rewrite; a fixed reply if they fail)
      │
      └─ answer + audit trail of raw evidence + one JSON log line (behaviour, guards, latency, cost)
 ```
@@ -612,8 +614,10 @@ countable, and impossible to half-do.*
 happen. The customer never typed `FW-1002`; the model did.
 
 **Fix.** `look_up_client_query` runs only for a reference the customer typed in
-full somewhere in the conversation, compared without case or punctuation.
-Otherwise it returns `REFERENCE_NOT_GIVEN`, which the policy treats as
+full somewhere in the conversation, matched whole whatever its case or
+punctuation: *fw 1002* is `FW-1002`, but *FW-10021* is not. (An independent
+review caught the first version accepting the reference anywhere inside a
+longer one.) Otherwise it returns `REFERENCE_NOT_GIVEN`, which the policy treats as
 unresolved: one question back is allowed, a declarative reply is escalated.
 Enforced in code; the prompt also says never to suggest a reference.
 
@@ -652,9 +656,31 @@ would have counted as things the customer said.
 
 **Fix.** The agent's instructions are now content blocks, so a plain string
 in the user role is by construction the customer's. Numbers the customer
-wrote may be repeated back; URLs they wrote may not, because repeating a link
-a customer pasted lends it the firm's authority. A test proves an instruction
-that names an unsupported number does not make it the customer's.
+wrote may be repeated back — an age, an amount, a year — but not a phone
+number or a URL, because repeating either lends the firm's authority to
+something a fraudster may have given the customer. (The first version
+allowed any number the customer wrote; an independent review showed it
+repeating a customer's "fraud line" back as genuine.) A test proves an
+instruction that names an unsupported number does not make it the
+customer's.
+
+### 15. Replies no guard read
+
+**Symptom.** An independent review scripted the rewrite that follows a policy
+escalation to say *"Our mortgage desk is on 0999 123 4567"*. It reached the
+customer with no warning.
+
+**Cause.** The citation guard and the fact-check read answers drawn from
+evidence. Three replies are written outside that path: the rewrite after a
+policy escalation, a clarifying question asked through the tool, and a
+greeting, which has no evidence, so the guard returned early with nothing to
+compare against.
+
+**Fix.** A last-line check runs the same exact-match test on all three,
+against the evidence, the switchboard number and what the customer wrote. A
+reply that fails is replaced by a fixed one rather than rewritten again,
+because a fixed reply cannot fail, and the web interface shows *Replaced with
+a fixed reply*. Tested on both implementations.
 
 ---
 
@@ -726,7 +752,7 @@ Caching cut the cost of an answer by 58%, from $0.0154 to $0.0064.
 
 ## Testing strategy
 
-`tests/` — **423 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
+`tests/` — **435 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
 Eight further tests call the real API and run only on request: `pytest -m live`;
 two download and run the real embedding model: `pytest -m model`.
 
@@ -937,7 +963,7 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `rag/` | `corpus.py` chunker, `embeddings.py`, `store.py` (Qdrant), `lexical.py` (BM25), `retrieval.py` (fusion), `index.py` (CLI) |
 | `eval/` | `questions.yaml` (169 labelled cases), `dataset.py` validator, `retrieval.py` metrics and sweep, `live.py` end-to-end scorer, `report.py` README tables |
 | `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json`, `caching-off.json`, `caching-on.json` |
-| `tests/` | 423 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
+| `tests/` | 435 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `api.py` | FastAPI service — `/chat`, `/sessions/{id}`, `/health`, `/ready`, OpenAPI docs at `/docs` |
 | `Dockerfile` / `.dockerignore` | The service as a container: model and index baked in, non-root, health-checked, allow-listed contents |

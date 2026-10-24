@@ -75,6 +75,9 @@ def build_status(result):
     elif "citations_clean" in kinds:
         chips.append(("ok", "Figures verified"))
 
+    if "citation_fallback" in kinds:
+        chips.append(("warn", "Replaced with a fixed reply"))
+
     if "verified" in kinds:
         chips.append(("ok", "Grounded in evidence"))
     elif "unsupported" in kinds:

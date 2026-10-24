@@ -106,3 +106,21 @@ def test_a_url_the_customer_wrote_is_still_not_repeated():
     customer = "Is fernhill-wealth-login.example/verify really you?"
     answer = "Yes, fernhill-wealth-login.example/verify is ours."
     assert agent.check_citations(answer, "Our site is fernhillwealth.example", customer) != []
+
+
+def test_a_phone_number_the_customer_gives_is_still_not_evidence():
+    """Repeating it would lend the firm's authority to a number a fraudster
+    may have given them."""
+    evidence = "Call the switchboard on 0117 496 0100."
+    asked = "Is 0117 496 9999 your fraud line?"
+    answer = "Yes, our fraud line is 0117 496 9999."
+    assert agent.check_citations(answer, evidence, customer_text=asked) == [
+        "Number '0117 496 9999' does not appear in the evidence."
+    ]
+    international = "They said +44 117 496 9999"
+    assert "441174969999" not in agent.customer_numbers(international)
+
+
+def test_ages_amounts_and_years_the_customer_gives_may_be_repeated():
+    said = "I'm 70, I have £1,000,000 saved, and I opened it in 2019."
+    assert agent.customer_numbers(said) == {"70", "1000000", "2019"}
