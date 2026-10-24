@@ -15,6 +15,13 @@ the version.
   so it reads the cached tools and system prompt like every other main-model
   call, instead of writing a cache entry of its own.
 
+### Added
+
+- `python -m eval.live --workers 4` runs four cases at a time, with the same
+  rows in the same order, so a full evaluation takes about a quarter of the
+  wait. Searches of the local index take a lock, which the HTTP service's
+  thread pool needed too.
+
 ### Fixed
 
 - The release notes ran on past their own entry when the next heading had no

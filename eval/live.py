@@ -29,6 +29,7 @@ This costs money: about four model calls per case. Run it with
     python -m eval.live --ids isa-01,status-01
     python -m eval.live --kind advice
     python -m eval.live --limit 10
+    python -m eval.live --workers 4     # four cases at a time: same results, a quarter of the wait
 
 When a label is corrected after a run, the run's rows are still what the
 agent did; only the scoring is stale. ``--rescore reports/live-baseline.json``
@@ -43,9 +44,11 @@ import argparse
 import json
 import statistics
 import sys
+import threading
 import time
 from collections import Counter, defaultdict
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 
@@ -386,21 +389,42 @@ def render(summary: dict) -> str:
 
 
 def evaluate_cases(
-    cases: list[Case], runner: Runner = agent.run_agent, progress=None
+    cases: list[Case], runner: Runner = agent.run_agent, progress=None, workers: int = 1
 ) -> list[Observation]:
-    rows = []
-    for index, case in enumerate(cases, start=1):
+    """Every case through the runner, rows in case order.
+
+    With ``workers`` above one, that many cases run at once. Each case is its
+    own conversation with its own policy state, so they are independent; the
+    model calls dominate the time, so four workers take about a quarter of it.
+    Progress lines appear in the order cases finish, numbered as they do.
+    """
+    rows: list[Observation | None] = [None] * len(cases)
+    done = 0
+    lock = threading.Lock()
+
+    def one(index: int, case: Case) -> None:
+        nonlocal done
         row = run_case(case, runner)
-        rows.append(row)
-        if progress:
-            mark = "ok " if row.behaviour_ok and row.facts_ok is not False else "BAD"
-            progress(
-                f"[{index:3}/{len(cases)}] {mark} {case.id:18} expected {case.expected:8} "
-                f"observed {row.observed:8} {row.seconds:5.1f}s"
-                + (f"  missing {row.missing_facts}" if row.missing_facts else "")
-                + (f"  {row.error}" if row.error else "")
-            )
-    return rows
+        with lock:
+            rows[index] = row
+            done += 1
+            if progress:
+                mark = "ok " if row.behaviour_ok and row.facts_ok is not False else "BAD"
+                progress(
+                    f"[{done:3}/{len(cases)}] {mark} {case.id:18} expected {case.expected:8} "
+                    f"observed {row.observed:8} {row.seconds:5.1f}s"
+                    + (f"  missing {row.missing_facts}" if row.missing_facts else "")
+                    + (f"  {row.error}" if row.error else "")
+                )
+
+    if workers <= 1:
+        for index, case in enumerate(cases):
+            one(index, case)
+    else:
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            for future in [pool.submit(one, i, case) for i, case in enumerate(cases)]:
+                future.result()
+    return [row for row in rows if row is not None]
 
 
 def select(cases: list[Case], ids: str | None, kind: str | None, limit: int | None) -> list[Case]:
@@ -424,6 +448,9 @@ def main(argv: list[str] | None = None, runner: Runner = agent.run_agent) -> int
     parser.add_argument("--limit", type=int, help="run the first N selected cases")
     parser.add_argument("--out", type=Path, default=DEFAULT_REPORT, help="where to write the JSON")
     parser.add_argument(
+        "--workers", type=int, default=1, help="cases run at once (default 1; 4 is a good choice)"
+    )
+    parser.add_argument(
         "--rescore", type=Path, help="re-score this report against the current labels, in place"
     )
     args = parser.parse_args(argv)
@@ -439,7 +466,9 @@ def main(argv: list[str] | None = None, runner: Runner = agent.run_agent) -> int
     if not cases:
         raise SystemExit("no cases selected")
     started = time.perf_counter()
-    rows = evaluate_cases(cases, runner, progress=lambda line: print(line, file=sys.stderr))
+    rows = evaluate_cases(
+        cases, runner, progress=lambda line: print(line, file=sys.stderr), workers=args.workers
+    )
     summary = summarise(rows)
     report = {
         "generated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -447,6 +476,7 @@ def main(argv: list[str] | None = None, runner: Runner = agent.run_agent) -> int
         "agent_impl": agent.SETTINGS.agent_impl,
         "settings": agent.SETTINGS.describe(),
         "selection": {"ids": args.ids, "kind": args.kind, "limit": args.limit},
+        "workers": args.workers,
         "seconds": round(time.perf_counter() - started, 1),
         "summary": summary,
         "rows": [asdict(row) for row in rows],

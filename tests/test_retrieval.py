@@ -211,3 +211,21 @@ def test_the_agent_builds_its_retriever_once_and_closes_it_at_exit(monkeypatch, 
     agent.close_retriever()
     assert first.store.closed and agent._RETRIEVER is None
     agent.close_retriever()  # idempotent
+
+
+def test_a_search_holds_the_retrieval_lock(monkeypatch):
+    """The service answers on a thread pool and the evaluation runs cases in
+    parallel; the local index is one in-process store, searched one at a time."""
+    retriever = agent.get_retriever()
+    real_search = retriever.search
+    held = []
+
+    def search(*args, **kwargs):
+        held.append(agent._RETRIEVAL_LOCK.locked())
+        return real_search(*args, **kwargs)
+
+    monkeypatch.setattr(retriever, "search", search)
+    monkeypatch.setattr(agent, "USE_RERANK", False)
+    monkeypatch.setattr(agent, "expand_query", lambda query: [])
+    agent.search_knowledge_base("ISA allowance")
+    assert held == [True]

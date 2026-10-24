@@ -66,6 +66,7 @@ import contextvars
 import json
 import logging
 import re
+import threading
 from dataclasses import dataclass, field
 
 from anthropic import Anthropic
@@ -494,6 +495,11 @@ def check_citations(answer, evidence, customer_text=""):
 # an LLM rerank reads them and keeps the ones that answer the question.
 
 _RETRIEVER: HybridRetriever | None = None
+# One search at a time: the HTTP service answers requests on a thread pool and
+# the evaluation can run cases in parallel, while the local index is a single
+# in-process store. A search takes milliseconds; the model calls around it,
+# which take seconds, still run side by side.
+_RETRIEVAL_LOCK = threading.Lock()
 
 
 def get_retriever() -> HybridRetriever:
@@ -505,16 +511,17 @@ def get_retriever() -> HybridRetriever:
     app.py warms this up at start rather than on the first question.
     """
     global _RETRIEVER
-    if _RETRIEVER is None:
-        _RETRIEVER, report = open_retriever(SETTINGS)
-        atexit.register(close_retriever)
-        log(
-            "index",
-            f"index ready: {report.total} chunks ({report.added} embedded, "
-            f"{report.removed} removed)",
-            **report.as_dict(),
-        )
-    return _RETRIEVER
+    with _RETRIEVAL_LOCK:
+        if _RETRIEVER is None:
+            _RETRIEVER, report = open_retriever(SETTINGS)
+            atexit.register(close_retriever)
+            log(
+                "index",
+                f"index ready: {report.total} chunks ({report.added} embedded, "
+                f"{report.removed} removed)",
+                **report.as_dict(),
+            )
+        return _RETRIEVER
 
 
 def close_retriever() -> None:
@@ -641,7 +648,8 @@ def search_knowledge_base(query):
     if added:
         log("expanded", f"expanded +{len(added)}: {', '.join(added[:8])}", terms=added)
 
-    results = retriever.search(query, k=CANDIDATES, extra_terms=expanded)
+    with _RETRIEVAL_LOCK:
+        results = retriever.search(query, k=CANDIDATES, extra_terms=expanded)
     candidates = [result for result in results if clears_floor(result)]
 
     if not candidates:

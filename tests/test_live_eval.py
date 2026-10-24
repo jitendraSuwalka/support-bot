@@ -284,6 +284,36 @@ def test_the_cli_runs_the_selection_through_the_runner_and_writes_the_report(tmp
     assert "report written to" in captured.out and "[  1/3]" in captured.err
 
 
+def test_cases_run_in_parallel_give_the_same_rows_in_case_order():
+    """Four workers finish cases in any order; the rows come back in case order
+    and identical to a run one case at a time."""
+    import random
+    import time as clock
+
+    cases = live.select(live.load_cases(), None, None, 12)
+
+    def runner(messages, state):
+        clock.sleep(random.uniform(0, 0.02))  # finish out of order
+        return result(f"answer to {messages[-1]['content']}")
+
+    one_at_a_time = live.evaluate_cases(cases, runner)
+    lines = []
+    in_parallel = live.evaluate_cases(cases, runner, progress=lines.append, workers=4)
+    strip = [{**asdict(r), "seconds": 0} for r in one_at_a_time]
+    assert [{**asdict(r), "seconds": 0} for r in in_parallel] == strip
+    assert [r.id for r in in_parallel] == [c.id for c in cases]
+    assert sorted(int(line[1:4]) for line in lines) == list(range(1, 13))
+
+
+def test_the_report_records_how_many_workers_ran(tmp_path):
+    out = tmp_path / "live.json"
+    live.main(
+        ["--ids", "greeting-01", "--out", str(out), "--workers", "2"],
+        runner=lambda m, s: result("Hello!"),
+    )
+    assert json.loads(out.read_text(encoding="utf-8"))["workers"] == 2
+
+
 # --- re-scoring an earlier run against corrected labels --------------------------------------
 
 
