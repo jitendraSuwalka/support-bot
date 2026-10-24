@@ -33,6 +33,9 @@ the version.
   of the same cases with one component switched off, or the main model
   changed, against everything switched on.
 
+- `python -m eval.live --set SUPPORT_BOT_NAME=value` runs the evaluation
+  with a setting changed, in a fresh process, refusing a name that is not a
+  setting, so an ablation is one command on any platform.
 - `python -m eval.label_factcheck` shows a fixed sample of the fact-checker's
   forced rewrites, with the claims it flagged, the draft and the evidence,
   and records a person's verdict on each (needed, a false alarm, unsure),

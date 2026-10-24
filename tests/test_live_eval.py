@@ -443,3 +443,38 @@ def test_a_fact_check_rewrite_is_recorded_with_its_claims_draft_and_evidence():
     }
     assert observe(case(), result("x"), 1.0).factcheck is None
     assert summarise([row])["factcheck_rewrites"] == 1
+
+
+# --- running with a setting changed ------------------------------------------------------
+
+
+def test_set_runs_a_fresh_process_with_the_setting_and_the_other_arguments(monkeypatch):
+    seen = {}
+
+    def fake_run(command, env):
+        seen["command"], seen["env"] = command, env
+
+        class Done:
+            returncode = 0
+
+        return Done()
+
+    monkeypatch.setattr(live.subprocess, "run", fake_run)
+    argv = ["--set", "SUPPORT_BOT_USE_RERANK=false", "--workers", "4", "--out", "x.json"]
+    assert live.main(argv) == 0
+    assert seen["command"][1:] == ["-m", "eval.live", "--workers", "4", "--out", "x.json"]
+    assert seen["env"]["SUPPORT_BOT_USE_RERANK"] == "false"
+
+
+def test_set_refuses_an_unknown_name_or_a_bad_value_before_spending_anything():
+    with pytest.raises(SystemExit, match="SUPPORT_BOT_NAME=value"):
+        live.main(["--set", "USE_RERANK=false"])
+    with pytest.raises(SystemExit, match="--set"):
+        live.main(["--set", "SUPPORT_BOT_USE_RERANK=perhaps"])
+    with pytest.raises(SystemExit, match="no setting called SUPPORT_BOT_USE_RERNK"):
+        live.main(["--set", "SUPPORT_BOT_USE_RERNK=false"])
+
+
+def test_without_set_keeps_every_other_argument():
+    argv = ["--set", "A=1", "--limit", "3", "--set=B=2", "--out", "o.json"]
+    assert live.without_set(argv) == ["--limit", "3", "--out", "o.json"]

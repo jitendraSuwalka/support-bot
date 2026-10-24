@@ -30,6 +30,7 @@ This costs money: about four model calls per case. Run it with
     python -m eval.live --kind advice
     python -m eval.live --limit 10
     python -m eval.live --workers 4     # four cases at a time: same results, a quarter of the wait
+    python -m eval.live --set SUPPORT_BOT_USE_RERANK=false --out reports/ablations/no-rerank.json
 
 When a label is corrected after a run, the run's rows are still what the
 agent did; only the scoring is stale. ``--rescore reports/live-baseline.json``
@@ -42,7 +43,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import statistics
+import subprocess
 import sys
 import threading
 import time
@@ -485,6 +488,48 @@ def select(cases: list[Case], ids: str | None, kind: str | None, limit: int | No
     return cases
 
 
+def without_set(argv: list[str]) -> list[str]:
+    """The arguments with every --set NAME=VALUE taken out."""
+    kept, skip = [], False
+    for arg in argv:
+        if skip:
+            skip = False
+        elif arg == "--set":
+            skip = True
+        elif not arg.startswith("--set="):
+            kept.append(arg)
+    return kept
+
+
+def run_with_settings(assignments: list[str], argv: list[str]) -> int:
+    """Run the evaluation again in a fresh process with some settings changed.
+
+    The agent reads its settings once, when it is imported, so a changed
+    setting needs a new process: this one checks the names and values, then
+    starts ``python -m eval.live`` with them in its environment and the rest
+    of the arguments unchanged. The report records the settings it ran with.
+    """
+    from dataclasses import fields
+
+    from config import ENV_PREFIX, Settings
+
+    known = {ENV_PREFIX + field.name.upper() for field in fields(Settings)}
+    changes = {}
+    for assignment in assignments:
+        name, sep, value = assignment.partition("=")
+        if not sep or not name.startswith("SUPPORT_BOT_"):
+            raise SystemExit(f"--set wants SUPPORT_BOT_NAME=value, got {assignment!r}")
+        if name not in known:  # a typo would otherwise run the full agent, unchanged
+            raise SystemExit(f"--set: no setting called {name}")
+        changes[name] = value
+    try:
+        Settings.from_env({**os.environ, **changes})
+    except ValueError as error:
+        raise SystemExit(f"--set: {error}") from None
+    command = [sys.executable, "-m", "eval.live", *without_set(argv)]
+    return subprocess.run(command, env={**os.environ, **changes}).returncode
+
+
 def main(argv: list[str] | None = None, runner: Runner = agent.run_agent) -> int:
     parser = argparse.ArgumentParser(prog="python -m eval.live", description=__doc__)
     parser.add_argument("--ids", help="comma-separated case ids to run")
@@ -497,7 +542,18 @@ def main(argv: list[str] | None = None, runner: Runner = agent.run_agent) -> int
     parser.add_argument(
         "--rescore", type=Path, help="re-score this report against the current labels, in place"
     )
-    args = parser.parse_args(argv)
+    parser.add_argument(
+        "--set",
+        action="append",
+        default=[],
+        metavar="NAME=VALUE",
+        help="run with a setting changed, e.g. SUPPORT_BOT_USE_RERANK=false (repeatable)",
+    )
+    raw = sys.argv[1:] if argv is None else list(argv)
+    args = parser.parse_args(raw)
+
+    if args.set:
+        return run_with_settings(args.set, raw)
 
     if args.rescore:
         report = rescore(json.loads(args.rescore.read_text(encoding="utf-8")), load_cases())
