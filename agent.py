@@ -78,7 +78,10 @@ from rag.lexical import tokenize
 from rag.retrieval import HybridRetriever, RetrievedChunk, open_retriever
 
 load_dotenv()
-client = Anthropic()
+# More retries than the default two: the evaluation runs cases in parallel, and
+# a rate-limited helper call would otherwise degrade quietly (a rerank falls
+# back to retrieval order, a fact-check becomes unavailable).
+client = Anthropic(max_retries=6)
 
 SETTINGS = Settings.from_env()
 
@@ -1175,9 +1178,11 @@ def _main_call(messages, use_tools):
         request["tool_choice"] = {"type": "none"}
     if SETTINGS.prompt_caching:
         # Automatic caching as well: a second breakpoint that moves to the end
-        # of the conversation, so the calls within one turn (answer, tool
-        # results, a rewrite) read the conversation so far from the cache
-        # instead of paying for it again. Two of the four breakpoints allowed.
+        # of the conversation, so the calls within one turn read the
+        # conversation so far from the cache instead of paying for it again.
+        # A rewrite sends tool_choice none, which the API treats as a change
+        # that invalidates the cached messages: it reads the tools and system
+        # prompt only. Two of the four breakpoints allowed.
         request["cache_control"] = {"type": "ephemeral"}
     response = client.messages.create(**request)
     record_usage(response, "main")

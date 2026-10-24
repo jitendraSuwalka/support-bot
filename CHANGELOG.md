@@ -14,6 +14,9 @@ the version.
 - A rewrite or a greeting sends the tools with `tool_choice` set to `none`,
   so it reads the cached tools and system prompt like every other main-model
   call, instead of writing a cache entry of its own.
+- The Anthropic client retries a failed call six times rather than two, so
+  a rate limit under parallel runs is waited out instead of quietly
+  degrading a rerank or a fact-check.
 
 ### Added
 
@@ -21,21 +24,23 @@ the version.
   rows in the same order, so a full evaluation takes about a quarter of the
   wait. Searches of the local index take a lock, which the HTTP service's
   thread pool needed too.
-
 - Every evaluation row records the numbers and links in the final reply that
   nothing supports, checked after the turn whichever guards were on, so an
   ablation can show what reaches the customer; and, when the fact-checker
   forced a rewrite, the claims it flagged, the draft it read and the evidence.
-
 - The README's evaluation gains a table of repeated runs of the same code,
   with each metric's mean and spread and a 95% Wilson confidence interval on
   behaviour accuracy, which the headline carries too; and an ablation table
   of the same cases with one component switched off, or the main model
   changed, against everything switched on.
-
 - `python -m eval.live --set SUPPORT_BOT_NAME=value` runs the evaluation
   with a setting changed, in a fresh process, refusing a name that is not a
   setting, so an ablation is one command on any platform.
+- Safeguards for paid runs: a run with `--set`, `--ids`, `--kind` or
+  `--limit` needs its own `--out`, so it cannot overwrite run 1; Ctrl+C or a
+  failure stops a parallel run at once; a repeat or ablation report that did
+  not run with the settings and cases its file name promises is refused by
+  `python -m eval.report`.
 - `python -m eval.label_factcheck` shows a fixed sample of the fact-checker's
   forced rewrites, with the claims it flagged, the draft and the evidence,
   and records a person's verdict on each (needed, a false alarm, unsure),

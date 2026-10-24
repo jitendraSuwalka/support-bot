@@ -49,7 +49,7 @@ python app.py                  # web interface, as in the recording above
 uvicorn api:app                # the same agent as an HTTP service; docs at /docs
 docker build -t support-bot .  # the service as a container (CI builds and tests it)
 python agent.py                # same agent, in the terminal
-pytest                         # 477 tests, under twenty seconds, no API calls, no network
+pytest                         # 487 tests, under twenty seconds, no API calls, no network
 ```
 
 > **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
@@ -793,7 +793,7 @@ Caching cut the cost of an answer by 58%, from $0.0154 to $0.0064.
 
 ## Testing strategy
 
-`tests/` — **477 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
+`tests/` — **487 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
 Eight further tests call the real API and run only on request: `pytest -m live`;
 two download and run the real embedding model: `pytest -m model`.
 
@@ -1008,7 +1008,7 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `rag/` | `corpus.py` chunker, `embeddings.py`, `store.py` (Qdrant), `lexical.py` (BM25), `retrieval.py` (fusion), `index.py` (CLI) |
 | `eval/` | `questions.yaml` (169 labelled cases), `dataset.py` validator, `retrieval.py` metrics and sweep, `live.py` end-to-end scorer, `label_factcheck.py` hand labels for the fact-checker, `report.py` README tables |
 | `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json`, `caching-off.json`, `caching-on.json` |
-| `tests/` | 477 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
+| `tests/` | 487 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `api.py` | FastAPI service — `/chat`, `/sessions/{id}`, `/health`, `/ready`, OpenAPI docs at `/docs` |
 | `Dockerfile` / `.dockerignore` | The service as a container: model and index baked in, non-root, health-checked, allow-listed contents |

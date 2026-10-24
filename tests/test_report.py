@@ -240,12 +240,22 @@ def test_tokens_per_case_include_the_cache():
 # --- repeated runs, confidence intervals and ablations ------------------------------------
 
 
-def full_run(accuracy_wrong, untouched=0.8, cost=0.005, unsupported=(), median=8.0):
+SETTINGS = {
+    "use_rerank": True,
+    "verify_answers": True,
+    "check_citations": True,
+    "retrieval_mode": "hybrid",
+    "main_model": "claude-sonnet-5-5",
+}
+
+
+def full_run(accuracy_wrong, untouched=0.8, cost=0.005, unsupported=(), median=8.0, **changed):
     """A run's summary as eval.live writes it, with `accuracy_wrong` wrong behaviours."""
     wrong = {f"c{i}": "expected answer, observed escalate" for i in range(accuracy_wrong)}
     return {
         "generated": "2026-10-25T10:00:00Z",
         "models": {"main": "main-model", "helper": "helper-model"},
+        "settings": {**SETTINGS, **changed},
         "summary": {
             "cases": 169,
             "errors": [],
@@ -309,16 +319,58 @@ def test_repeats_and_ablations_are_read_from_their_folders(tmp_path):
     (tmp_path / "repeats" / "live-2.json").write_text(json.dumps(full_run(3)), encoding="utf-8")
     (tmp_path / "ablations").mkdir()
     (tmp_path / "ablations" / "haiku-main.json").write_text(
-        json.dumps(full_run(10)), encoding="utf-8"
+        json.dumps(full_run(10, main_model="claude-haiku-5-5")), encoding="utf-8"
     )
     (tmp_path / "ablations" / "no-rerank.json").write_text(
-        json.dumps(full_run(9)), encoding="utf-8"
+        json.dumps(full_run(9, use_rerank=False)), encoding="utf-8"
     )
     repeats = report.load_repeats(tmp_path)
     assert [len(r["summary"]["wrong_behaviour"]) for r in repeats] == [2, 3]
     labels = [label for label, _ in report.load_ablations(tmp_path)]
-    assert labels[0].startswith("Reranking off") and labels[1].startswith("Haiku 5.5")
+    assert labels == [
+        "Reranking off (`SUPPORT_BOT_USE_RERANK=false`)",
+        "Haiku 5.5 answering (`SUPPORT_BOT_MAIN_MODEL=claude-haiku-5-5`)",
+    ]
     block = report.current_block(tmp_path)
     assert "run 2 times" in block and "Ablation:" in block
     top = report.current_headline(tmp_path)
     assert "(95% CI 95.8%–99.7%; 2 runs: 98.2%–98.8%)" in top
+
+
+def write(path, data):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data), encoding="utf-8")
+
+
+def test_an_ablation_that_did_not_run_with_its_setting_is_refused(tmp_path):
+    write(tmp_path / "live.json", full_run(2))
+    write(tmp_path / "ablations" / "no-rerank.json", full_run(9))  # --set was forgotten
+    with pytest.raises(report.ReportMismatch, match="SUPPORT_BOT_USE_RERANK=True"):
+        report.load_ablations(tmp_path)
+
+
+def test_an_ablation_over_other_cases_or_a_stray_file_is_refused(tmp_path):
+    write(tmp_path / "live.json", full_run(2))
+    short = full_run(0, use_rerank=False)
+    short["summary"]["cases"] = 20
+    write(tmp_path / "ablations" / "no-rerank.json", short)
+    with pytest.raises(report.ReportMismatch, match="covers 20 cases, run 1 covers 169"):
+        report.load_ablations(tmp_path)
+    (tmp_path / "ablations" / "no-rerank.json").unlink()
+    write(tmp_path / "ablations" / "no-rerank-2.json", full_run(0, use_rerank=False))
+    with pytest.raises(report.ReportMismatch, match="not a known ablation"):
+        report.load_ablations(tmp_path)
+
+
+def test_a_repeat_with_other_settings_is_refused(tmp_path):
+    write(tmp_path / "live.json", full_run(2))
+    write(tmp_path / "repeats" / "live-2.json", full_run(2, use_rerank=False))
+    with pytest.raises(report.ReportMismatch, match="different settings from run 1"):
+        report.load_repeats(tmp_path)
+
+
+def test_the_cli_reports_a_mismatch_plainly(tmp_path, capsys):
+    write(tmp_path / "live.json", full_run(2))
+    write(tmp_path / "ablations" / "no-rerank.json", full_run(9))
+    assert report.main(["--reports", str(tmp_path)]) == 1
+    assert "ablations/no-rerank.json ran with" in capsys.readouterr().err

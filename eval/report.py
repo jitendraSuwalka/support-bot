@@ -47,14 +47,28 @@ RETRIEVAL = "retrieval.json"
 CACHING_RUNS = (("off", "caching-off.json"), ("on", "caching-on.json"))
 # Repeats of the current run on the same code: reports/repeats/*.json.
 REPEATS = "repeats"
-# The same cases with one thing changed, in the order the table shows them.
+# The same cases with one thing changed, in the order the table shows them:
+# file, label, and the one setting that must differ from run 1, and to what.
 ABLATIONS = (
-    ("no-rerank.json", "Reranking off (`SUPPORT_BOT_USE_RERANK=false`)"),
-    ("no-factcheck.json", "Fact-check off (`SUPPORT_BOT_VERIFY_ANSWERS=false`)"),
-    ("no-citation-guard.json", "Citation guard off (`SUPPORT_BOT_CHECK_CITATIONS=false`)"),
-    ("lexical-only.json", "BM25 only, no vector search (`SUPPORT_BOT_RETRIEVAL_MODE=lexical`)"),
-    ("haiku-main.json", "Haiku 5.5 answering (`SUPPORT_BOT_MAIN_MODEL=claude-haiku-5-5`)"),
+    ("no-rerank.json", "Reranking off", "use_rerank", False),
+    ("no-factcheck.json", "Fact-check off", "verify_answers", False),
+    (
+        "no-citation-checks.json",
+        "Citation checks off: the guard, its re-check and the last-line check",
+        "check_citations",
+        False,
+    ),
+    ("lexical-only.json", "BM25 only, no vector search", "retrieval_mode", "lexical"),
+    ("haiku-main.json", "Haiku 5.5 answering", "main_model", "claude-haiku-5-5"),
 )
+
+
+class ReportMismatch(ValueError):
+    """A report is not the comparison its file name says it is."""
+
+
+def _setting_name(field: str) -> str:
+    return "SUPPORT_BOT_" + field.upper()
 
 
 def load_reports(directory: Path = REPORTS) -> tuple[dict | None, dict[str, dict]]:
@@ -81,22 +95,70 @@ def load_caching(directory: Path = REPORTS) -> dict[str, dict]:
     return runs
 
 
+def _same_cases(report: dict, first: dict, name: str) -> None:
+    if report["summary"]["cases"] != first["summary"]["cases"]:
+        raise ReportMismatch(
+            f"{name} covers {report['summary']['cases']} cases, run 1 covers "
+            f"{first['summary']['cases']}: compare like with like"
+        )
+
+
 def load_repeats(directory: Path = REPORTS) -> list[dict]:
-    """Run 1 (reports/live.json) and its repeats, in name order; empty without repeats."""
+    """Run 1 (reports/live.json) and its repeats, in name order; empty without repeats.
+
+    A repeat must be the same code and settings over the same cases, or its
+    spread would not be the model's own variation.
+    """
     repeats = sorted((directory / REPEATS).glob("*.json"))
-    first = directory / "live.json"
-    if not repeats or not first.exists():
+    first_path = directory / "live.json"
+    if not repeats or not first_path.exists():
         return []
-    return [json.loads(path.read_text(encoding="utf-8")) for path in [first, *repeats]]
+    first = json.loads(first_path.read_text(encoding="utf-8"))
+    runs = [first]
+    for path in repeats:
+        run = json.loads(path.read_text(encoding="utf-8"))
+        _same_cases(run, first, f"repeats/{path.name}")
+        if run.get("settings") != first.get("settings"):
+            raise ReportMismatch(f"repeats/{path.name} ran with different settings from run 1")
+        runs.append(run)
+    return runs
 
 
 def load_ablations(directory: Path = REPORTS) -> list[tuple[str, dict]]:
-    """The ablation runs that exist, with their labels, in table order."""
+    """The ablation runs that exist, with their labels, in table order.
+
+    Each must have run with exactly the setting its file name promises, over
+    the same cases as run 1; a stray file in the folder is refused rather
+    than silently left out.
+    """
+    folder = directory / "ablations"
+    if not folder.exists():
+        return []
+    expected = {name for name, *_ in ABLATIONS}
+    stray = sorted(path.name for path in folder.glob("*.json") if path.name not in expected)
+    if stray:
+        raise ReportMismatch(
+            f"ablations/{', '.join(stray)}: not a known ablation; expected names: "
+            + ", ".join(sorted(expected))
+        )
+    first_path = directory / "live.json"
+    first = json.loads(first_path.read_text(encoding="utf-8")) if first_path.exists() else None
     found = []
-    for name, label in ABLATIONS:
-        path = directory / "ablations" / name
-        if path.exists():
-            found.append((label, json.loads(path.read_text(encoding="utf-8"))))
+    for name, label, field, value in ABLATIONS:
+        path = folder / name
+        if not path.exists():
+            continue
+        report = json.loads(path.read_text(encoding="utf-8"))
+        ran_with = (report.get("settings") or {}).get(field)
+        if ran_with != value:
+            raise ReportMismatch(
+                f"ablations/{name} ran with {_setting_name(field)}={ran_with!r}, "
+                f"not {value!r}: rerun it with --set {_setting_name(field)}={value}"
+            )
+        if first is not None:
+            _same_cases(report, first, f"ablations/{name}")
+        setting = f"`{_setting_name(field)}={str(value).lower() if value is False else value}`"
+        found.append((f"{label} ({setting})", report))
     return found
 
 
@@ -486,8 +548,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--readme", type=Path, default=README, help="the README to update")
     args = parser.parse_args(argv)
 
-    block = current_block(args.reports)
-    top = current_headline(args.reports)
+    try:
+        block = current_block(args.reports)
+        top = current_headline(args.reports)
+    except ReportMismatch as error:
+        print(f"report refused: {error}", file=sys.stderr)
+        return 1
     if not args.write:
         print(top + "\n\n" + block)
         return 0

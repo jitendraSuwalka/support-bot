@@ -196,7 +196,8 @@ def run_case(case: Case, runner: Runner) -> Observation:
             runner(messages, state)
         messages.append({"role": "user", "content": case.question})
         result = runner(messages, state)
-    except Exception as error:  # one failed call must not end a ten-minute run
+        return observe(case, result, time.perf_counter() - started)
+    except Exception as error:  # one failed case must not throw away a paid-for run
         return Observation(
             id=case.id,
             kind=case.kind,
@@ -216,7 +217,6 @@ def run_case(case: Case, runner: Runner) -> Observation:
             output_tokens=0,
             error=f"{type(error).__name__}: {error}",
         )
-    return observe(case, result, time.perf_counter() - started)
 
 
 def rescore(report: dict, cases: list[Case]) -> dict:
@@ -468,9 +468,16 @@ def evaluate_cases(
         for index, case in enumerate(cases):
             one(index, case)
     else:
-        with ThreadPoolExecutor(max_workers=workers) as pool:
+        pool = ThreadPoolExecutor(max_workers=workers)
+        try:
             for future in [pool.submit(one, i, case) for i, case in enumerate(cases)]:
                 future.result()
+        except BaseException:
+            # Ctrl+C or a failure: cases not yet started are cancelled, so the
+            # run stops spending at once instead of finishing the queue first.
+            pool.shutdown(wait=False, cancel_futures=True)
+            raise
+        pool.shutdown()
     return [row for row in rows if row is not None]
 
 
@@ -531,7 +538,9 @@ def run_with_settings(assignments: list[str], argv: list[str]) -> int:
 
 
 def main(argv: list[str] | None = None, runner: Runner = agent.run_agent) -> int:
-    parser = argparse.ArgumentParser(prog="python -m eval.live", description=__doc__)
+    parser = argparse.ArgumentParser(
+        prog="python -m eval.live", description=__doc__, allow_abbrev=False
+    )
     parser.add_argument("--ids", help="comma-separated case ids to run")
     parser.add_argument("--kind", help="only cases of this kind")
     parser.add_argument("--limit", type=int, help="run the first N selected cases")
@@ -552,6 +561,15 @@ def main(argv: list[str] | None = None, runner: Runner = agent.run_agent) -> int
     raw = sys.argv[1:] if argv is None else list(argv)
     args = parser.parse_args(raw)
 
+    partial = args.set or args.ids or args.kind or args.limit
+    if partial and not args.rescore and args.out.resolve() == DEFAULT_REPORT.resolve():
+        # reports/live.json is run 1, which the README, the repeats, the
+        # ablations and the labelling all read: only a full, unchanged run
+        # may write it.
+        raise SystemExit(
+            "a run with --set, --ids, --kind or --limit needs its own --out; "
+            "reports/live.json is kept for the full run"
+        )
     if args.set:
         return run_with_settings(args.set, raw)
 

@@ -466,13 +466,55 @@ def test_set_runs_a_fresh_process_with_the_setting_and_the_other_arguments(monke
     assert seen["env"]["SUPPORT_BOT_USE_RERANK"] == "false"
 
 
-def test_set_refuses_an_unknown_name_or_a_bad_value_before_spending_anything():
+def test_set_refuses_an_unknown_name_or_a_bad_value_before_spending_anything(tmp_path):
+    out = ["--out", str(tmp_path / "x.json")]
     with pytest.raises(SystemExit, match="SUPPORT_BOT_NAME=value"):
-        live.main(["--set", "USE_RERANK=false"])
+        live.main(["--set", "USE_RERANK=false", *out])
     with pytest.raises(SystemExit, match="--set"):
-        live.main(["--set", "SUPPORT_BOT_USE_RERANK=perhaps"])
+        live.main(["--set", "SUPPORT_BOT_USE_RERANK=perhaps", *out])
     with pytest.raises(SystemExit, match="no setting called SUPPORT_BOT_USE_RERNK"):
-        live.main(["--set", "SUPPORT_BOT_USE_RERNK=false"])
+        live.main(["--set", "SUPPORT_BOT_USE_RERNK=false", *out])
+
+
+@pytest.mark.parametrize(
+    "argv", [["--set", "SUPPORT_BOT_USE_RERANK=false"], ["--limit", "20"], ["--ids", "isa-01"]]
+)
+def test_a_partial_or_changed_run_cannot_overwrite_run_one(argv):
+    with pytest.raises(SystemExit, match="needs its own --out"):
+        live.main(argv, runner=lambda m, s: result("x"))
+
+
+def test_an_abbreviated_set_is_not_accepted(tmp_path):
+    with pytest.raises(SystemExit):
+        live.main(["--se", "SUPPORT_BOT_USE_RERANK=false", "--out", str(tmp_path / "x.json")])
+
+
+def test_a_failure_while_reading_a_result_is_an_error_row_not_a_lost_run(monkeypatch):
+    def broken(case, result, seconds):
+        raise KeyError("trace")
+
+    monkeypatch.setattr(live, "observe", broken)
+    row = run_case(case(), lambda m, s: result("x"))
+    assert row.observed == "error" and row.error == "KeyError: 'trace'"
+
+
+def test_an_interrupted_parallel_run_stops_without_running_the_queue():
+    import time as clock
+
+    cases = live.select(live.load_cases(), None, None, 40)
+    started = []
+
+    def runner(messages, state):
+        started.append(1)
+        if len(started) == 3:
+            raise KeyboardInterrupt
+        clock.sleep(0.05)
+        return result("x")
+
+    with pytest.raises(KeyboardInterrupt):
+        live.evaluate_cases(cases, runner, workers=4)
+    clock.sleep(0.3)
+    assert len(started) < 12  # the queue was cancelled, not worked through
 
 
 def test_without_set_keeps_every_other_argument():
