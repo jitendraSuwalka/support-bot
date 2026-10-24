@@ -1,6 +1,7 @@
 """A release is published only when the tag, the code and the changelog agree,
 and its notes carry measured numbers, never typed ones."""
 
+import re
 import shutil
 from pathlib import Path
 
@@ -56,7 +57,7 @@ def test_the_version_agrees_everywhere_in_the_repository():
 
 
 def test_the_notes_for_this_version_carry_the_entry_the_measured_numbers_and_the_image():
-    entry = release_notes.check(f"v{api.VERSION}")
+    entry = release_notes.check()
     text = release_notes.notes(entry)
     assert text.startswith(entry.body) and "### Added" in text
     assert report.current_headline() in text  # the README's headline, from the reports
@@ -168,3 +169,15 @@ def test_the_cli_needs_a_tag_or_check():
     with pytest.raises(SystemExit) as stopped:
         release_notes.main([])
     assert stopped.value.code == 2
+
+
+def test_an_entry_ends_at_the_next_heading_even_one_without_brackets():
+    text = "## [2.0.0] - 2026-10-24\n\nNew.\n\n## 1.0.0 - 2026-08-06\n\nOld.\n"
+    [entry] = release_notes.changelog_entries(text)
+    assert entry.body == "New."
+
+
+def test_the_notes_for_this_version_carry_no_other_version():
+    text = release_notes.notes(release_notes.check())
+    assert not re.search(r"^## ", text, re.M)  # only this entry's own ### sections
+    assert "## 1.0.0" not in text

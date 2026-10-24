@@ -40,6 +40,10 @@ UNRELEASED = "unreleased"
 _HEADING = re.compile(
     r"^## \[(?P<version>[^\]]+)\](?: - (?P<date>\d{4}-\d{2}-\d{2}))?[ \t]*$", re.M
 )
+# Any second-level heading ends the entry before it, bracketed or not: a
+# heading the parser does not read as a version must still not run on into
+# the notes (the 2.0.0 notes ran on into an unbracketed "## 1.0.0").
+_ANY_HEADING = re.compile(r"^## ", re.M)
 _LINK = re.compile(r"^\[(?P<label>[^\]]+)\]: (?P<url>\S+)[ \t]*$", re.M)
 _API_VERSION = re.compile(r'^VERSION = "(?P<version>[^"]+)"$', re.M)
 _SEMVER = re.compile(r"^\d+\.\d+\.\d+$")
@@ -73,8 +77,9 @@ def changelog_entries(text: str) -> list[Entry]:
     links = {m["label"]: m["url"] for m in _LINK.finditer(text)}
     headings = list(_HEADING.finditer(text))
     entries = []
-    for i, heading in enumerate(headings):
-        end = headings[i + 1].start() if i + 1 < len(headings) else len(text)
+    for heading in headings:
+        following = _ANY_HEADING.search(text, heading.end())
+        end = following.start() if following else len(text)
         # Link definitions at the foot of the file belong to the file, not to an entry.
         body = _LINK.sub("", text[heading.end() : end]).strip()
         version = heading["version"]
