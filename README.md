@@ -762,7 +762,7 @@ to be. (Re-scored against the corrected labels the baseline has 19 wrong
 behaviours, which is why its row reads 88.8%.)
 
 <!-- eval:start -->
-Retrieval alone, before expansion and reranking: the 135 cases with gold sections of 169, 129 chunks, embedder `BAAI/bge-small-en-v1.5` (384-d), fusion k = 20, dense floor 0.5 (`python -m eval.retrieval`, 2026-10-23).
+Retrieval alone, before expansion and reranking: the 135 cases with gold sections of 169, 129 chunks, embedder `BAAI/bge-small-en-v1.5` (384-d), fusion k = 20, dense floor 0.5 (`python -m eval.retrieval`, 2026-10-24).
 
 | Mode | recall@1 | recall@3 | recall@6 | MRR | not in the top six |
 |---|---:|---:|---:|---:|---:|
@@ -775,7 +775,7 @@ End to end: every case through the real agent (`claude-sonnet-5-5` answering, `c
 | Run | Date | Cases | Behaviour accuracy | Answers correct | Escalation precision | Escalation recall | Untouched by guards | Median latency | Tokens per case, all |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|
 | baseline | 2026-10-22 | 169 | 88.8% | 91.6% | 65.8% | 96.2% | 74.4% | 9.1 s | 6,335 |
-| current | 2026-10-23 | 169 | 98.8% | 99.2% | 96.2% | 96.2% | 75.6% | 8.2 s | 8,269 |
+| current | 2026-10-24 | 169 | 98.8% | 99.2% | 96.2% | 96.2% | 82.4% | 8.1 s | 8,113 |
 
 Behaviour accuracy: the agent did what the label expects (answer, escalate, clarify, decline, greeting). Answers correct: answerable questions answered with every required fact. Escalation precision: escalations that were wanted; recall: wanted escalations that happened. Untouched: answers that passed the citation guard and the fact-check without a rewrite. Tokens per case counts every token processed, cache reads and writes included: prompt caching makes most of them cheaper, not fewer (the caching table below shows the cost). Every failure is listed by id in the report.
 

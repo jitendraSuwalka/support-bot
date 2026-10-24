@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-23T10:11:26Z",
+  "generated": "2026-10-24T14:42:52Z",
   "embedder": "BAAI/bge-small-en-v1.5-384",
   "cases": 169,
   "cases_with_gold": 135,
@@ -1338,14 +1338,17 @@
       "misses": [
         "about-06",
         "access-04",
+        "admin-08",
         "client-01",
         "client-06",
         "denial-cardiff",
         "fees-13",
+        "handoff-complaint",
         "invest-03",
         "invest-06",
         "life-02",
         "life-06",
+        "life-07",
         "security-06"
       ],
       "outcomes": [
@@ -2355,11 +2358,15 @@
         }
       },
       "misses": [
+        "action-01",
         "denial-cardiff",
         "exact-06",
+        "pension-02",
+        "pension-10",
         "portal-05",
         "portal-06",
-        "scope-06"
+        "scope-06",
+        "tax-04"
       ],
       "outcomes": [
         {
@@ -3566,7 +3573,7 @@
       }
     }
   },
-  "seconds": 18.8,
+  "seconds": 23.2,
   "sweep": [
     {
       "rrf_k": 20,
@@ -3574,7 +3581,7 @@
       "recall@1": 0.607,
       "recall@6": 0.948,
       "mrr": 0.748,
-      "misses": 4
+      "misses": 7
     },
     {
       "rrf_k": 20,
@@ -3590,7 +3597,7 @@
       "recall@1": 0.637,
       "recall@6": 0.963,
       "mrr": 0.767,
-      "misses": 4
+      "misses": 5
     },
     {
       "rrf_k": 20,
@@ -3598,7 +3605,7 @@
       "recall@1": 0.667,
       "recall@6": 0.963,
       "mrr": 0.781,
-      "misses": 2
+      "misses": 5
     },
     {
       "rrf_k": 20,
@@ -3606,7 +3613,7 @@
       "recall@1": 0.696,
       "recall@6": 0.963,
       "mrr": 0.794,
-      "misses": 1
+      "misses": 5
     },
     {
       "rrf_k": 60,
@@ -3614,7 +3621,7 @@
       "recall@1": 0.607,
       "recall@6": 0.948,
       "mrr": 0.744,
-      "misses": 6
+      "misses": 7
     },
     {
       "rrf_k": 60,
@@ -3622,7 +3629,7 @@
       "recall@1": 0.637,
       "recall@6": 0.956,
       "mrr": 0.764,
-      "misses": 4
+      "misses": 6
     },
     {
       "rrf_k": 60,
@@ -3630,7 +3637,7 @@
       "recall@1": 0.637,
       "recall@6": 0.956,
       "mrr": 0.764,
-      "misses": 4
+      "misses": 6
     },
     {
       "rrf_k": 60,
@@ -3638,7 +3645,7 @@
       "recall@1": 0.659,
       "recall@6": 0.963,
       "mrr": 0.774,
-      "misses": 4
+      "misses": 5
     },
     {
       "rrf_k": 60,
@@ -3646,7 +3653,7 @@
       "recall@1": 0.681,
       "recall@6": 0.963,
       "mrr": 0.785,
-      "misses": 4
+      "misses": 5
     }
   ]
 }
