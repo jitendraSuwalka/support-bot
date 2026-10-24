@@ -803,6 +803,16 @@ Ablation: the same cases with one component switched off, or the main model chan
 | BM25 only, no vector search (`SUPPORT_BOT_RETRIEVAL_MODE=lexical`) | 95.3% (-2.9) | 93.1% | 78.1% | 96.2% | 1 | $0.0046 | 8.0 s |
 | Haiku 5.5 answering (`SUPPORT_BOT_MAIN_MODEL=claude-haiku-5-5`) | 97.0% (-1.2) | 96.9% | 92.6% | 96.2% | 0 | $0.0006 | 7.0 s |
 
+The fact-checker, judged by hand: 40 of its forced rewrites, sampled from the runs, were read against the same evidence it had by Jitendra Suwalka, with an AI second reader (`python -m eval.label_factcheck`, `reports/factcheck-labels.json`).
+
+| Verdict | Rewrites |
+|---|---:|
+| Needed: the draft said something the evidence does not support | 18 |
+| Not needed: a false alarm | 22 |
+| Unsure | 0 |
+
+Precision 45.0% (95% CI 30.7% to 60.2%, Wilson, 40 judged either way).
+
 Prompt caching, measured: the same cases through the real agent with caching off, then on (`SUPPORT_BOT_PROMPT_CACHING`, `python -m eval.live --limit … --out …`).
 
 | Prompt caching | Cases | Cost per answer | Uncached input tokens per answer | Cache reads per answer | Median latency | Behaviour accuracy |

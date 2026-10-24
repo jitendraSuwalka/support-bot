@@ -1,0 +1,453 @@
+{
+  "labelled_by": "Jitendra Suwalka, with an AI second reader",
+  "started": "2026-10-25",
+  "items": [
+    {
+      "id": "life-04",
+      "run": "live-3.json",
+      "claims": [
+        "The answer says to send 'proof of your identity as the attorney'. The evidence says proof of the attorney's identity, meaning the appointed attorney's identity, not the user's.",
+        "The answer says 'you can instruct us within the powers granted'. The evidence says the attorney can instruct us within the powers granted."
+      ],
+      "before": "To register your power of attorney, send us two things:\n- a certified copy of the registered document\n- proof of your identity as the attorney\n\nWe accept these types:\n- a registered Lasting Power of Attorney for property and financial affairs\n- an Enduring Power of Attorney made before October 2007\n- for clients in Scotland, a continuing power of attorney registered with the Office of the Public Guardian (Scotland)\n\nOnce it's registered with us, you can instruct us within the powers granted. The documents I have don't say where to send them. More information is on the life events page: https://www.fernhillwealth.example/client-support/life-events/",
+      "after": "Here is the corrected answer.\n\nTo register a power of attorney, send us a certified copy of the registered document and proof of the attorney's identity.\n\nWe accept these types:\n- a registered Lasting Power of Attorney for property and financial affairs\n- an Enduring Power of Attorney made before October 2007\n- for clients in Scotland, a continuing power of attorney registered with the Office of the Public Guardian (Scotland)\n\nOnce it is registered with us, the attorney can instruct us within the powers granted. The documents don't say where to send these items. More information is at https://www.fernhillwealth.example/client-support/life-events/",
+      "verdict": "not needed",
+      "note": "customer is the attorney; you = the attorney, as in the evidence"
+    },
+    {
+      "id": "advice-07",
+      "run": "live.json",
+      "claims": [
+        "25% tax-free cash"
+      ],
+      "before": "I can't advise on whether you should take your 25% tax-free cash now or leave it. That decision depends on your own circumstances, so I've passed your question to a qualified adviser. They will contact you. You can also call the switchboard on 0117 496 0100.",
+      "after": "I've passed your question to a qualified adviser, who will contact you. The switchboard number is 0117 496 0100.",
+      "verdict": "not needed",
+      "note": "repeats the customer's question; refusal wording, not a claim; rewrite less clear"
+    },
+    {
+      "id": "advice-02",
+      "run": "live-2.json",
+      "claims": [
+        "The answer says the switchboard is for speaking to someone \"sooner\". The evidence gives the switchboard number but does not say it offers a faster route to an adviser."
+      ],
+      "before": "I can't say whether transferring your final salary pension is a good idea. That is advice about what to do with your own money, and I'm not able to give it. I've passed your question to a qualified adviser, who will contact you. If you'd like to speak to someone sooner, the switchboard number is 0117 496 0100.",
+      "after": "I can't advise on whether you should transfer your final salary pension. I've passed your question to a qualified adviser, who will contact you. The switchboard number is 0117 496 0100.",
+      "verdict": "needed",
+      "note": ""
+    },
+    {
+      "id": "client-03",
+      "run": "live-2.json",
+      "claims": [
+        "\"Living in London doesn't change that.\" The evidence says the firm cannot act for US citizens or US tax residents. It does not address how London residence affects this, so the claim is an added assertion."
+      ],
+      "before": "I'm sorry, but we can't take you on. Our documents say we are unable to act for persons who are US citizens or US tax residents. Living in London doesn't change that.\n\nIf you have questions about this, you can call the new client enquiry line on 0808 157 0450.",
+      "after": "We can't take you on. Our documents say: \"We are unable to act for persons who are US citizens or US tax residents.\"\n\nThe documents don't say anything more about how living in London affects this. The new client enquiry line is 0808 157 0450.",
+      "verdict": "not needed",
+      "note": "rule covers all US citizens; London follows from evidence; rewrite adds false doubt"
+    },
+    {
+      "id": "life-07",
+      "run": "live.json",
+      "claims": [
+        "\"If you'd like to speak to someone sooner\" implies that calling the switchboard will get the customer to an adviser faster than waiting for contact. The evidence only says to give the switchboard number."
+      ],
+      "before": "I'm sorry you're having a hard time. I've passed your request to a qualified adviser, who will contact you. I can't arrange a withdrawal or advise on what to do with your money myself.\n\nIf you'd like to speak to someone sooner, the switchboard number is 0117 496 0100.",
+      "after": "I'm sorry you're struggling with your bills. I've passed your request to a qualified adviser, who will contact you. I can't arrange a withdrawal myself.\n\nThe switchboard number is 0117 496 0100.",
+      "verdict": "needed",
+      "note": ""
+    },
+    {
+      "id": "life-05",
+      "run": "live-3.json",
+      "claims": [
+        "Our documents don't say whether you need probate for the rest of her estate. The evidence states that the grant of probate or letters of administration is required before assets can be released, with the \u00a330,000 exception, so the documents do address this."
+      ],
+      "before": "I'm sorry for your loss.\n\nWhere the total held with us is below \u00a330,000, we can usually release assets to the personal representatives without a grant of probate, against a signed indemnity. Our documents don't say whether you need probate for the rest of her estate.\n\nI've passed your message to a qualified adviser, who will contact you. You can also call the switchboard on 0117 496 0100.",
+      "after": "I'm sorry for your loss.\n\nNormally we need the grant of probate (or letters of administration, or Confirmation in Scotland) before assets can be released. Where the total value held with us is below \u00a330,000, we can usually release assets to the personal representatives without a grant, against a signed indemnity. Your mother's holding of about \u00a320,000 is below that figure.\n\nI've passed your message to a qualified adviser, who will contact you. You can also call the switchboard on 0117 496 0100.",
+      "verdict": "not needed",
+      "note": "draft right: documents cover only assets held with us, not the rest of the estate; rewrite dropped that caveat"
+    },
+    {
+      "id": "advice-08",
+      "run": "live-3.json",
+      "claims": [
+        "\"If you'd like to reach us sooner\" implies the switchboard gets a faster response than the adviser contact. The evidence only says to give the switchboard number."
+      ],
+      "before": "I can't recommend funds, because that's investment advice. I've passed your request to a qualified adviser, who will contact you. If you'd like to reach us sooner, the switchboard number is 0117 496 0100.",
+      "after": "I can't recommend funds, because that's a request for investment advice. I've passed your request to a qualified adviser, who will contact you. The switchboard number is 0117 496 0100.",
+      "verdict": "needed",
+      "note": ""
+    },
+    {
+      "id": "pension-07",
+      "run": "live-3.json",
+      "claims": [
+        "With no earnings, the \u00a33,600 gross figure is the one that applies. The evidence says \u00a33,600 gross applies 'if your earnings are lower' but does not address the case of no earnings."
+      ],
+      "before": "Yes. According to our pensions guide, your own contributions receive tax relief up to 100% of your relevant UK earnings in the tax year, or \u00a33,600 gross if your earnings are lower. With no earnings, the \u00a33,600 gross figure is the one that applies. Basic-rate relief is added to the pension automatically.\n\nThe guide doesn't say whether paying in is right for you. For that, you'd need to speak to an adviser. Do you want me to arrange it?\n\nSource: https://www.fernhillwealth.example/guides/pensions/",
+      "after": "Here is a corrected answer, using only what the pensions guide says.\n\nThe guide says your own contributions receive tax relief up to 100% of your relevant UK earnings in the tax year, or \u00a33,600 gross if your earnings are lower. It doesn't address the case of having no earnings, so I can't confirm from it how that applies to you. Basic-rate relief is added to the pension automatically. Higher- and additional-rate taxpayers claim the extra relief through their tax return.\n\nFor whether this applies to your situation, please raise it with an adviser.\n\nSource: https://www.fernhillwealth.example/guides/pensions/",
+      "verdict": "not needed",
+      "note": "no earnings is lower than 3,600, so 3,600 applies; rewrite withheld a correct answer"
+    },
+    {
+      "id": "advice-02",
+      "run": "live.json",
+      "claims": [
+        "The answer says the switchboard can be used to speak to someone \"sooner\". The evidence only gives the switchboard number and does not say it provides faster contact than the adviser callback."
+      ],
+      "before": "I can't tell you whether a transfer is a good idea. That is advice, and it has to come from a qualified adviser. I've passed your question to one, and they will contact you. If you'd like to speak to someone sooner, the switchboard number is 0117 496 0100.",
+      "after": "I can't say whether transferring your pension is a good idea, because that is advice. I've passed your question to a qualified adviser, who will contact you. The switchboard number is 0117 496 0100.",
+      "verdict": "needed",
+      "note": ""
+    },
+    {
+      "id": "pension-02",
+      "run": "live-3.json",
+      "claims": [
+        "Yes, you can still pay in."
+      ],
+      "before": "Yes, you can still pay in. Once you've taken taxable income flexibly from a defined contribution pension, the money purchase annual allowance of \u00a310,000 applies to further defined contribution contributions.\n\nThe documents I have don't say whether this applies to your circumstances, or what you should do. For that, please raise it with your adviser. I can pass your question to one if you'd like.",
+      "after": "Correction: the documents don't say \"Yes, you can still pay in\". They say only this: \"Once you have taken taxable income flexibly from a defined contribution pension, the money purchase annual allowance of \u00a310,000 applies to further defined contribution contributions.\"\n\nThey don't say whether you can pay in, or what you should do. Please raise that with your adviser.",
+      "verdict": "not needed",
+      "note": "allowance for further contributions implies you can pay in; rewrite leaked and misled"
+    },
+    {
+      "id": "planning-01",
+      "run": "live-3.json",
+      "claims": [
+        "The answer applies the 'planning meeting' document advice to the discovery meeting. The evidence says 'For a planning meeting it helps to have recent statements...' and does not link that to the discovery meeting."
+      ],
+      "before": "The first meeting is a free introductory appointment. It lasts about 45 minutes, carries no charge and no obligation. You can have it at any of our six offices, by telephone or by video call. We explain how we work, what our services cost, and whether we think we can help. You don't need to bring anything.\n\nIf you both decide to go ahead, we send a client agreement before anything is charged. It sets out the agreed work and fees.\n\nIf you take up financial planning, the first step is a discovery meeting. It usually lasts 90 minutes, and we gather information about your circumstances, goals and attitude to risk. For that meeting it helps to have recent statements for any pensions, investments, mortgages and insurance policies. It also helps to have an idea of your income and regular outgoings.\n\nTo book, use the Book an Appointment page or call 0808 157 0450.",
+      "after": "Here is a corrected answer.\n\nThe first meeting is a free introductory appointment. It lasts about 45 minutes, carries no charge and no obligation. It can take place at any of our six offices, by telephone or by video call. At the meeting we explain how we work, what our services cost, and whether we think we can help. You do not need to bring anything.\n\nIf we both decide to go ahead, we send a client agreement setting out the agreed work and fees before anything is charged.\n\nYou can book through the Book an Appointment page or by calling the new client enquiry line on 0808 157 0450.\n\nThe documents also describe a financial planning process that starts with a discovery meeting. It usually lasts 90 minutes, and we gather information about your circumstances, goals and attitude to risk. Separately, the documents say that for a planning meeting it helps to have recent statements for any pensions, investments, mortgages and insurance policies, and an idea of your income and regular outgoings. They do not say whether that applies to the discovery meeting.",
+      "verdict": "not needed",
+      "note": "discovery is the first planning meeting (the fact-find); statements apply; rewrite hedged and leaked"
+    },
+    {
+      "id": "tax-02",
+      "run": "live.json",
+      "claims": [
+        "\"Outside an ISA\": the evidence does not mention ISAs or any exemption that applies only outside an ISA."
+      ],
+      "before": "Outside an ISA, dividends are tax-free up to the dividend allowance of \u00a3500 a year. Above that, they're taxed at these rates:\n- Basic-rate taxpayers: 10.75%\n- Higher-rate taxpayers: 35.75%\n- Additional-rate taxpayers: 39.35%\n\nSource: https://www.fernhillwealth.example/guides/tax/\n\nI can't advise on your own tax position. If you want that, I can pass you to an adviser.",
+      "after": "The guide says dividends are tax-free within the dividend allowance of \u00a3500 a year. Above the allowance, they're taxed at 10.75% for basic-rate taxpayers, 35.75% for higher-rate taxpayers and 39.35% for additional-rate taxpayers.\n\nThe guide doesn't mention ISAs, so I can't say how this compares with dividends held in one. Source: https://www.fernhillwealth.example/guides/tax/",
+      "verdict": "not needed",
+      "note": "outside an ISA is the customer's framing; general rule applies; figures match evidence"
+    },
+    {
+      "id": "advice-08",
+      "run": "live-2.json",
+      "claims": [
+        "The answer implies the switchboard can connect the customer to someone sooner than the adviser's contact. The evidence gives the number but says nothing about faster access."
+      ],
+      "before": "I can't recommend funds, because that counts as financial advice. I've passed your request to a qualified adviser, who will contact you. If you'd like to speak to someone sooner, the switchboard number is 0117 496 0100.",
+      "after": "I can't recommend funds, because that counts as financial advice. I've passed your request to a qualified adviser, who will contact you. The switchboard number is 0117 496 0100.",
+      "verdict": "needed",
+      "note": ""
+    },
+    {
+      "id": "handoff-complaint",
+      "run": "live-2.json",
+      "claims": [
+        "The answer calls the customer's matter a \"complaint\", but the evidence does not describe the matter as a complaint."
+      ],
+      "before": "I've passed your complaint to a qualified adviser, and they will contact you. If you need to reach us before then, the switchboard number is 0117 496 0100.",
+      "after": "Your request has been escalated. A qualified adviser will contact you. The switchboard number is 0117 496 0100.",
+      "verdict": "not needed",
+      "note": "customer's own word; under FCA DISP it is a complaint; rewrite downgraded it to a request"
+    },
+    {
+      "id": "fees-11",
+      "run": "live-3.json",
+      "claims": [
+        "The answer says the 0.25% margin is the difference between the rate 'we receive from the partner banks' and the rate we pay. The evidence says only 'the rate we receive', without naming the partner banks as the source."
+      ],
+      "before": "Yes. Fernhill keeps a margin of 0.25% a year. That is the difference between the rate we receive from the partner banks and the rate we pay you. Interest is paid on cash balances at the rates shown on the portal, and the margin is disclosed in your client agreement.\n\nYour cash is held as client money in pooled client bank accounts with our partner banks. These are separate from the firm's own money.\n\nSource: https://www.fernhillwealth.example/client-support/cash-and-dealing/",
+      "after": "Yes. We keep a margin of 0.25% a year between the rate we receive and the rate we pay. Interest is paid on cash balances at the rates shown on the portal. The margin is disclosed in your client agreement.\n\nCash in your accounts is held as client money in pooled client bank accounts with our partner banks, separate from the firm's own money.\n\nSource: https://www.fernhillwealth.example/client-support/cash-and-dealing/",
+      "verdict": "not needed",
+      "note": "cash is held with partner banks, so the rate received comes from them; plain inference"
+    },
+    {
+      "id": "isa-04",
+      "run": "live.json",
+      "claims": [
+        "The answer lists the permitted withdrawal reasons (first home at \u00a3450,000 or less, age 60 or over, terminal illness) without the conditions in the evidence. Withdrawal for a first home is penalty-free only if the account has been open at least 12 months, and terminal illness applies only with less than 12 months to live. Omitting these conditions overstates when withdrawals are free of the 25% charge."
+      ],
+      "before": "You can pay up to \u00a34,000 a year into a Lifetime ISA. That counts towards the \u00a320,000 overall ISA allowance. The government adds a 25% bonus of up to \u00a31,000 a year.\n\nYou can open one if you're aged 18 to 39. Withdrawals for reasons other than the permitted ones incur a 25% government charge. The permitted reasons are a first home costing \u00a3450,000 or less, age 60 or over, or terminal illness. More details are in the ISA guide on our website: https://www.fernhillwealth.example/guides/isas/",
+      "after": "Here is a corrected answer.\n\nUp to \u00a34,000 a year can be paid into a Lifetime ISA. That counts towards the \u00a320,000 overall allowance. The government adds a 25% bonus of up to \u00a31,000 a year. A Lifetime ISA can be opened by anyone aged 18 to 39.\n\nMoney can be withdrawn without charge in three cases:\n- to buy a first home costing \u00a3450,000 or less, provided the account has been open for at least 12 months\n- from age 60\n- if you are terminally ill with less than 12 months to live\n\nOther withdrawals incur a 25% government charge.\n\nMore detail is at https://www.fernhillwealth.example/guides/isas/",
+      "verdict": "needed",
+      "note": ""
+    },
+    {
+      "id": "admin-04",
+      "run": "live-2.json",
+      "claims": [
+        "The answer says the quarterly valuation reports are 'sent' within 15 working days of quarter end. The evidence says they are 'published to the portal' (or 'client portal') within that period, not sent."
+      ],
+      "before": "Valuation reports are issued quarterly. They're sent within 15 working days of the end of March, June, September and December, and published to the client portal.\n\nYou can also ask your adviser's team for a valuation as at any date. It is normally available within two working days.",
+      "after": "Valuation reports are issued quarterly, within 15 working days of the end of March, June, September and December, and published to the portal.\n\nA valuation as at any date can be requested from your adviser's team. It is normally available within two working days.",
+      "verdict": "needed",
+      "note": ""
+    },
+    {
+      "id": "about-05",
+      "run": "live-3.json",
+      "claims": [
+        "More detail is on the financial planning service page"
+      ],
+      "before": "Fernhill Wealth gives independent advice. We consider products from across the whole market and are not restricted to any provider's range.\n\nMore detail is on the financial planning service page: https://www.fernhillwealth.example/services/financial-planning/",
+      "after": "Fernhill Wealth gives independent advice. We consider products from across the whole market and are not restricted to any provider's range.",
+      "verdict": "not needed",
+      "note": "link is the evidence's own source page; rewrite removed a useful link"
+    },
+    {
+      "id": "advice-08",
+      "run": "live.json",
+      "claims": [
+        "\"If you'd like to speak to someone sooner\" implies that calling the switchboard gets a faster response than the adviser contact. The evidence gives the number but says nothing about speed."
+      ],
+      "before": "I can't recommend funds, because that would be investment advice. I've passed your request to a qualified adviser, who will contact you. If you'd like to speak to someone sooner, the switchboard number is 0117 496 0100.",
+      "after": "I can't recommend funds. I've passed your request to a qualified adviser, who will contact you. The switchboard number is 0117 496 0100.",
+      "verdict": "needed",
+      "note": ""
+    },
+    {
+      "id": "pension-07",
+      "run": "live.json",
+      "claims": [
+        "\"With no earnings, the \u00a33,600 gross figure is the one that would apply.\" The evidence says \u00a33,600 gross applies 'if your earnings are lower' but does not address the case of no earnings.",
+        "\"Yes.\" The evidence does not show what question was asked, so this affirmative answer is not supported by the evidence."
+      ],
+      "before": "Yes. According to our pensions guide, your own contributions receive tax relief up to 100% of your relevant UK earnings in the tax year, or \u00a33,600 gross if your earnings are lower. With no earnings, the \u00a33,600 gross figure is the one that would apply. Basic-rate relief is added to the pension automatically.\n\nThe guide doesn't say whether this suits your circumstances. For that, please speak to an adviser. Guide: https://www.fernhillwealth.example/guides/pensions/",
+      "after": "Here is a corrected answer, using only what the pensions guide says.\n\nThe guide says your own contributions receive tax relief up to 100% of your relevant UK earnings in the tax year, or \u00a33,600 gross if your earnings are lower. It also says basic-rate relief is added to the pension automatically. Higher- and additional-rate taxpayers claim the extra relief through their tax return.\n\nThe guide doesn't say what applies if you have no earnings at all. Please raise that with an adviser. The guide is the \"Pensions: allowances and options\" page, under \"Tax relief on contributions\": https://www.fernhillwealth.example/guides/pensions/",
+      "verdict": "not needed",
+      "note": "same as pension-07 earlier; fact-checker cannot see the question, so flagged Yes"
+    },
+    {
+      "id": "fees-11",
+      "run": "live-2.json",
+      "claims": [
+        "The answer says the margin is the difference between the rate 'we receive from our partner banks' and the rate we pay. The evidence says only 'the rate we receive' and does not state that this rate comes from partner banks."
+      ],
+      "before": "Yes. We keep a margin of 0.25% a year, which is the difference between the rate we receive from our partner banks and the rate we pay you. Your client agreement discloses this margin. The rates we pay are shown on the portal.\n\nSource: https://www.fernhillwealth.example/client-support/cash-and-dealing/",
+      "after": "Yes. We retain a margin of 0.25% a year between the rate we receive and the rate we pay. This margin is disclosed in your client agreement. Interest is paid on cash balances at the rates shown on the portal.\n\nSource: https://www.fernhillwealth.example/client-support/cash-and-dealing/",
+      "verdict": "not needed",
+      "note": "same as fees-11 earlier; rate received comes from the partner banks holding the cash"
+    },
+    {
+      "id": "advice-12",
+      "run": "live.json",
+      "claims": [
+        "The phrase \"If you'd like to speak to someone sooner\" implies that calling the switchboard would get the customer a faster response. The evidence only says to give the switchboard number and does not support any claim about speed."
+      ],
+      "before": "I've passed your question to a qualified adviser, who will contact you. I can't say whether a SIPP is better than your workplace pension, because that depends on your own circumstances and is a matter for advice. If you'd like to speak to someone sooner, the switchboard number is 0117 496 0100.",
+      "after": "A qualified adviser will contact you about your question. The switchboard number is 0117 496 0100.",
+      "verdict": "needed",
+      "note": ""
+    },
+    {
+      "id": "pension-11",
+      "run": "live-2.json",
+      "claims": [
+        "Transfers are started by the receiving provider, which here would be us."
+      ],
+      "before": "Possibly, yes. It depends on the type of scheme.\n\n- **Defined contribution workplace pension:** Our self-invested personal pension (SIPP) accepts transfers from these. It also accepts transfers from other personal pensions.\n- **Defined benefit (final salary) scheme:** Transferring out is a significant decision. If the transfer value is more than \u00a330,000, the law requires you to take independent advice from a firm with Financial Conduct Authority permission to advise on pension transfers. Fernhill Wealth holds that permission. The FCA expects advisers to start from the assumption that a transfer won't be suitable. We recommend one only where we can show it is clearly in your interest.\n\nTransfers are started by the receiving provider, which here would be us. Pension transfers typically take four to eight weeks. The receiving scheme carries out the required checks. It may require you to take guidance from MoneyHelper if the checks raise an amber flag.\n\nI can't say whether a transfer is right for you. If you'd like to talk it through, I can pass you to an adviser. More detail is on our pensions guide: https://www.fernhillwealth.example/guides/pensions/",
+      "after": "Here is a corrected version, using only what the documents say.\n\nOur self-invested personal pension (SIPP) accepts transfers from other personal pensions and from defined contribution workplace pensions.\n\nTransferring out of a defined benefit (final salary) scheme is a significant decision. If the transfer value is more than \u00a330,000, the law requires you to take appropriate independent advice from a firm with Financial Conduct Authority permission to advise on pension transfers. Fernhill Wealth holds that permission. The Financial Conduct Authority expects advisers to start from the assumption that a transfer will not be suitable. We recommend one only where we can show it is clearly in your interest.\n\nPension transfers typically take four to eight weeks. The receiving scheme carries out the checks required by the pension transfer regulations. It may require you to take guidance from MoneyHelper if the checks raise an amber flag.\n\nThe source is https://www.fernhillwealth.example/guides/pensions/",
+      "verdict": "not needed",
+      "note": "receiving provider is us for a transfer in; rewrite dropped the no-advice line and leaked"
+    },
+    {
+      "id": "isa-03",
+      "run": "live.json",
+      "claims": [
+        "Our ISA guide only covers adults aged 18 or over. The evidence says adults aged 18 or over can pay up to \u00a320,000 into ISAs, but it does not say the guide covers only adults.",
+        "Call the switchboard. The evidence does not mention a switchboard or any phone number."
+      ],
+      "before": "Our ISA guide only covers adults aged 18 or over, who can pay up to \u00a320,000 into ISAs in the 2026/27 tax year. A Lifetime ISA can be opened by anyone aged 18 to 39. The guide doesn't say whether a 17-year-old can open an ISA with us, so I can't confirm it.\n\nIf you'd like a definite answer, please raise it with your adviser or call the switchboard.",
+      "after": "Here is a corrected answer, using only what the ISA guide says.\n\nThe guide says adults aged 18 or over can pay up to \u00a320,000 into ISAs in the 2026/27 tax year. It also says a Lifetime ISA can be opened by anyone aged 18 to 39. It doesn't say whether a 17-year-old can open an ISA with us, so I can't confirm it. Please raise this with your adviser.",
+      "verdict": "needed",
+      "note": ""
+    },
+    {
+      "id": "life-04",
+      "run": "live.json",
+      "claims": [
+        "The answer says to send \"proof of your identity as attorney\", but the evidence says \"proof of the attorney's identity\". The answer changes whose identity is being proven.",
+        "The answer says \"you can instruct us within the powers granted\", but the evidence says \"the attorney can instruct us\". The answer changes who gives the instructions."
+      ],
+      "before": "To register your power of attorney, send us two things:\n- a certified copy of the registered document\n- proof of your identity as attorney\n\nWe accept a registered Lasting Power of Attorney for property and financial affairs. We also accept an Enduring Power of Attorney made before October 2007. For clients in Scotland, we accept a continuing power of attorney registered with the Office of the Public Guardian (Scotland). Once it is registered with us, you can instruct us within the powers granted.\n\nThe documents don't say where to send them. You can ask the bereavement and life events team on 0117 496 0412 (09:00 to 17:30 on working days) or at lifeevents@fernhillwealth.example. More information is at https://www.fernhillwealth.example/client-support/life-events/",
+      "after": "Here is the answer again, kept to what the documents say.\n\nSend us a certified copy of the registered document and proof of the attorney's identity. We accept a registered Lasting Power of Attorney for property and financial affairs. We also accept an Enduring Power of Attorney made before October 2007. For clients in Scotland, we accept a continuing power of attorney registered with the Office of the Public Guardian (Scotland). Once it is registered with us, the attorney can instruct us within the powers granted.\n\nThe documents don't say where to send these. The bereavement and life events team can be reached on 0117 496 0412, 09:00 to 17:30 on working days, or at lifeevents@fernhillwealth.example. The page is https://www.fernhillwealth.example/client-support/life-events/",
+      "verdict": "not needed",
+      "note": "same as life-04 earlier; customer is the attorney; fact-checker cannot see the question"
+    },
+    {
+      "id": "security-02",
+      "run": "live-2.json",
+      "claims": [
+        "The answer says \"If the fraud involves your Fernhill Wealth account\", but the evidence covers suspected fraud (\"If you think you have been targeted by fraud involving your Fernhill Wealth account\"). The answer drops the suspicion condition and presupposes that fraud has occurred."
+      ],
+      "before": "You can report fraud to the police through Report Fraud, the national fraud reporting service. Its website is reportfraud.police.uk and its phone number is 0300 123 2040. If you live in Scotland, report to Police Scotland on 101.\n\nIf the fraud involves your Fernhill Wealth account, call the switchboard straight away on 0117 496 0100 and ask for the Fraud and Security team.",
+      "after": "You can report fraud to the police through Report Fraud, the national fraud reporting service, at reportfraud.police.uk or on 0300 123 2040. If you live in Scotland, report to Police Scotland on 101.\n\nIf you think you have been targeted by fraud involving your Fernhill Wealth account, call the switchboard immediately on 0117 496 0100 and ask for the Fraud and Security team.",
+      "verdict": "not needed",
+      "note": "customer is reporting a fraud, so the narrower wording fits; all facts match the evidence"
+    },
+    {
+      "id": "advice-12",
+      "run": "live-2.json",
+      "claims": [
+        "'If you'd like to talk to someone sooner' implies the switchboard gives faster access to an adviser than the scheduled callback. The evidence only says to give the switchboard number."
+      ],
+      "before": "I've passed your question to a qualified adviser, who will contact you. I can't say whether a SIPP is better than your workplace pension, because that's advice. If you'd like to talk to someone sooner, the switchboard number is 0117 496 0100.",
+      "after": "A qualified adviser will contact you about your question. The switchboard number is 0117 496 0100.",
+      "verdict": "needed",
+      "note": ""
+    },
+    {
+      "id": "life-06",
+      "run": "live-3.json",
+      "claims": [
+        "The phrase \"If you'd like to speak to someone sooner\" implies that calling the switchboard will get the customer a faster response. The evidence only says to give the switchboard number and does not mention speed."
+      ],
+      "before": "I'm sorry to hear about your diagnosis. I can't advise on what you should do with your investments, so I've passed your message to a qualified adviser. They will contact you.\n\nIf you'd like to speak to someone sooner, you can call the switchboard on 0117 496 0100.",
+      "after": "I'm sorry to hear about your diagnosis. I can't advise on what you should do with your investments. I've passed your message to a qualified adviser, who will contact you. The switchboard number is 0117 496 0100.",
+      "verdict": "needed",
+      "note": ""
+    },
+    {
+      "id": "life-05",
+      "run": "live-2.json",
+      "claims": [
+        "The reference to \"your mother's estate\" is not in the evidence, which does not identify the deceased.",
+        "The statement \"They don't say whether you need probate for the rest of your mother's estate\" misreads the evidence. The knowledge base says the grant of probate or letters of administration is required before assets can be released, with the sub-\u00a330,000 exception as the only stated exemption."
+      ],
+      "before": "I'm sorry for your loss. Our documents say that where the total held with us is below \u00a330,000, we can usually release assets to the personal representatives without a grant of probate. This is done against a signed indemnity. They don't say whether you need probate for the rest of your mother's estate, so please raise that with the adviser.\n\nI've passed your details to a qualified adviser, who will contact you. You can also call the switchboard on 0117 496 0100.",
+      "after": "Here is a corrected answer, using only what the documents say.\n\nBefore assets can be released, we need the grant of probate or letters of administration (in Scotland, Confirmation). Where the total value held with us is below \u00a330,000, we can usually release assets to the personal representatives without a grant, against a signed indemnity.\n\nThe documents don't say whether you specifically need probate. A qualified adviser will contact you. The switchboard number is 0117 496 0100.",
+      "verdict": "not needed",
+      "note": "same as life-05 earlier; mother is from the question; rest-of-estate caveat is correct"
+    },
+    {
+      "id": "handoff-complaint",
+      "run": "live-3.json",
+      "claims": [
+        "The phrase \"if you'd like to speak to someone sooner\" implies that calling the switchboard will get the customer contacted faster than waiting for the adviser. The evidence gives the number but makes no claim about speed."
+      ],
+      "before": "I've passed your complaint to a qualified adviser, and they will contact you. If you'd like to speak to someone sooner, the switchboard number is 0117 496 0100.",
+      "after": "Your complaint has been passed to a qualified adviser, who will contact you. The switchboard number is 0117 496 0100.",
+      "verdict": "needed",
+      "note": ""
+    },
+    {
+      "id": "security-05",
+      "run": "live-2.json",
+      "claims": [
+        "The opening word \"Yes.\" affirms that calls are recorded, but the evidence says calls \"may be recorded\". This strengthens the wording into a definite statement."
+      ],
+      "before": "Yes. Calls to and from the firm may be recorded for regulatory purposes and to help resolve any dispute about an instruction. Recordings are kept for at least five years.\n\nMore detail is on the Security page: https://www.fernhillwealth.example/security/",
+      "after": "Calls to and from the firm may be recorded for regulatory purposes and to help resolve any dispute about an instruction. Recordings are kept for at least five years.\n\nSource: https://www.fernhillwealth.example/security/",
+      "verdict": "needed",
+      "note": ""
+    },
+    {
+      "id": "security-06",
+      "run": "live-2.json",
+      "claims": [
+        "\"If you want to reach us sooner\" implies that calling the switchboard will get the customer to an adviser faster than waiting for the callback. The evidence only gives the switchboard number and does not say calling is faster."
+      ],
+      "before": "I've passed your case to a qualified adviser, who will contact you. If you want to reach us sooner, call the switchboard on 0117 496 0100.",
+      "after": "I've passed your case to a qualified adviser, who will contact you. The switchboard number is 0117 496 0100.",
+      "verdict": "needed",
+      "note": ""
+    },
+    {
+      "id": "planning-01",
+      "run": "live.json",
+      "claims": [
+        "The answer says the bring-list (statements and income/outgoings) applies to the discovery meeting. The evidence only says \"For a planning meeting it helps to have...\" and never identifies the planning meeting with the discovery meeting."
+      ],
+      "before": "The first meeting is a free introductory appointment. It lasts about 45 minutes, has no charge and no obligation, and can be at any of our six offices, by telephone or by video call. We explain how we work, what our services cost, and whether we think we can help. You don't need to bring anything.\n\nIf you both decide to go ahead, we send a client agreement setting out the agreed work and fees before anything is charged. If you take up financial planning, the first step is a discovery meeting. It usually lasts 90 minutes, and we gather information about your circumstances, goals and attitude to risk. For that meeting it helps to bring recent statements for any pensions, investments, mortgages and insurance policies. It also helps to have an idea of your income and regular outgoings.\n\nTo book, use the Book an Appointment page or call 0808 157 0450.",
+      "after": "The first meeting is a free introductory appointment. It lasts about 45 minutes, carries no charge and no obligation, and can take place at any of our six offices, by telephone or by video call. We explain how we work, what our services cost, and whether we think we can help. You do not need to bring anything.\n\nIf we both decide to go ahead, we send a client agreement setting out the agreed work and fees before anything is charged. For a planning meeting, it helps to have recent statements for any pensions, investments, mortgages and insurance policies, and an idea of your income and regular outgoings. To book, use the Book an Appointment page or call the new client enquiry line on 0808 157 0450.",
+      "verdict": "not needed",
+      "note": "same as planning-01 earlier; discovery is the first planning meeting; rewrite dropped it"
+    },
+    {
+      "id": "appt-02",
+      "run": "live.json",
+      "claims": [
+        "The claim that a 10am call back time doesn't mean the office opens at 10 is not addressed in the evidence, which says nothing about call back times.",
+        "The query reference format 'FW-XXXX' is not in the evidence."
+      ],
+      "before": "No. Our offices are open 09:00 to 17:30, Monday to Friday, and closed at weekends and on bank holidays. So a 10am call back time doesn't mean the office opens at 10. Visits are by appointment, so the right adviser is available for you.\n\nI can't see your call back request from here. If you want me to check its status, send me the full query reference in the format FW-XXXX.",
+      "after": "All offices are open 09:00 to 17:30, Monday to Friday. They are closed at weekends and on bank holidays. Visits are by appointment so that the right adviser is available for you.\n\nI have no information about call back times, so I can't say how your 10am request relates to opening hours.",
+      "verdict": "not needed",
+      "note": "open 09:00 answers the question; FW-XXXX is the tool's own format; rewrite refused a simple answer"
+    },
+    {
+      "id": "handoff-complaint",
+      "run": "live.json",
+      "claims": [
+        "\"If you need to reach us sooner\" implies the switchboard gives a faster route than waiting for the adviser. The evidence only says to give the switchboard number."
+      ],
+      "before": "I've passed your complaint to a qualified adviser, and they will contact you. If you need to reach us sooner, the switchboard number is 0117 496 0100.",
+      "after": "I've logged your complaint, and a qualified adviser will contact you. The switchboard number is 0117 496 0100.",
+      "verdict": "needed",
+      "note": ""
+    },
+    {
+      "id": "client-05",
+      "run": "live-3.json",
+      "claims": [
+        "The documents say joint accounts are available. The evidence only says joint accounts need identity checks for each holder; it does not state that joint accounts are available.",
+        "\"you and your wife\" adds a detail (the user's marital status and that the other holder is a wife) that does not appear in the evidence."
+      ],
+      "before": "The documents say joint accounts are available. Each holder needs identity checks, so both you and your wife would need to complete them.\n\nThey don't say anything more, such as which account types can be held jointly. Please ask your adviser about that. The page on becoming a client is https://www.fernhillwealth.example/becoming-a-client/",
+      "after": "Here is a corrected answer, using only what the document says.\n\nThe document says: \"Joint accounts need identity checks for each holder.\" It doesn't say whether joint accounts are available, and it doesn't say which account types can be held jointly. Please raise those points with your adviser.\n\nThe source is the \"Becoming a client: what to expect\" page, at https://www.fernhillwealth.example/becoming-a-client/",
+      "verdict": "not needed",
+      "note": "identity checks for joint accounts imply they exist; wife is from the question; rewrite cast doubt wrongly"
+    },
+    {
+      "id": "security-05",
+      "run": "live.json",
+      "claims": [
+        "The opening word \"Yes.\" affirms a definite answer, but the evidence only says calls \"may be recorded\". Without the user's question, this reads as stronger than the source supports."
+      ],
+      "before": "Yes. Calls to and from the firm may be recorded for regulatory purposes and to help resolve any dispute about an instruction. Recordings are kept for at least five years.\n\nYou can find more on the security page: https://www.fernhillwealth.example/security/",
+      "after": "Calls to and from the firm may be recorded for regulatory purposes and to help resolve any dispute about an instruction. Recordings are kept for at least five years.\n\nSource: https://www.fernhillwealth.example/security/",
+      "verdict": "needed",
+      "note": ""
+    },
+    {
+      "id": "fees-13",
+      "run": "live-3.json",
+      "claims": [
+        "so that may be what you're seeing"
+      ],
+      "before": "Our documents say there is no charge for closing an account or for transferring out. On our model portfolios there are also no dealing charges if holdings have to be sold. Fund charges continue to be deducted within the funds until the holdings are transferred or sold, so that may be what you're seeing.\n\nI can't see your account or what the charge was. If you'd like it looked into, give me the details of the charge. I can also pass this to an adviser, or you can raise it as a complaint.",
+      "after": "There is no charge for closing an account or for transferring out. On our model portfolios there are no dealing charges if holdings have to be sold. Fund charges continue to be deducted within the funds until the holdings are transferred or sold.\n\nThe documents don't say what the charge on your account is, so I can't explain it. I can pass this to an adviser if you'd like.",
+      "verdict": "not needed",
+      "note": "hedged may-explanation from evidence; flag gave no reason; rewrite dropped the complaint offer"
+    },
+    {
+      "id": "security-06",
+      "run": "live.json",
+      "claims": [
+        "The answer says the customer can call the switchboard to speak to someone \"sooner\". The evidence gives the switchboard number but does not say calling will bring faster contact."
+      ],
+      "before": "I've passed your case to a qualified adviser, who will contact you. If you want to speak to someone sooner, you can call the switchboard on 0117 496 0100.",
+      "after": "I've passed your case to a qualified adviser, who will contact you. The switchboard number is 0117 496 0100.",
+      "verdict": "needed",
+      "note": ""
+    },
+    {
+      "id": "appt-02",
+      "run": "live-2.json",
+      "claims": [
+        "\"a 10am call back doesn't mean the office opens at 10\" makes a claim about call backs, which the evidence does not mention"
+      ],
+      "before": "No, a 10am call back doesn't mean the office opens at 10. All offices are open 09:00 to 17:30, Monday to Friday. They are closed at weekends and on bank holidays.\n\nVisits are by appointment so that the right adviser is available for you. Source: https://www.fernhillwealth.example/contact-us/",
+      "after": "Our documents give the opening hours but say nothing about call backs. They say all offices are open 09:00 to 17:30, Monday to Friday. Offices are closed at weekends and on bank holidays.\n\nVisits are by appointment so that the right adviser is available for you.",
+      "verdict": "not needed",
+      "note": "open 09:00 answers the question; same as item 34"
+    }
+  ]
+}
