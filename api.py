@@ -36,6 +36,7 @@ from __future__ import annotations
 import copy
 import logging
 import re
+import secrets
 import threading
 import time
 import uuid
@@ -107,7 +108,7 @@ class SessionStore:
             while len(self._sessions) >= self.max_sessions:
                 self._sessions.popitem(last=False)  # the least recently used goes first
             now = self.clock()
-            session = Session(id=uuid.uuid4().hex, created=now, last_seen=now)
+            session = Session(id=secrets.token_hex(16), created=now, last_seen=now)
             self._sessions[session.id] = session
             return session
 

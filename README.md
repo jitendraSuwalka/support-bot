@@ -48,7 +48,7 @@ python app.py                  # web interface, as in the recording above
 uvicorn api:app                # the same agent as an HTTP service; docs at /docs
 docker build -t support-bot .  # the service as a container (CI builds and tests it)
 python agent.py                # same agent, in the terminal
-pytest                         # 435 tests, under twenty seconds, no API calls, no network
+pytest                         # 436 tests, under twenty seconds, no API calls, no network
 ```
 
 > **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
@@ -283,7 +283,7 @@ POST /chat  {"message": "How much can I pay into an ISA this tax year?"}
      "behaviour": "answer", "escalated": false,
      "sources": [{"title": "ISAs: a guide for clients", "section": "The allowance",
                   "url": "https://www.fernhillwealth.example/guides/isas/"}],
-     "warnings": [], "latency_ms": 8016, "cost": {"usd": 0.0146, …}}
+     "warnings": [], "latency_ms": 8016, "cost": {"usd": 0.0061, …}}
 ```
 
 A client gets the outcome as data — the behaviour, whether a person was
@@ -291,7 +291,7 @@ brought in, the sections the answer rests on, any guard warning, the cost —
 so a front end can show a hand-off banner or the sources without parsing the
 answer. The choices that make it a service rather than a demo:
 
-- **The server issues conversation ids** (128 random bits) and refuses an
+- **The server issues conversation ids** (128 random bits, from `secrets`) and refuses an
   unknown or expired one with a 404, instead of starting a conversation under
   an id the client picked: one customer cannot continue another's by
   guessing.
@@ -396,7 +396,7 @@ Every turn the web interface serves is written as one JSON line to stderr
  "turn":2,"behaviour":"answer","escalated":false,"tools":["search_knowledge_base"],
  "guards":["citation_rewrite"],"warnings":[],"evidence_parts":1,"latency_ms":8412,
  "message":{"chars":44,"sha256":"5d1e0c7a9b2f4e31"},"answer":{"chars":312,"sha256":"…"},
- "cost":{"usd":0.0121,"input_tokens":4211,"output_tokens":388,"cache_read_tokens":0,
+ "cost":{"usd":0.0083,"input_tokens":1830,"output_tokens":388,"cache_read_tokens":7410,
  "cache_write_tokens":0,"calls":4,"unpriced_models":[]},"level":"INFO"}
 ```
 
@@ -404,10 +404,14 @@ That is what an on-call engineer, a cost report or a complaints reviewer needs
 about a turn, and it says nothing about what the customer wrote. The message
 and the answer are kept as a length and the first sixteen hex digits of a
 SHA-256 hash: hash a complainant's words and the turn can be found, without
-the log becoming a second copy of every conversation. `SUPPORT_BOT_LOG_CONTENT=true`
+the log becoming a second copy of every conversation. That is pseudonymised,
+not anonymous — a short or common message ("yes", "FW-1001") can be found by
+hashing guesses — so the log still deserves the care of personal data; a
+keyed hash would close that gap at the cost of a secret to manage. `SUPPORT_BOT_LOG_CONTENT=true`
 records the text for a deployment that has decided it may. A turn with a
 `WARNING` note is logged at warning level, a turn that fails at error level
-with the exception's type, so alerting needs no parsing.
+with the exception's type — not its text, which can carry the customer's
+words as easily as anything else — so alerting needs no parsing.
 
 **Prompt caching.** The tool definitions and the system prompt, about 2,500
 tokens, are identical on every main-model call of every conversation, and a
@@ -752,7 +756,7 @@ Caching cut the cost of an answer by 58%, from $0.0154 to $0.0064.
 
 ## Testing strategy
 
-`tests/` — **435 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
+`tests/` — **436 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
 Eight further tests call the real API and run only on request: `pytest -m live`;
 two download and run the real embedding model: `pytest -m model`.
 
@@ -842,7 +846,7 @@ traceable beats fluent and unverifiable.
 
 **Log what happened, not what was said.** The turn log records behaviour,
 guards, latency and cost for every turn, and a hash of the words instead of
-the words. A log is copied, shipped and kept longer than anyone intends; it
+the words (pseudonymised, not anonymous: see above). A log is copied, shipped and kept longer than anyone intends; it
 should not be the place customer conversations accumulate by default.
 
 ---
@@ -963,7 +967,7 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `rag/` | `corpus.py` chunker, `embeddings.py`, `store.py` (Qdrant), `lexical.py` (BM25), `retrieval.py` (fusion), `index.py` (CLI) |
 | `eval/` | `questions.yaml` (169 labelled cases), `dataset.py` validator, `retrieval.py` metrics and sweep, `live.py` end-to-end scorer, `report.py` README tables |
 | `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json`, `caching-off.json`, `caching-on.json` |
-| `tests/` | 435 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
+| `tests/` | 436 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `api.py` | FastAPI service — `/chat`, `/sessions/{id}`, `/health`, `/ready`, OpenAPI docs at `/docs` |
 | `Dockerfile` / `.dockerignore` | The service as a container: model and index baked in, non-root, health-checked, allow-listed contents |

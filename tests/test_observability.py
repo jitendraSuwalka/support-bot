@@ -124,8 +124,26 @@ def test_a_failed_turn_is_recorded_as_an_error_without_the_answer_fields(convers
         error=RuntimeError("API down"),
     )
     assert record["behaviour"] == "error"
-    assert record["error"] == {"type": "RuntimeError", "detail": "API down"}
+    assert record["error"] == {"type": "RuntimeError"}  # the text could carry the customer's words
     assert "cost" not in record and "answer" not in record
+
+
+def test_the_exception_text_is_logged_only_where_content_logging_is_on(conversation):
+    error = RuntimeError("customer said: my NI number is QQ123456C")
+    quiet, chatty = (
+        observability.turn_record(
+            None,
+            messages=conversation,
+            request_id="r",
+            session_id="s",
+            seconds=0,
+            settings=Settings(log_content=on),
+            error=error,
+        )
+        for on in (False, True)
+    )
+    assert "QQ123456C" not in json.dumps(quiet)
+    assert chatty["error"]["detail"] == "customer said: my NI number is QQ123456C"
 
 
 # --- running a turn --------------------------------------------------------------------
