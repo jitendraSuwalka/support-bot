@@ -31,7 +31,10 @@ import argparse
 import json
 import re
 import sys
+import time
 from pathlib import Path
+
+from eval.label_factcheck import rewrites, runs
 
 ROOT = Path(__file__).resolve().parent.parent
 REPORTS = ROOT / "reports"
@@ -248,8 +251,22 @@ def stability_table(runs: list[dict], baseline: dict | None = None) -> str:
     return "\n".join(lines)
 
 
-def ablation_table(full: dict, ablations: list[tuple[str, dict]]) -> str:
-    """The same cases with one thing changed, against everything switched on."""
+def behaviour_spread(repeats: list[dict] | None) -> float | None:
+    """How far behaviour accuracy moved between runs of the same code, in points."""
+    if not repeats or len(repeats) < 2:
+        return None
+    values = [run["summary"]["behaviour_accuracy"] for run in repeats]
+    return round(100 * (max(values) - min(values)), 1)
+
+
+def ablation_table(
+    full: dict, ablations: list[tuple[str, dict]], spread: float | None = None
+) -> str:
+    """The same cases with one thing changed, against everything switched on.
+
+    `spread` is how far behaviour accuracy moved between repeated runs of the
+    same code: a change no larger than that is not evidence of an effect.
+    """
     lines = [
         "Ablation: the same cases with one component switched off, or the main model "
         "changed, one at a time (`reports/ablations/`). *Unsupported* counts replies that "
@@ -272,6 +289,18 @@ def ablation_table(full: dict, ablations: list[tuple[str, dict]]) -> str:
             f"{_pct(s['escalation']['precision'])} | {_pct(s['escalation']['recall'])} | "
             f"{_unsupported(s)} | {_cost(s)} | {s['latency_seconds']['median']:.1f} s |"
         )
+    if spread is not None:
+        larger = sum(
+            round(abs(100 * (report["summary"]["behaviour_accuracy"] - base)), 1) > spread
+            for _, report in ablations
+        )
+        lines += [
+            "",
+            f"Repeated runs of the same code differ by up to {spread:.1f} points of behaviour "
+            "accuracy (the table above), so a change no larger than that is not evidence that "
+            f"the component matters to behaviour. {larger} of the {len(ablations)} changes "
+            "differ by more.",
+        ]
     return "\n".join(lines)
 
 
@@ -284,16 +313,46 @@ def load_labels(directory: Path = REPORTS) -> dict | None:
     return labels if labels.get("items") else None
 
 
-def factcheck_table(labels: dict) -> str:
-    """How often the fact-checker's forced rewrites were needed, judged by hand."""
+def _runs(count: int) -> str:
+    return f"{count} full run" + ("" if count == 1 else "s")
+
+
+def _dates(stamps) -> str:
+    """'2026-10-24T19:48:52Z' stamps as '24 October 2026' (or '24 and 25 October 2026')."""
+    days = sorted({time.strptime(stamp[:10], "%Y-%m-%d") for stamp in stamps if stamp})
+    if not days:
+        return ""
+    text = [f"{day.tm_mday} {time.strftime('%B %Y', day)}" for day in days]
+    if len({time.strftime("%B %Y", day) for day in days}) == 1 and len(days) > 1:
+        return " and ".join(str(day.tm_mday) for day in days[:-1]) + f" and {text[-1]}"
+    return " and ".join(text)
+
+
+def factcheck_table(labels: dict, now: dict | None = None) -> str:
+    """How often the fact-checker's forced rewrites were needed, judged by hand.
+
+    `now` is the runs the reports hold today and the rewrites in them: when they
+    are not the runs the sample was drawn from, the table says so, because the
+    labels then describe the fact-checker as it was.
+    """
     counts = {"needed": 0, "not needed": 0, "unsure": 0}
     for item in labels["items"]:
         counts[item["verdict"]] += 1
     judged = counts["needed"] + counts["not needed"]
-    who = f" by {labels['labelled_by']}" if labels.get("labelled_by") else ""
+    drawn, population = labels.get("drawn_from"), labels.get("population")
+    count = len(labels["items"])
+    if drawn and population:
+        when = _dates(drawn.values())
+        source = (
+            f"{count} of the {population} rewrites it forced in {_runs(len(drawn))}"
+            + (f" of {when}" if when else "")
+            + ", sampled by a fixed hash"
+        )
+    else:
+        source = f"{count} of its forced rewrites, sampled from the runs"
+    who = f" Labelled by {labels['labelled_by']}" if labels.get("labelled_by") else " Labelled"
     lines = [
-        f"The fact-checker, judged by hand: {len(labels['items'])} of its forced rewrites, "
-        "sampled from the runs, were read against the same evidence it had"
+        f"The fact-checker, judged by hand: {source}, each read against the evidence it had."
         f"{who} (`python -m eval.label_factcheck`, `reports/factcheck-labels.json`).",
         "",
         "| Verdict | Rewrites |",
@@ -308,6 +367,13 @@ def factcheck_table(labels: dict) -> str:
             "",
             f"Precision {_pct(counts['needed'] / judged)} (95% CI {_pct(low)} to {_pct(high)}, "
             f"Wilson, {judged} judged either way).",
+        ]
+    if now and drawn and now["drawn_from"] != drawn:
+        lines += [
+            "",
+            "These labels describe the fact-checker as it was in those runs. The runs now in "
+            f"`reports/` are different ones: in {_runs(len(now['drawn_from']))} it forced "
+            f"{now['population']} rewrites.",
         ]
     return "\n".join(lines)
 
@@ -498,6 +564,7 @@ def render(
     repeats: list[dict] | None = None,
     ablations: list[tuple[str, dict]] | None = None,
     labels: dict | None = None,
+    now: dict | None = None,
 ) -> str:
     parts = []
     if retrieval:
@@ -507,9 +574,9 @@ def render(
     if repeats:
         parts.append(stability_table(repeats, runs.get("baseline")))
     if ablations and "current" in runs:
-        parts.append(ablation_table(runs["current"], ablations))
+        parts.append(ablation_table(runs["current"], ablations, behaviour_spread(repeats)))
     if labels:
-        parts.append(factcheck_table(labels))
+        parts.append(factcheck_table(labels, now))
     if caching:
         parts.append(caching_table(caching))
     if not parts:
@@ -524,6 +591,7 @@ def current_block(directory: Path = REPORTS) -> str:
         load_repeats(directory),
         load_ablations(directory),
         load_labels(directory),
+        {"drawn_from": runs(directory), "population": len(rewrites(directory))},
     )
 
 

@@ -21,6 +21,11 @@ sample is drawn the same way every time (by a hash of the case and draft),
 so it can be labelled over several sittings: every answer is saved to
 reports/factcheck-labels.json as it is given, and a rerun carries on from
 the first unlabelled item. The README's table is rendered from that file.
+
+The file records the runs its sample was drawn from. Once those runs are
+replaced by new ones, it still describes the fact-checker as it was then, and
+labelling refuses to add the new runs' rewrites to it: a new sample goes in a
+new file (--labels reports/factcheck-labels-new.json).
 """
 
 from __future__ import annotations
@@ -43,14 +48,26 @@ VERDICTS = {"y": "needed", "n": "not needed", "u": "unsure"}
 SAMPLE = 40
 
 
+def _run_paths(directory: Path) -> list[Path]:
+    paths = [directory / "live.json", *sorted((directory / "repeats").glob("*.json"))]
+    return [path for path in paths if path.exists()]
+
+
+def runs(directory: Path = REPORTS) -> dict[str, str | None]:
+    """The runs the rewrites are drawn from: each file, and when it was generated."""
+    return {
+        path.relative_to(directory).as_posix(): json.loads(path.read_text(encoding="utf-8")).get(
+            "generated"
+        )
+        for path in _run_paths(directory)
+    }
+
+
 def rewrites(directory: Path = REPORTS) -> list[dict]:
     """Every forced rewrite in the current run and its repeats, once per case and draft."""
-    paths = [directory / "live.json", *sorted((directory / "repeats").glob("*.json"))]
     seen, found = set(), []
-    for path in paths:
-        if not path.exists():
-            continue
-        for row in json.loads(path.read_text(encoding="utf-8"))["rows"]:
+    for path in _run_paths(directory):
+        for row in json.loads(path.read_text(encoding="utf-8")).get("rows", []):
             record = row.get("factcheck")
             if not record:
                 continue
@@ -72,9 +89,17 @@ def sample(items: list[dict], size: int = SAMPLE) -> list[dict]:
 
 
 def load_labels(path: Path = LABELS) -> dict:
-    if path.exists():
-        return json.loads(path.read_text(encoding="utf-8"))
-    return {"labelled_by": None, "started": None, "items": []}
+    """The labels so far. `drawn_from` names the runs the sample came from and
+    `population` how many rewrites they held, so a file always says which
+    fact-checker it describes, after those runs are replaced."""
+    saved = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    return {
+        "labelled_by": saved.get("labelled_by"),
+        "started": saved.get("started"),
+        "drawn_from": saved.get("drawn_from"),
+        "population": saved.get("population"),
+        "items": saved.get("items", []),
+    }
 
 
 def save_labels(labels: dict, path: Path = LABELS) -> None:
@@ -136,11 +161,21 @@ def label(
 ) -> dict:
     """Show each unlabelled item of the sample and record the verdict as it is given."""
     labels = load_labels(path)
+    drawn = runs(directory)
+    if labels["items"] and labels["drawn_from"] != drawn:
+        say(
+            f"{path.name} holds labels drawn from other runs than the reports now hold. "
+            "Label these runs into a new file with --labels, so that two samples are "
+            "never mixed."
+        )
+        return labels
     if by:
         labels["labelled_by"] = by
     labels["started"] = labels["started"] or time.strftime("%Y-%m-%d")
     questions = {case.id: case.question for case in load_cases()}
-    items = sample(rewrites(directory), size)
+    found = rewrites(directory)
+    labels["drawn_from"], labels["population"] = drawn, len(found)
+    items = sample(found, size)
     done = {(item["id"], item["before"]) for item in labels["items"]}
     todo = [item for item in items if (item["id"], item["before"]) not in done]
     say(f"{len(items)} rewrites in the sample, {len(items) - len(todo)} already labelled.")
@@ -153,10 +188,12 @@ def label(
             )
         )
         while True:
-            answer = ask(PROMPT).strip().lower()[:1]
+            # One letter exactly: a note pasted at this prompt once began with
+            # "s" and was taken as skip.
+            answer = ask(PROMPT).strip().lower()
             if answer in VERDICTS or answer in ("s", "q"):
                 break
-            say("Please type y, n, u, s or q.")
+            say("Please type one letter: y, n, u, s or q.")
         if answer == "q":
             break
         if answer == "s":
@@ -196,11 +233,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--by", help="who is labelling, recorded in the labels file")
     parser.add_argument("--size", type=int, default=SAMPLE, help="how many rewrites to sample")
     parser.add_argument("--summary", action="store_true", help="print the precision and stop")
+    parser.add_argument(
+        "--labels", type=Path, default=LABELS, help="the labels file (default: %(default)s)"
+    )
     args = parser.parse_args(argv)
     if args.summary:
-        print(render(precision(load_labels())))
+        print(render(precision(load_labels(args.labels))))
         return 0
-    label(by=args.by, size=args.size)
+    label(path=args.labels, by=args.by, size=args.size)
     return 0
 
 

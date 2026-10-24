@@ -19,13 +19,15 @@ def row(case_id, before, claims=("a claim",)):
     }
 
 
-def write_runs(directory, first, *repeats):
-    (directory / "live.json").write_text(json.dumps({"rows": first}), encoding="utf-8")
+def write_runs(directory, first, *repeats, generated="2026-10-24T19:48:52Z"):
+    (directory / "live.json").write_text(
+        json.dumps({"generated": generated, "rows": first}), encoding="utf-8"
+    )
     if repeats:
-        (directory / "repeats").mkdir()
+        (directory / "repeats").mkdir(exist_ok=True)
     for number, rows in enumerate(repeats, start=2):
         path = directory / "repeats" / f"live-{number}.json"
-        path.write_text(json.dumps({"rows": rows}), encoding="utf-8")
+        path.write_text(json.dumps({"generated": generated, "rows": rows}), encoding="utf-8")
 
 
 def scripted(*answers):
@@ -81,7 +83,7 @@ def test_labelling_saves_each_answer_and_carries_on_where_it_stopped(tmp_path):
     assert [i["verdict"] for i in saved["items"]] == ["needed", "not needed", "unsure"]
     assert saved["labelled_by"] == "Jay"  # kept from the first sitting
     assert any("2 already labelled" in line for line in said)
-    assert any("Please type y, n, u, s or q." in line for line in said)
+    assert any("Please type one letter: y, n, u, s or q." in line for line in said)
     assert sum(f"case {order[2]}" in line for line in said) == 1
 
 
@@ -133,3 +135,60 @@ def test_the_summary_option_prints_the_precision(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr(lf, "load_labels", lambda p=path: json.loads(path.read_text()))
     assert lf.main(["--summary"]) == 0
     assert "labelled 0" in capsys.readouterr().out
+
+
+def test_a_note_typed_at_the_verdict_prompt_is_not_taken_as_a_verdict(tmp_path):
+    # "sooner is ..." once began with "s" and skipped the item.
+    write_runs(tmp_path, [row("isa-01", "one")])
+    path = tmp_path / "labels.json"
+    said = []
+    lf.label(tmp_path, path, ask=scripted("sooner is fine", "n", "a note"), say=said.append)
+    [item] = json.loads(path.read_text(encoding="utf-8"))["items"]
+    assert (item["verdict"], item["note"]) == ("not needed", "a note")
+    assert any("Please type one letter" in line for line in said)
+
+
+def test_the_labels_record_the_runs_their_sample_came_from(tmp_path):
+    write_runs(tmp_path, [row("isa-01", "one")], [row("isa-02", "two")])
+    path = tmp_path / "labels.json"
+    lf.label(tmp_path, path, ask=scripted("y", "q"), say=lambda line: None)
+    saved = json.loads(path.read_text(encoding="utf-8"))
+    assert saved["drawn_from"] == {
+        "live.json": "2026-10-24T19:48:52Z",
+        "repeats/live-2.json": "2026-10-24T19:48:52Z",
+    }
+    assert saved["population"] == 2
+
+
+def test_labels_from_earlier_runs_are_never_mixed_with_new_ones(tmp_path):
+    write_runs(tmp_path, [row("isa-01", "one")])
+    path = tmp_path / "labels.json"
+    lf.label(tmp_path, path, ask=scripted("y"), say=lambda line: None)
+    before = path.read_text(encoding="utf-8")
+
+    write_runs(tmp_path, [row("isa-01", "a new draft")], generated="2026-11-01T09:00:00Z")
+    said = []
+    lf.label(tmp_path, path, ask=scripted("n", ""), say=said.append)
+    assert path.read_text(encoding="utf-8") == before  # nothing added
+    assert any("--labels" in line for line in said)
+
+    fresh = tmp_path / "labels-new.json"  # the new runs go in their own file
+    lf.label(tmp_path, fresh, ask=scripted("n", ""), say=lambda line: None)
+    assert json.loads(fresh.read_text(encoding="utf-8"))["items"][0]["before"] == "a new draft"
+
+
+def test_the_table_names_the_runs_and_says_when_the_reports_have_moved_on():
+    drawn = {"live.json": "2026-10-24T19:48:52Z", "repeats/live-2.json": "2026-10-25T08:00:00Z"}
+    labels = {
+        "labelled_by": "Jitendra Suwalka, with an AI second reader",
+        "drawn_from": drawn,
+        "population": 106,
+        "items": [{"id": "a", "verdict": "needed"}, {"id": "b", "verdict": "not needed"}],
+    }
+    same = report.factcheck_table(labels, {"drawn_from": drawn, "population": 106})
+    assert "2 of the 106 rewrites it forced in 2 full runs of 24 and 25 October 2026" in same
+    assert "Labelled by Jitendra Suwalka, with an AI second reader" in same
+    assert "describe the fact-checker as it was" not in same
+    later = {"drawn_from": {"live.json": "2026-11-01T09:00:00Z"}, "population": 12}
+    moved = report.factcheck_table(labels, later)
+    assert "in 1 full run it forced 12 rewrites" in moved

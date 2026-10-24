@@ -1,6 +1,12 @@
 {
   "labelled_by": "Jitendra Suwalka, with an AI second reader",
   "started": "2026-10-25",
+  "drawn_from": {
+    "live.json": "2026-10-24T19:48:52Z",
+    "repeats/live-2.json": "2026-10-24T20:02:40Z",
+    "repeats/live-3.json": "2026-10-24T20:10:28Z"
+  },
+  "population": 106,
   "items": [
     {
       "id": "life-04",

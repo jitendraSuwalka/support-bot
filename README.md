@@ -803,7 +803,9 @@ Ablation: the same cases with one component switched off, or the main model chan
 | BM25 only, no vector search (`SUPPORT_BOT_RETRIEVAL_MODE=lexical`) | 95.3% (-2.9) | 93.1% | 78.1% | 96.2% | 1 | $0.0046 | 8.0 s |
 | Haiku 5.5 answering (`SUPPORT_BOT_MAIN_MODEL=claude-haiku-5-5`) | 97.0% (-1.2) | 96.9% | 92.6% | 96.2% | 0 | $0.0006 | 7.0 s |
 
-The fact-checker, judged by hand: 40 of its forced rewrites, sampled from the runs, were read against the same evidence it had by Jitendra Suwalka, with an AI second reader (`python -m eval.label_factcheck`, `reports/factcheck-labels.json`).
+Repeated runs of the same code differ by up to 0.6 points of behaviour accuracy (the table above), so a change no larger than that is not evidence that the component matters to behaviour. 2 of the 5 changes differ by more.
+
+The fact-checker, judged by hand: 40 of the 106 rewrites it forced in 3 full runs of 24 October 2026, sampled by a fixed hash, each read against the evidence it had. Labelled by Jitendra Suwalka, with an AI second reader (`python -m eval.label_factcheck`, `reports/factcheck-labels.json`).
 
 | Verdict | Rewrites |
 |---|---:|
