@@ -1,12 +1,21 @@
 # Grounded Support Agent
 
 [![CI](https://github.com/jitendraSuwalka/support-bot/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jitendraSuwalka/support-bot/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/jitendraSuwalka/support-bot?sort=semver)](https://github.com/jitendraSuwalka/support-bot/releases/latest)
+[![Container](https://img.shields.io/badge/container-ghcr.io-blue?logo=docker&logoColor=white)](https://github.com/jitendraSuwalka/support-bot/pkgs/container/support-bot)
+[![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue?logo=python&logoColor=white)](pyproject.toml)
+[![Licence: MIT](https://img.shields.io/badge/licence-MIT-green)](LICENSE)
 
-![The agent showing which checks each answer passed](screenshot.png)
+![The agent quoting a case status word for word, answering an ISA question with its sources, and handing a pension question to an adviser](docs/demo.gif)
 
-A customer support agent for Fernhill Wealth — a fictional UK wealth-management
-firm — built to answer only
-what it can evidence — and to prove, in code, that it does.
+*Three questions, three behaviours: a case status quoted word for word, an ISA
+question answered from the firm's documents with every figure checked, and a
+request for pension advice handed to a person. The labels under each reply are
+the checks it passed; the panel on the right is the evidence it used.*
+
+A customer support agent for Fernhill Wealth, a fictional UK wealth-management
+firm, built to answer only what it can evidence — and to prove, in code, that
+it does.
 
 The interesting part is not that an LLM can call tools. It is that a support
 assistant in a regulated industry must never invent a phone number, never
@@ -25,8 +34,17 @@ rendered from the reports in `reports/` ([Evaluation](#evaluation)):
 - **$0.0064** an answer with prompt caching, **58%** less than without.
 <!-- headline:end -->
 
+Try the released service in one command, with your own Anthropic API key, then
+open http://127.0.0.1:8000/docs:
+
+```bash
+docker run -p 8000:8000 -e ANTHROPIC_API_KEY=sk-ant-... ghcr.io/jitendrasuwalka/support-bot:latest
 ```
-python app.py                  # web interface
+
+Or from a clone ([Running it](#running-it) has the set-up):
+
+```
+python app.py                  # web interface, as in the recording above
 uvicorn api:app                # the same agent as an HTTP service; docs at /docs
 docker build -t support-bot .  # the service as a container (CI builds and tests it)
 python agent.py                # same agent, in the terminal
@@ -56,6 +74,8 @@ pytest                         # 421 tests, under twenty seconds, no API calls, 
 - [Design decisions and trade-offs](#design-decisions-and-trade-offs)
 - [Known limitations](#known-limitations)
 - [Running it](#running-it)
+- [What I would do next](#what-i-would-do-next)
+- [Changelog](CHANGELOG.md)
 
 ---
 
@@ -298,6 +318,10 @@ answer. The choices that make it a service rather than a demo:
 docker build -t support-bot .
 docker run -p 8000:8000 -e ANTHROPIC_API_KEY=sk-ant-... support-bot
 ```
+
+Or skip the build: every release publishes the image, so
+`docker pull ghcr.io/jitendrasuwalka/support-bot:2.0.0` fetches exactly what
+the release tested ([Releases](#releases)).
 
 The `Dockerfile` builds the HTTP service into an image, and CI builds that
 image and runs `scripts/container_smoke_test.sh` against it on every push, so
@@ -848,6 +872,8 @@ one whose weaknesses are unknown.
 Requires Python 3.11–3.13 and an Anthropic API key.
 
 ```bash
+git clone https://github.com/jitendraSuwalka/support-bot.git
+cd support-bot
 python -m venv .venv
 .venv\Scripts\activate          # Windows;  source .venv/bin/activate on macOS/Linux
 pip install -r requirements.txt
@@ -907,7 +933,7 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `corpus/` | 18 documents for the fictional firm, with front matter; `corpus/README.md` sources every public figure |
 | `rag/` | `corpus.py` chunker, `embeddings.py`, `store.py` (Qdrant), `lexical.py` (BM25), `retrieval.py` (fusion), `index.py` (CLI) |
 | `eval/` | `questions.yaml` (169 labelled cases), `dataset.py` validator, `retrieval.py` metrics and sweep, `live.py` end-to-end scorer, `report.py` README tables |
-| `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json` |
+| `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json`, `caching-off.json`, `caching-on.json` |
 | `tests/` | 421 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `api.py` | FastAPI service — `/chat`, `/sessions/{id}`, `/health`, `/ready`, OpenAPI docs at `/docs` |
@@ -915,6 +941,7 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `scripts/container_smoke_test.sh` | Starts the image and checks the service in it, with no model call and no secret; run by CI |
 | `scripts/release_notes.py` | Holds a release tag to the code and the changelog, and writes the release notes with the measured headline |
 | `CHANGELOG.md` | Every release, newest first; the release notes are taken from it |
+| `docs/demo.gif` | The recording at the top of this README |
 | `.github/workflows/` | `ci.yml`: lint, tests and the container on every push; `release.yml`: a version tag published as an image and a release |
 | `requirements.txt` / `requirements.lock` | Direct dependencies / every resolved dependency |
 
