@@ -203,8 +203,7 @@ def headline(
         hybrid = retrieval["modes"]["hybrid"]
         lines.append(
             f"- **{_pct(hybrid['recall@6'])}** of the {hybrid['n']} labelled questions with a "
-            "known answering passage have it among the six retrieved (hybrid BM25 and vector "
-            "search)."
+            "gold passage have it among the six retrieved (hybrid BM25 and vector search)."
         )
     if caching and "off" in caching and "on" in caching:
         off = (caching["off"]["summary"].get("cost_usd") or {}).get("per_case_mean")

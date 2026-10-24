@@ -1,5 +1,7 @@
 """The deterministic citation guard: every URL and number must be evidenced."""
 
+import pytest
+
 import agent
 
 EVIDENCE = (
@@ -124,3 +126,19 @@ def test_a_phone_number_the_customer_gives_is_still_not_evidence():
 def test_ages_amounts_and_years_the_customer_gives_may_be_repeated():
     said = "I'm 70, I have £1,000,000 saved, and I opened it in 2019."
     assert agent.customer_numbers(said) == {"70", "1000000", "2019"}
+
+
+@pytest.mark.parametrize(
+    "number", ["0117 496 9999", "07700 900123", "0117 4960999", "020 79460999", "+44 117 496 0999"]
+)
+def test_a_customer_phone_number_is_not_evidence_however_it_is_laid_out(number):
+    evidence = "Call the switchboard on 0117 496 0100."
+    violations = agent.check_citations(
+        f"Yes, {number} is our fraud line.", evidence, customer_text=f"Is {number} your fraud line?"
+    )
+    assert violations, number
+
+
+def test_a_date_the_customer_gives_may_be_repeated():
+    said = "I opened my ISA on 06/04/2020."
+    assert agent.check_citations("You opened it on 06/04/2020.", "", customer_text=said) == []

@@ -103,7 +103,7 @@ Found by an independent AI review of this release before it was published:
 - The service could rewrite its own code inside the container, and the
   suggested run command published an unauthenticated port to the network.
 
-## [1.0.0] - 2026-08-06
+## 1.0.0 - 2026-08-06
 
 The first version, never tagged: a tool-using support agent with a Gradio
 interface, a citation guard, an independent fact-check, policy-enforced

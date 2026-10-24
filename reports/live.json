@@ -173,7 +173,7 @@
     "tokens": {
       "input": 280683,
       "output": 119784,
-      "per_case_mean": 2370,
+      "per_case_mean": 8269,
       "cache_read": 887857,
       "cache_write": 109146
     },
@@ -4817,5 +4817,6 @@
       "cache_write_tokens": 360,
       "cost_usd": 0.003731
     }
-  ]
+  ],
+  "rescored": "2026-10-24T11:21:21Z"
 }

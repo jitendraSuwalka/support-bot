@@ -87,12 +87,15 @@ def test_a_failed_turn_puts_the_conversation_back_and_shows_no_error_text(monkey
         raise RuntimeError("secret internal detail sk-ant-123")
 
     monkeypatch.setattr(app.agent, "run_agent", failing)
-    state = {"unclear_turns": 0, "session_id": "s"}
+    state = {"unclear_turns": 0}
     history, _, conversation, state, status, _, trace = app.respond("ISA?", [], [], state)
-    assert conversation == [] and state == {"unclear_turns": 0, "session_id": "s"}
+    # Put back as it was, keeping the session id, so a retry joins the same session.
+    assert conversation == [] and set(state) == {"unclear_turns", "session_id"}
+    assert state["unclear_turns"] == 0
     assert history[-1]["content"] == app.REQUEST_FAILED_REPLY
-    assert "secret" not in history[-1]["content"] and "Request failed" in status
-    assert "RuntimeError" in trace  # for whoever runs the app, in the trace panel
+    assert "Request failed" in status
+    assert "secret" not in history[-1]["content"] and "secret" not in trace
+    assert "RuntimeError" in trace  # the type only, for whoever runs the app
 
 
 def test_a_reply_replaced_by_the_last_line_check_says_so():

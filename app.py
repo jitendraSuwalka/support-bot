@@ -117,20 +117,20 @@ def respond(question, history, conversation, state):
         return history, "", conversation, state, "", EMPTY_EVIDENCE, ""
 
     history = history + [{"role": "user", "content": question}]
-    # What the conversation was before this turn, to put back if it fails.
-    before, saved_state = len(conversation), copy.deepcopy(state)
-    conversation.append({"role": "user", "content": question})
-
     # The policy state lives for the conversation, so it carries the session id
     # the turn log groups turns by; Reset starts a new state and a new session.
     session_id = state.setdefault("session_id", uuid.uuid4().hex)
+    # What the conversation was before this turn, to put back if it fails.
+    before, saved_state = len(conversation), copy.deepcopy(state)
+    conversation.append({"role": "user", "content": question})
     try:
         result, _ = observability.run_logged_turn(conversation, state, session_id=session_id)
     except Exception as error:
         # Put the conversation back as it was (the agent extends it in place,
         # so a failure after a tool call would leave a tool request without
-        # its result), and show the customer a plain message. The error's
-        # text goes to the pipeline-trace panel for whoever runs the app.
+        # its result), and show a plain message. The trace panel, on the same
+        # page, names the exception's type; its text, which can carry anything,
+        # goes only to the turn log, and only where content logging is on.
         del conversation[before:]
         state.clear()
         state.update(saved_state)
@@ -142,7 +142,7 @@ def respond(question, history, conversation, state):
             state,
             '<span class="chip chip-bad">Request failed</span>',
             EMPTY_EVIDENCE,
-            f"```\n{type(error).__name__}: {error}\n```",
+            f"```\nturn failed: {type(error).__name__}\n```",
         )
 
     history.append({"role": "assistant", "content": result.answer})

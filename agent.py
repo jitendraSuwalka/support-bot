@@ -403,20 +403,24 @@ def normalise_number(text):
     return re.sub(r"\D", "", text)
 
 
+# A UK phone number however it is laid out: 0117 496 0999, 07700 900123,
+# 020 79460999, +44 117 496 0999. Spaces and hyphens only, so a date such as
+# 06/04/2020 is not one.
+PHONE_PATTERN = re.compile(r"(?:\+44\s?|\b0)\d(?:[\s-]?\d){8,9}\b")
+
+
 def customer_numbers(text):
     """The numbers a customer wrote that may be repeated back to them.
 
-    An age, an amount or a year the customer gave can be used in the answer
-    ("I'm 70. Does the cash ISA cap apply to me?"). A phone number cannot:
-    repeating it would lend the firm's authority to a number the customer
-    was given by someone else -- the classic way a fraudster's line is made
-    to look genuine. Anything that looks like a phone number (ten or more
-    digits, or seven or more starting with 0) is left out, as customer
-    links are.
+    An age, an amount, a date or a year the customer gave can be used in the
+    answer ("I'm 70. Does the cash ISA cap apply to me?"). A phone number
+    cannot: repeating it would lend the firm's authority to a number the
+    customer was given by someone else -- the classic way a fraudster's line
+    is made to look genuine. Phone numbers are taken out of the customer's
+    text before it is read, whatever their layout, as customer links are;
+    any other run of ten or more digits is left out too.
     """
-    return {
-        n for n in number_tokens(text) if len(n) < 10 and not (n.startswith("0") and len(n) >= 7)
-    }
+    return {n for n in number_tokens(PHONE_PATTERN.sub(" ", text)) if len(n) < 10}
 
 
 def number_tokens(text):
@@ -691,8 +695,9 @@ CLIENT_QUERIES = {
 }
 
 
-# A case reference as a customer might type it: FW-1002, fw 1002, FW1002.
-REFERENCE_PATTERN = re.compile(r"\bFW[\s-]?(\d{4})\b", re.IGNORECASE)
+# A case reference as a customer might type it: FW-1002, fw 1002, FW1002,
+# FW - 1002, with any dash, spaced or not.
+REFERENCE_PATTERN = re.compile(r"\bFW\s*[-\u2013\u2014]?\s*(\d{4})\b", re.IGNORECASE)
 
 
 def references_in(text):
@@ -1421,8 +1426,8 @@ def recheck_citations(answer, evidence, customer_text="") -> list[str]:
     the third evaluation run (since replaced in reports/live.json), isa-05
     ended with a warning that two details were unverified, and the answer the
     customer saw had been rewritten after that check, so nothing had looked
-    at it. Every
-    rewrite now meets the same exact-match check as the first draft.
+    at it. Every rewrite now meets the same exact-match check as the first
+    draft.
     """
     if not CHECK_CITATIONS:
         return []
@@ -1461,6 +1466,10 @@ def groundedness_check(answer, messages, evidence) -> tuple[str, list[str]]:
 # that no other guard reads carries a number or link the evidence lacks.
 SAFE_REPLIES = {
     "greeting": "Hello! How can I help you today?",
+    "unevidenced reply": (
+        "I can't answer that from the information I have. You can call the switchboard on "
+        f"{SWITCHBOARD}."
+    ),
     "clarification": (
         "Could you tell me a little more about what you need, so I can find the right information?"
     ),
@@ -1521,7 +1530,11 @@ def escalation_policy(answer, messages, evidence_parts, model_escalated, state, 
         answer, more = last_line_check(answer, messages, evidence_parts, "clarification")
         notes += more
     elif ended is None and not evidence_parts:
-        answer, more = last_line_check(answer, messages, evidence_parts, "greeting")
+        # A greeting, by default; with the evidence guard switched off, any
+        # answer given without a tool comes this way too.
+        said = customer_messages(messages)
+        kind = "greeting" if said and is_pleasantry(said[-1]) else "unevidenced reply"
+        answer, more = last_line_check(answer, messages, evidence_parts, kind)
         notes += more
     return answer, notes, forced
 

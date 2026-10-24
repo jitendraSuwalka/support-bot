@@ -30,7 +30,7 @@ rendered from the reports in `reports/` ([Evaluation](#evaluation)):
 <!-- headline:start -->
 - **98.8%** of 169 labelled customer questions handled as the label says — answered, escalated, clarified or declined (the first measurement: 88.8%).
 - **96.2%** of escalations were wanted, and **96.2%** of the questions that needed a person reached one.
-- **97.0%** of the 135 labelled questions with a known answering passage have it among the six retrieved (hybrid BM25 and vector search).
+- **97.0%** of the 135 labelled questions with a gold passage have it among the six retrieved (hybrid BM25 and vector search).
 - **$0.0064** an answer with prompt caching, **58%** less than without.
 <!-- headline:end -->
 
@@ -49,7 +49,7 @@ python app.py                  # web interface, as in the recording above
 uvicorn api:app                # the same agent as an HTTP service; docs at /docs
 docker build -t support-bot .  # the service as a container (CI builds and tests it)
 python agent.py                # same agent, in the terminal
-pytest                         # 442 tests, under twenty seconds, no API calls, no network
+pytest                         # 450 tests, under twenty seconds, no API calls, no network
 ```
 
 > **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
@@ -340,6 +340,13 @@ The key comes from a file rather than the command line, so it stays out of
 shell history, and the port is published on this machine only: the service
 has no authentication of its own (see [Known limitations](#known-limitations)),
 so it should not be reachable from the network without a gateway in front.
+Docker reads `--env-file` values literally — no quotes, no trailing comments,
+which is why `.env.example` keeps every comment on its own line — and three
+settings need care in a container: leave `SUPPORT_BOT_MODEL_CACHE` and
+`SUPPORT_BOT_INDEX_PATH` unset (the image sets them), and point
+`SUPPORT_BOT_TURN_LOG_PATH` at a mounted volume
+(`-v "$PWD/logs:/logs" -e SUPPORT_BOT_TURN_LOG_PATH=/logs/turns.jsonl`), since
+the service cannot write beside its code.
 
 Or skip the build: every release publishes the image, so
 `docker pull ghcr.io/jitendrasuwalka/support-bot:2.0.0` fetches exactly what
@@ -592,7 +599,8 @@ offline suite it claims to be.
 **Fix.** Gradio analytics off in code; ONNX Runtime telemetry disabled before
 the model's first session, with a test. The suite now makes no outbound
 connection at all, and an autouse fixture keeps it that way: any test that
-opens a connection to another machine fails.
+connects a socket to another machine fails. (It watches `socket.connect`; a
+DNS lookup or a datagram sent without connecting would pass it unseen.)
 
 ### 10. A number that swallowed its neighbour
 
@@ -785,7 +793,7 @@ Caching cut the cost of an answer by 58%, from $0.0154 to $0.0064.
 
 ## Testing strategy
 
-`tests/` — **442 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
+`tests/` — **450 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
 Eight further tests call the real API and run only on request: `pytest -m live`;
 two download and run the real embedding model: `pytest -m model`.
 
@@ -840,7 +848,7 @@ framework used for what it adds, not depended on.
 
 **No telemetry.** Gradio analytics and ONNX Runtime telemetry are switched off in
 code; the test suite makes no outbound connection, and a fixture fails any test
-that tries.
+that connects a socket to another machine.
 
 **Selective staleness.** Case statuses expire from conversation history; FAQ
 content does not. Wiping static content would cost calls and latency for no
@@ -998,7 +1006,7 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `rag/` | `corpus.py` chunker, `embeddings.py`, `store.py` (Qdrant), `lexical.py` (BM25), `retrieval.py` (fusion), `index.py` (CLI) |
 | `eval/` | `questions.yaml` (169 labelled cases), `dataset.py` validator, `retrieval.py` metrics and sweep, `live.py` end-to-end scorer, `report.py` README tables |
 | `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json`, `caching-off.json`, `caching-on.json` |
-| `tests/` | 442 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
+| `tests/` | 450 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `api.py` | FastAPI service — `/chat`, `/sessions/{id}`, `/health`, `/ready`, OpenAPI docs at `/docs` |
 | `Dockerfile` / `.dockerignore` | The service as a container: model and index baked in, non-root, health-checked, allow-listed contents |

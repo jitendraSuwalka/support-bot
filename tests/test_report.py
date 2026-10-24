@@ -180,7 +180,7 @@ def test_the_headline_states_the_numbers_a_reader_sees_first():
         "- **60.0%** of escalations were wanted, and **95.0%** of the questions that needed "
         "a person reached one."
     )
-    assert "**100.0%** of the 8 labelled questions with a known answering passage" in lines[2]
+    assert "**100.0%** of the 8 labelled questions with a gold passage" in lines[2]
     assert lines[3] == "- **$0.0064** an answer with prompt caching, **58%** less than without."
     assert report.headline(None, {}, {}) == "_No reports yet._"
 
@@ -201,7 +201,7 @@ def test_write_updates_both_blocks_even_when_they_start_empty(tmp_path):
     )
     assert report.main(["--reports", str(tmp_path), "--readme", str(readme), "--write"]) == 0
     text = readme.read_text(encoding="utf-8")
-    assert "with a known answering passage" in text.split("<!-- headline:end -->")[0]
+    assert "with a gold passage" in text.split("<!-- headline:end -->")[0]
     assert "| hybrid |" in text.split("<!-- eval:start -->")[1]
     assert report.readme_block("a\n<!-- eval:start -->\n<!-- eval:end -->\n") == ""
 

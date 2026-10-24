@@ -122,7 +122,8 @@ _LOCAL_HOSTS = {"127.0.0.1", "::1", "localhost"}
 @pytest.fixture(autouse=True)
 def no_network(request, monkeypatch):
     """The suite says it needs no network; this makes that a checked fact.
-    A connection to anything but this machine fails the test that opened it.
+    A socket connected to anything but this machine fails the test that
+    connected it. (Name lookups and unconnected datagrams are not watched.)
     Live and model tests are exempt: they call the API and download the
     embedding model by design."""
     if request.node.get_closest_marker("live") or request.node.get_closest_marker("model"):

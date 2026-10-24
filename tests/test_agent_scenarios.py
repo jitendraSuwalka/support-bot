@@ -672,3 +672,16 @@ def test_a_reference_must_be_given_whole():
     said = [{"role": "user", "content": "it's fw1002"}]
     assert agent.reference_was_given("FW-1002", said) is True
     assert agent.reference_was_given("1002", said) is False  # not a reference at all
+    for layout in ("FW \u2013 1002", "fw - 1002", "FW\u20141002"):
+        assert agent.reference_was_given("FW-1002", [{"role": "user", "content": layout}])
+
+
+def test_without_the_evidence_guard_an_unevidenced_figure_is_not_answered_as_a_greeting(
+    run_scenario, monkeypatch
+):
+    monkeypatch.setattr(agent, "REQUIRE_EVIDENCE", False)
+    results, _, _ = run_scenario(
+        script=[text_reply("The ISA allowance is £25,000.")],
+        user_messages=["What is the ISA allowance?"],
+    )
+    assert results[0].answer == agent.SAFE_REPLIES["unevidenced reply"]
