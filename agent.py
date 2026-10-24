@@ -756,12 +756,79 @@ def look_up_client_query(reference):
     )
 
 
-def escalate_to_adviser(reason, summary):
-    log("escalation", f"ESCALATION LOGGED — {reason}: {summary}", reason=reason, summary=summary)
-    return (
+CLIENT_RESOLUTION = "0117 496 0355"
+LIFE_EVENTS_TEAM = "0117 496 0412"
+
+# Who takes an escalation, and what the customer is told. A complaint about an
+# adviser handed back to "a qualified adviser" is not complaint handling, and a
+# customer who has just paid a scammer needs their own bank told at once: both
+# reached customers that way before routing. The teams and numbers are the
+# firm's own (corpus/contact-and-offices.md).
+ESCALATION_ROUTES = {
+    "complaint": (
+        "Escalation logged with Client Resolution, the complaints team. Tell the "
+        "customer their complaint has been logged and passed to Client Resolution, "
+        "who will be in touch, and that Client Resolution can also be reached on "
+        f"{CLIENT_RESOLUTION}, 09:00 to 17:30 on working days, or at "
+        "complaints@fernhillwealth.example."
+    ),
+    "fraud": (
+        "Escalation logged with the Fraud and Security team. Tell the customer the "
+        "Fraud and Security team will contact them; that they should call the "
+        f"switchboard immediately on {SWITCHBOARD} and ask for Fraud and Security; "
+        "and, if they have sent money, to contact their own bank straight away as "
+        "well."
+    ),
+    "life event": (
+        "Escalation logged with the bereavement and life events team. Tell the "
+        "customer the life events team will contact them, and that the team can "
+        f"also be reached on {LIFE_EVENTS_TEAM}, 09:00 to 17:30 on working days, or "
+        "at lifeevents@fernhillwealth.example."
+    ),
+    "adviser": (
         "Escalation logged. Tell the customer a qualified adviser will contact "
         f"them, and give the switchboard number {SWITCHBOARD}."
+    ),
+}
+# Labelling found "if you need to reach us sooner" on almost every escalation:
+# nothing says the switchboard is quicker than the call the customer was promised.
+# Not on the fraud route, where the documents say to call immediately.
+NO_QUICKER_ROUTE = " Do not call any number quicker than another, or a way to reach someone sooner."
+ESCALATION_REASONS = (
+    "advice",
+    "complaint",
+    "scam or missing money",
+    "life event",
+    "financial difficulty",
+    "instruction",
+    "not covered",
+)
+
+
+def escalation_route(reason: str) -> str:
+    """Which team takes an escalation, read from the reason given for it."""
+    text = reason.lower()
+    # Money first: a complaint about a scam still needs the customer's bank told.
+    if any(word in text for word in ("scam", "fraud", "missing money", "stolen")):
+        return "fraud"
+    if "complain" in text:
+        return "complaint"
+    life = ("life event", "death", "died", "passed away", "deceased", "bereave", "divorce")
+    if any(word in text for word in (*life, "illness", "attorney")):
+        return "life event"
+    return "adviser"  # advice, financial difficulty, an instruction, anything not covered
+
+
+def escalate_to_adviser(reason, summary):
+    route = escalation_route(reason)
+    log(
+        "escalation",
+        f"ESCALATION LOGGED — {reason}: {summary}",
+        reason=reason,
+        summary=summary,
+        route=route,
     )
+    return ESCALATION_ROUTES[route] + ("" if route == "fraud" else NO_QUICKER_ROUTE)
 
 
 DECLINE_REPLY = (
@@ -836,16 +903,19 @@ tools = [
     {
         "name": "escalate_to_adviser",
         "description": (
-            "Hand to a qualified human adviser, who will contact the customer. MUST "
-            "be used for: a request for financial, investment, tax or pension "
-            "advice, or any question about what the customer should do with their "
-            "own money; a complaint the customer is raising now; a customer telling "
-            "us of a death, a divorce or a serious illness, in financial difficulty, "
-            "or acting under a power of attorney now; a customer who has paid money "
-            "to someone they now believe was a scammer, or whose money is missing; "
-            "an instruction to buy, sell, move or withdraw money; and a question no "
-            "part of which the documents cover, once one clarifying question could "
-            "not resolve it."
+            "Hand to a person, who will contact the customer: Client Resolution for "
+            "a complaint, the Fraud and Security team for a scam payment or missing "
+            "money, the life events team for a death, a divorce, a serious illness "
+            "or a power of attorney, otherwise (financial difficulty included) a "
+            "qualified adviser. MUST be used for: a request for financial, "
+            "investment, tax or pension advice, or any question about what the "
+            "customer should do with their own money; a complaint the customer is "
+            "raising now; a customer telling us of a death, a divorce or a serious "
+            "illness, in financial difficulty, or acting under a power of attorney "
+            "now; a customer who has paid money to someone they now believe was a "
+            "scammer, or whose money is missing; an instruction to buy, sell, move or "
+            "withdraw money; and a question no part of which the documents cover, "
+            "once one clarifying question could not resolve it."
             "\n\nDo NOT use it for a question about how a service, fee or process "
             "works: how to register a power of attorney, what can be done after a "
             "final response to a complaint, whether one-off advice is offered and "
@@ -856,7 +926,11 @@ tools = [
         "input_schema": {
             "type": "object",
             "properties": {
-                "reason": {"type": "string", "description": "Short category"},
+                "reason": {
+                    "type": "string",
+                    "enum": list(ESCALATION_REASONS),
+                    "description": "The category, which decides who takes it",
+                },
                 "summary": {"type": "string", "description": "One sentence"},
             },
             "required": ["reason", "summary"],
@@ -1021,8 +1095,8 @@ def verify_answer(answer, evidence, question=""):
         "- ordinary politeness and offers of further help;\n"
         "- statements about the assistant's own role or limits, such as that it "
         "cannot give financial, investment, tax or pension advice;\n"
-        "- statements that the matter has been escalated or that an adviser will be "
-        "in touch, when the evidence records an escalation;\n"
+        "- statements that the matter has been escalated or that an adviser or a named "
+        "team will be in touch, when the evidence records an escalation;\n"
         "- details the customer gave about themselves in their message (who they are, "
         "who they act for, what has happened to them, the words they used), and the "
         "answer addressing them in those terms. A claim about the firm, its fees, "
@@ -1329,9 +1403,9 @@ def rewrite_after_escalation(messages):
             "message as one short, coherent reply that: says plainly you do not "
             "have the information; states that it HAS BEEN passed to a qualified "
             "adviser who will be in touch; gives the switchboard number "
-            f"{SWITCHBOARD}. Do not offer to escalate, since it has already "
-            "happened, and do not ask the customer any question. Do not call "
-            "any tools."
+            f"{SWITCHBOARD}, without calling it a quicker way to reach someone. "
+            "Do not offer to escalate, since it has already happened, and do not "
+            "ask the customer any question. Do not call any tools."
         )
     )
     response = _main_call(messages, use_tools=False)

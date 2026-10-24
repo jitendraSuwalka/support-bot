@@ -423,6 +423,21 @@ def live_table(runs: dict[str, dict]) -> str:
         "writes included: prompt caching makes most of them cheaper, not fewer (the caching "
         "table below shows the cost). Every failure is listed by id in the report.",
     ]
+    measured = [
+        (label, r["summary"]["handoffs"])
+        for label, r in runs.items()
+        if r["summary"].get("handoffs", {}).get("with_facts")
+    ]
+    if measured:
+        counts = "; ".join(f"{label} {h['given']} of {h['with_facts']}" for label, h in measured)
+        label, last = measured[-1]
+        failed = ", ".join(f"{case} ({', '.join(why)})" for case, why in last["failed"].items())
+        lines += [
+            "",
+            "Hand-offs that must also give the customer a team or a number (the complaints "
+            f"line for a complaint, the fraud team for a scam payment): {counts}."
+            + (f" Missing in the {label} run: {failed}." if failed else ""),
+        ]
     return "\n".join(lines)
 
 

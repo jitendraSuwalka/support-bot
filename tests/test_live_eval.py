@@ -232,6 +232,22 @@ def test_summary_arithmetic():
     }
 
 
+def test_hand_offs_with_facts_to_give_are_counted_apart():
+    summary = summarise(
+        [
+            obs("complaint", "handoff", "escalate", "escalate", facts_ok=True),
+            obs("fraud", "handoff", "escalate", "escalate", facts_ok=False, missing_facts=["F"]),
+            obs("bereaved", "handoff", "escalate", "answer", facts_ok=True),
+            obs("advice", "advice", "escalate", "escalate"),  # no facts asked for
+        ]
+    )
+    assert summary["handoffs"] == {
+        "with_facts": 3,
+        "given": 1,
+        "failed": {"fraud": ["F"], "bereaved": ["not escalated"]},
+    }
+
+
 def test_tokens_per_case_count_the_cached_tokens_too():
     """The API's input count leaves cache reads and writes out; a cached run
     processes them all the same, so the mean includes them."""

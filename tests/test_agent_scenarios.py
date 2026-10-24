@@ -139,6 +139,27 @@ def test_model_led_escalation_does_not_trigger_a_second_one(run_scenario):
     assert "policy_escalate" not in results[0].trace.kinds()
 
 
+def test_a_complaint_is_answered_with_the_complaints_line_unchanged(run_scenario):
+    results, _, _ = run_scenario(
+        script=[
+            tool_reply(
+                "escalate_to_adviser", {"reason": "complaint", "summary": "About the adviser."}
+            ),
+            text_reply(
+                "I've logged your complaint and passed it to Client Resolution, who will be "
+                "in touch. You can also reach them on 0117 496 0355."
+            ),
+        ],
+        user_messages=["I want to complain right now about my adviser. Can you log it?"],
+    )
+    result = results[0]
+    assert result.escalated is True
+    assert agent.CLIENT_RESOLUTION in result.answer  # the route's number is evidence
+    assert not any(note.startswith("rewritten") for note in result.notes)
+    [event] = result.trace.find("escalation")
+    assert event.data["route"] == "complaint"
+
+
 # --- the evidence guard: no answering from memory -----------------------
 
 

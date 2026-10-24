@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+import agent
 from rag import corpus
 from rag.corpus import (
     Chunk,
@@ -76,6 +77,15 @@ def test_chunk_ids_are_stable_across_runs(documents):
 def test_the_facts_the_agent_relies_on_are_in_the_corpus(chunks):
     text = " ".join(chunk.text for chunk in chunks)
     for fact in ("0117 496 0100", "0800 023 4567", "22 Harbourside Walk", "£20,000", "£60,000"):
+        assert fact in text, fact
+    # The escalation routes give these teams' numbers and addresses.
+    for fact in (
+        agent.CLIENT_RESOLUTION,
+        agent.LIFE_EVENTS_TEAM,
+        "complaints@fernhillwealth.example",
+        "lifeevents@fernhillwealth.example",
+        "Fraud and Security",
+    ):
         assert fact in text, fact
 
 

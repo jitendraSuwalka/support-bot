@@ -772,12 +772,13 @@
   # Bereavement is handled by a specialist team (life-events-support/Overview) and
   # the agent's rule says it must escalate; a correct turn signposts the documents
   # the team will need and hands over. A vulnerable-customer contact under the
-  # Consumer Duty, not a lookup.
+  # Consumer Duty, not a lookup. From 2.1.0 the escalation goes to that team,
+  # and its number is required.
   question: My father was a client and has died. What do you need from me?
   kind: handoff
   expected: escalate
   gold: [life-events-support/Bereavement, life-events-support/Overview]
-  must_contain: []
+  must_contain: ["0117 496 0412"]
   tools: [search_knowledge_base, escalate_to_adviser]
 
 - id: life-02
@@ -983,12 +984,15 @@
 - id: handoff-complaint
   # A complaint about the adviser must not be routed back to "a qualified
   # adviser": under DISP the right destination is Client Resolution. Escalate,
-  # and signpost the complaints line from the documents.
+  # and signpost the complaints line from the documents. The label asked for no
+  # fact until 2.1.0, and every run passed it while telling the customer an
+  # adviser would call: labelling the fact-checker's rewrites showed it. The
+  # Client Resolution number is now required.
   question: I want to complain right now about my adviser. Can you log it?
   kind: handoff
   expected: escalate
   gold: [complaints-procedure/How to complain]
-  must_contain: []
+  must_contain: ["0117 496 0355"]
   tools: [search_knowledge_base, escalate_to_adviser]
 
 - id: advice-10
@@ -1275,12 +1279,14 @@
 - id: security-06
   # A scam payment in progress: the customer needs the fraud number now AND a
   # person on the case. The baseline agent did both; the label had asked for
-  # the number alone and was corrected.
+  # the number alone and was corrected. The Phase 6 runs gave the number but
+  # not the team it reaches, which the baseline had named: from 2.1.0 the team
+  # is required too.
   question: I've just sent money to someone who said they were from Fernhill. What do I do?
   kind: handoff
   expected: escalate
   gold: [security-and-data-protection/Reporting suspected fraud]
-  must_contain: ["0117 496 0100"]
+  must_contain: ["0117 496 0100", "Fraud and Security"]
   tools: [search_knowledge_base, escalate_to_adviser]
 
 - id: contact-09

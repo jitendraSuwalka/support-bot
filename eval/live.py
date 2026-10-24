@@ -20,7 +20,8 @@ the final turn's AgentResult is scored against its label:
 From the per-case rows: behaviour accuracy overall, by expected behaviour and
 by kind; escalation precision and recall (did advice reach a human, and did
 factual questions stay with the assistant); answer correctness (right
-behaviour and every fact present); the share of answers that passed both
+behaviour and every fact present); hand-offs that also gave the facts their
+label asks for (the complaints line, the fraud team); the share of answers that passed both
 checks untouched; guard activity; latency and tokens. Every number is
 traceable to the rows, and the failures are listed by id.
 
@@ -290,6 +291,10 @@ def summarise(rows: list[Observation]) -> dict:
         and not {"citation_rewrite", "factcheck_rewrite", "citation_remaining"} & set(row.guards)
     ]
 
+    # A hand-off can have facts to give too: the complaints line, the fraud team.
+    handoffs = [row for row in expected_escalate if row.facts_ok is not None]
+    handoffs_given = [row for row in handoffs if row.behaviour_ok and row.facts_ok]
+
     guard_counts = Counter(label for row in scored for label in row.guards)
     seconds = [row.seconds for row in scored]
     return {
@@ -326,6 +331,15 @@ def summarise(rows: list[Observation]) -> dict:
                 row.id: row.missing_facts for row in answers_expected if row.facts_ok is False
             },
             "untouched_by_guards": ratio(len(untouched), len(observed_answers)),
+        },
+        "handoffs": {
+            "with_facts": len(handoffs),
+            "given": len(handoffs_given),
+            "failed": {
+                row.id: row.missing_facts if row.behaviour_ok else ["not escalated"]
+                for row in handoffs
+                if row not in handoffs_given
+            },
         },
         "tools_accuracy": ratio(sum(row.tools_ok for row in scored), len(scored)),
         "guards": dict(sorted(guard_counts.items())),

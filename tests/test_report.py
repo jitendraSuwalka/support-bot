@@ -374,3 +374,12 @@ def test_the_cli_reports_a_mismatch_plainly(tmp_path, capsys):
     write(tmp_path / "ablations" / "no-rerank.json", full_run(9))
     assert report.main(["--reports", str(tmp_path)]) == 1
     assert "ablations/no-rerank.json ran with" in capsys.readouterr().err
+
+
+def test_the_live_table_says_which_hand_offs_gave_their_facts():
+    old, new = live("2026-10-22T19:07:44Z", 0.888), live("2026-10-25T10:00:00Z", 0.982)
+    assert "Hand-offs that must" not in report.live_table({"baseline": old, "current": new})
+    old["summary"]["handoffs"] = {"with_facts": 3, "given": 1, "failed": {"x": ["F"], "y": ["G"]}}
+    new["summary"]["handoffs"] = {"with_facts": 3, "given": 2, "failed": {"x": ["F"]}}
+    text = report.live_table({"baseline": old, "current": new})
+    assert "baseline 1 of 3; current 2 of 3. Missing in the current run: x (F)." in text
