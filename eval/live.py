@@ -89,6 +89,15 @@ class Observation:
     cache_read_tokens: int = 0
     cache_write_tokens: int = 0
     cost_usd: float | None = None
+    # Numbers and links in the final reply that the evidence, the switchboard
+    # and the customer's own words do not contain, checked after the turn by
+    # the same exact-match test, whichever guards were switched on: what an
+    # ablation needs to show what reaches the customer. None in older reports.
+    unsupported_details: list[str] | None = None
+    # When the fact-checker forced a rewrite: the claims it flagged, the draft
+    # it read and the evidence it read it against, for judging later whether
+    # the rewrite was needed (python -m eval.label_factcheck).
+    factcheck: dict | None = None
 
 
 # =========================================================
@@ -115,6 +124,25 @@ def tokens_used(result: agent.AgentResult) -> tuple[int, int]:
         sum(event.data.get("input_tokens", 0) for event in events),
         sum(event.data.get("output_tokens", 0) for event in events),
     )
+
+
+def unsupported_details(case: Case, result: agent.AgentResult) -> list[str]:
+    """The citation check on the final reply, run after the turn whatever the settings."""
+    evidence = "\n\n".join([*result.evidence, agent.SWITCHBOARD])
+    said = "\n".join([*case.before, case.question])
+    return agent.check_citations(result.answer, evidence, said)
+
+
+def factcheck_record(result: agent.AgentResult) -> dict | None:
+    flagged = result.trace.find("unsupported")
+    if not flagged:
+        return None
+    return {
+        "claims": list(flagged[0].data.get("claims", [])),
+        "before": flagged[0].data.get("before", ""),
+        "after": result.answer,
+        "evidence": "\n\n".join(result.evidence),
+    }
 
 
 def observe(case: Case, result: agent.AgentResult, seconds: float) -> Observation:
@@ -150,6 +178,8 @@ def observe(case: Case, result: agent.AgentResult, seconds: float) -> Observatio
         cache_read_tokens=cost.cache_read_tokens,
         cache_write_tokens=cost.cache_write_tokens,
         cost_usd=None if cost.usd is None else round(cost.usd, 6),
+        unsupported_details=unsupported_details(case, result),
+        factcheck=factcheck_record(result),
     )
 
 
@@ -297,6 +327,14 @@ def summarise(rows: list[Observation]) -> dict:
         "tools_accuracy": ratio(sum(row.tools_ok for row in scored), len(scored)),
         "guards": dict(sorted(guard_counts.items())),
         "warnings": [row.id for row in scored if row.warning],
+        # Replies carrying a number or link nothing supports, whatever the
+        # guards did: None when the rows predate the measurement.
+        "unsupported_replies": (
+            [row.id for row in scored if row.unsupported_details]
+            if any(row.unsupported_details is not None for row in scored)
+            else None
+        ),
+        "factcheck_rewrites": sum(1 for row in scored if row.factcheck),
         "wrong_behaviour": {
             row.id: f"expected {row.expected}, observed {row.observed}"
             for row in scored
@@ -355,9 +393,15 @@ def render(summary: dict) -> str:
     for name, group in summary["behaviour_by_expected"].items():
         lines.append(f"{name:10} {group['n']:>4} {group['accuracy']:>9}  {group['observed']}")
     lines.append(f"guards fired: {summary['guards']}")
+    unsupported = summary.get("unsupported_replies")
     lines.append(
         f"answers untouched by guards {summary['answers']['untouched_by_guards']}; "
         f"warnings on {len(summary['warnings'])} cases"
+        + (
+            f"; replies with an unsupported number or link: {len(unsupported)}"
+            if unsupported is not None
+            else ""
+        )
     )
     lines.append(
         f"latency mean {summary['latency_seconds']['mean']}s, "

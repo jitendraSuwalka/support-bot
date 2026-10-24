@@ -1467,7 +1467,9 @@ def groundedness_check(answer, messages, evidence) -> tuple[str, list[str]]:
         return answer, notes
     verdict = verify_answer(answer, evidence)
     if verdict["status"] == "unsupported":
-        log("unsupported", "UNSUPPORTED CLAIMS", claims=verdict["unsupported"])
+        # The draft is kept with the claims, so whether the rewrite was needed
+        # can be judged later against the same evidence (eval.label_factcheck).
+        log("unsupported", "UNSUPPORTED CLAIMS", claims=verdict["unsupported"], before=answer)
         answer = rewrite(messages, verdict["unsupported"])
         notes.append("rewritten after fact-check")
         notes += recheck_citations(answer, evidence, "\n".join(customer_messages(messages)))

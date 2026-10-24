@@ -22,6 +22,11 @@ the version.
   wait. Searches of the local index take a lock, which the HTTP service's
   thread pool needed too.
 
+- Every evaluation row records the numbers and links in the final reply that
+  nothing supports, checked after the turn whichever guards were on, so an
+  ablation can show what reaches the customer; and, when the fact-checker
+  forced a rewrite, the claims it flagged, the draft it read and the evidence.
+
 ### Fixed
 
 - The release notes ran on past their own entry when the next heading had no

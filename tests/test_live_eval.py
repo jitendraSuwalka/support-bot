@@ -402,3 +402,44 @@ def test_each_row_carries_its_cost_and_cache_tokens():
     assert summary["cost_usd"]["total"] == round(row.cost_usd, 4)
     assert summary["cost_usd"]["priced_cases"] == 1
     assert "cost $" in live.render(summary)
+
+
+# --- what the guards let through, and what the fact-checker flagged ----------------------
+
+
+def test_a_reply_is_checked_for_unsupported_details_after_the_turn_whatever_the_guards():
+    evidence = ["search -> [Fees] The fee is 1.2% a year."]
+    clean = observe(case(), result("The fee is 1.2% a year.", evidence=evidence), 1.0)
+    invented = observe(case(), result("The fee is 0.9% a year.", evidence=evidence), 1.0)
+    assert clean.unsupported_details == []
+    assert invented.unsupported_details == ["Number '0.9' does not appear in the evidence."]
+    # The switchboard and what the customer wrote are allowed, as in the guard.
+    said = case(question="I'm 70. Can I call you?")
+    reply = result(f"At 70, yes: call {agent.SWITCHBOARD}.", evidence=evidence)
+    assert observe(said, reply, 1.0).unsupported_details == []
+
+
+def test_the_summary_counts_unsupported_replies_and_says_when_they_were_not_measured():
+    measured = [
+        observe(case(id="a"), result("The fee is 1.2%.", evidence=["1.2%"]), 1.0),
+        observe(case(id="b"), result("The fee is 19%.", evidence=["1.2%"]), 1.0),
+    ]
+    assert summarise(measured)["unsupported_replies"] == ["b"]
+    older = [Observation(**{**asdict(measured[0]), "unsupported_details": None})]
+    assert summarise(older)["unsupported_replies"] is None
+
+
+def test_a_fact_check_rewrite_is_recorded_with_its_claims_draft_and_evidence():
+    flagged = result("Fees are 1.2% a year.", evidence=["search -> [Fees] 1.2% a year"])
+    flagged.trace.log(
+        "unsupported", "x", claims=["fees are capped"], before="Fees are 1.2%, capped."
+    )
+    row = observe(case(), flagged, 1.0)
+    assert row.factcheck == {
+        "claims": ["fees are capped"],
+        "before": "Fees are 1.2%, capped.",
+        "after": "Fees are 1.2% a year.",
+        "evidence": "search -> [Fees] 1.2% a year",
+    }
+    assert observe(case(), result("x"), 1.0).factcheck is None
+    assert summarise([row])["factcheck_rewrites"] == 1
