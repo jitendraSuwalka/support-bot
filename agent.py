@@ -1239,20 +1239,80 @@ def customer_messages(messages) -> list[str]:
     ]
 
 
+REWRITE_INSTRUCTION = (
+    "This message is from the support system, not the customer. A check of your "
+    "last answer found these problems: {problems}. Write the reply again for the "
+    "customer, changing only what these problems need. Keep everything else the "
+    "tool results support: refusals, caveats, links, phone numbers, an offer to "
+    "pass the matter to an adviser, any mention of a complaint. Copy URLs and "
+    "numbers exactly or omit them. The customer sees only your new reply, as your "
+    "answer to their message: do not call it corrected, rewritten or a new "
+    "version, do not apologise or say they are right, and do not mention these "
+    "problems or your earlier answer. Do not call any tools."
+)
+
+# The openings with which a rewrite addressed the check instead of the
+# customer. In the Phase 6 runs about one rewrite in six began this way, and
+# the customer read "Here is a corrected answer" or "You're right, that wording
+# was off" about an answer they never saw. The instruction above asks for none
+# of it; this removes what still gets through.
+_END = r"[.!:](?=\s|\Z)"  # a sentence end, not a decimal point or the colon in 09:00
+_HERE = r"(?:here\s+is|here(?:'|’)s|below\s+is)\s+(?:a|an|the|my)\s+"
+_LEAD_IN = re.compile(
+    rf"""\A\s*(?:
+        you(?:'|’)?(?:re|\s+are)\s+right
+          (?:\s+on\s+[^.!:\n]*?)?
+          (?:,\s*[^.!:\n]{{0,40}}?\b(?:sorry|wording|wrong|off|mistake)\b[^.!:\n]*?)?{_END}
+      | {_HERE}(?:corrected|revised|rewritten)\s+(?:answer|version|reply|response)\b
+          (?:[,\s]+(?:using|that|which|kept|based|sticking|strictly)\b[^\n]*?)?{_END}
+      | {_HERE}(?:answer|version|reply|response|rewrite)\b[^\n]*?
+          \b(?:again|only|stick\w*|kept\s+to|what\s+the)\b[^\n]*?{_END}
+      | {_HERE}rewrite{_END}
+      | correct(?:ion|ed\s+answer|ed\s+version)\s*:
+    )\s*""",
+    re.IGNORECASE | re.VERBOSE,
+)
+
+
+def without_lead_in(text: str) -> tuple[str, str]:
+    """The reply without an opening that addresses the check, and what was removed.
+
+    Only an opening that names the reply itself (a corrected answer, the
+    answer again, a version kept to the documents) or agrees with the check
+    (you're right, I'm sorry) is removed, so an opening that carries content
+    ("Here is the number to call: ...") stays. A reply that is nothing but
+    such an opening is returned unchanged: an odd sentence is better than an
+    empty reply.
+    """
+    reply = text
+    for _ in range(3):  # "You're right. Here is a corrected answer." is two
+        match = _LEAD_IN.match(reply)
+        if not match:
+            break
+        reply = reply[match.end() :]
+    if reply == text or not reply.strip():
+        return text, ""
+    removed = text[: len(text) - len(reply)].strip()
+    if reply[:1].islower() and not reply.lower().startswith(("www.", "http")):
+        reply = reply[:1].upper() + reply[1:]
+    return reply, removed
+
+
 def rewrite(messages, problems):
     """Send the answer back to be rewritten strictly from evidence."""
-    messages.append(
-        instruction(
-            "Your previous answer had these problems: "
-            + "; ".join(problems)
-            + ". Rewrite it using only what the tool results actually say. Remove "
-            "every added detail. Copy URLs and numbers exactly or omit them "
-            "entirely. Do not call any tools."
-        )
-    )
+    messages.append(instruction(REWRITE_INSTRUCTION.format(problems="; ".join(problems))))
     response = _main_call(messages, use_tools=False)
-    messages.append({"role": "assistant", "content": response.content})
-    return text_of(response)
+    reply, removed = without_lead_in(text_of(response))
+    if removed:
+        log(
+            "rewrite_lead_in",
+            "rewrite opened by addressing the check; opening removed",
+            removed=removed,
+        )
+        messages.append({"role": "assistant", "content": [{"type": "text", "text": reply}]})
+    else:
+        messages.append({"role": "assistant", "content": response.content})
+    return reply
 
 
 def rewrite_after_escalation(messages):

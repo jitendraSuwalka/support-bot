@@ -8,6 +8,8 @@ structured AgentResult, never printed text.
 
 from dataclasses import replace
 
+import pytest
+
 import agent
 from tests.conftest import text_reply, tool_reply
 
@@ -582,6 +584,93 @@ def test_the_fact_checker_is_told_what_the_agent_is_given(monkeypatch):
     assert agent.SWITCHBOARD in prompt and "FW-XXXX" in prompt
     assert "<customer_message>" not in prompt  # no message, no empty section
     assert "A yes where the evidence says something may happen" in prompt
+
+
+# --- a rewrite is the answer, not a reply to the check ------------------------------
+# About one rewrite in six in the Phase 6 runs opened by addressing the check, and
+# the customer read "Here is a corrected answer" about an answer they never saw.
+# Each opening below reached a customer.
+
+
+@pytest.mark.parametrize(
+    "leaked",
+    [
+        "Here is a corrected answer, using only what the documents say.",
+        "Here is a corrected answer.",
+        "Here is the answer again, kept to what the documents say.",
+        "Here is a version that sticks to the document:",
+        "Here is a rewrite that uses only what the search result says:",
+        "Correction:",
+        "You\u2019re right, I\u2019m sorry.",
+        "You're right, that wording was off. Here is a corrected answer.",  # two openings
+    ],
+)
+def test_an_opening_that_addresses_the_check_is_removed(leaked):
+    reply, cut = agent.without_lead_in(
+        f"{leaked}\n\nthe documents say a change of name needs a deed poll."
+    )
+    assert reply == "The documents say a change of name needs a deed poll."
+    assert cut == leaked
+
+
+@pytest.mark.parametrize(
+    "answer",
+    [
+        "Here is how to register a power of attorney: send us a certified copy.",
+        "Here is the large print version: call the switchboard.",
+        "I'm sorry for your loss. Our bereavement team can help.",
+        "Yes. Each risk profile is available in a version that excludes tobacco.",
+        # an opening that carries content, or a number or time inside its sentence
+        "Here is the correct number to call: 0117 496 0355.",
+        "Here's the revised fee schedule: 0.5% a year.",
+        "Here's a revised version of my answer, the fee is 0.45%.",
+        "You are right that the office opens at 09:00. It closes at 17:30.",
+        "Here is a corrected version of the address for e.g. our office: 22 Harbourside Walk.",
+    ],
+)
+def test_an_ordinary_opening_is_kept(answer):
+    assert agent.without_lead_in(answer) == (answer, "")
+
+
+def test_a_reply_left_starting_with_a_web_address_is_not_capitalised():
+    reply, _ = agent.without_lead_in("Here is the rewrite: www.fernhillwealth.example/isas/")
+    assert reply == "www.fernhillwealth.example/isas/"
+
+
+def test_a_reply_that_is_only_an_opening_is_kept_rather_than_emptied():
+    assert agent.without_lead_in("Here is a corrected answer.") == (
+        "Here is a corrected answer.",
+        "",
+    )
+
+
+def test_a_fact_check_rewrite_reaches_the_customer_without_its_opening(run_scenario):
+    results, _, fake = run_scenario(
+        script=[
+            tool_reply("search_knowledge_base", {"query": "ISA allowance"}),
+            text_reply("There is an annual ISA allowance, and we are always happy to help."),
+            text_reply(
+                "Here is a corrected answer, using only what the documents say.\n\n"
+                "There is an annual ISA allowance."
+            ),
+        ],
+        user_messages=["What is the ISA allowance?"],
+        helper=FACTCHECK_HELPER,
+    )
+    result = results[0]
+    assert result.answer == "There is an annual ISA allowance."
+    [event] = result.trace.find("rewrite_lead_in")
+    assert event.data["removed"].startswith("Here is a corrected answer")
+    sent = fake.calls[-1]["messages"]  # the conversation as the rewrite call saw it
+    instruction = next(
+        m["content"][0]["text"]
+        for m in reversed(sent)
+        if m["role"] == "user"
+        and isinstance(m["content"], list)
+        and m["content"][0]["type"] == "text"
+    )
+    assert "from the support system, not the customer" in instruction
+    assert "any mention of a complaint" in instruction  # keep what was right
 
 
 # --- the behaviour is part of the result -------------------------------------------
