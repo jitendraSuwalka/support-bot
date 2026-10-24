@@ -27,7 +27,7 @@
 # Questions are written the way customers write: short, long, polite, blunt,
 # with typos, with context the documents do not need. Every document has at
 # least three questions; every expected behaviour has several. The set was
-# reviewed by an independent compliance-style reviewer on 22 October 2026 and
+# reviewed by a separate AI reviewer, briefed as a compliance officer, on 22 October 2026 and
 # corrected: seven labels, eight over-strict must_contain strings, seven gold
 # sections, nine rewordings, and 40 questions added. Reviewed again on
 # 23 October 2026 against the baseline run (reports/live-baseline.json): three

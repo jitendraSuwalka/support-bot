@@ -546,9 +546,11 @@ def clears_floor(result: RetrievedChunk) -> bool:
     """A candidate must look relevant to at least one method.
 
     The lexical score is a share of the query's BM25 ceiling; the dense score
-    is a cosine similarity. The dense floor was set from measurement: with
-    this model, off-topic questions peak at about 0.53 against the corpus
-    while on-topic ones score 0.68 and above (Step 2.3 calibration).
+    is a cosine similarity. The dense floor is a noise gate set from the
+    labelled set (reports/retrieval.json): the lowest gold chunk scores 0.504,
+    while questions with no answer in the documents reach 0.81, because
+    cosine measures topic, not answerability. So 0.50 keeps every gold chunk
+    and leaves judging relevance to the rerank.
     """
     lexical = result.lexical_score or 0.0
     dense = result.dense_score or 0.0
@@ -607,7 +609,7 @@ def rerank(query, candidates):
     )
 
     if not isinstance(result, dict) or "relevant" not in result:
-        log("rerank_unavailable", "rerank unavailable — using lexical order")
+        log("rerank_unavailable", "rerank unavailable — using retrieval order")
         return candidates[:TOP_K]
 
     kept = []
@@ -1415,10 +1417,11 @@ def recheck_citations(answer, evidence, customer_text="") -> list[str]:
     """The deterministic check again, on text a fact-check rewrite produced.
 
     The citation guard runs before the fact-checker, so a rewrite the
-    fact-checker forces was never itself checked for URLs and numbers. The
-    third evaluation run (reports/live.json, isa-05) ended with a warning
-    that two details were unverified, and the answer the customer saw had
-    been rewritten after that check, so nothing had looked at it. Every
+    fact-checker forces was never itself checked for URLs and numbers. In
+    the third evaluation run (since replaced in reports/live.json), isa-05
+    ended with a warning that two details were unverified, and the answer the
+    customer saw had been rewritten after that check, so nothing had looked
+    at it. Every
     rewrite now meets the same exact-match check as the first draft.
     """
     if not CHECK_CITATIONS:

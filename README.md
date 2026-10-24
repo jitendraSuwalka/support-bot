@@ -57,7 +57,10 @@ pytest                         # 442 tests, under twenty seconds, no API calls, 
 > informed by my own experience working in the sector — but every policy,
 > address, client record and phone number is invented. The website lives on the
 > reserved `.example` domain and the phone numbers come from Ofcom's film-and-
-> drama ranges, so the agent can never direct a real customer to a real place.
+> drama ranges, so the agent can never direct a customer to a real firm. The
+> only real contact details in the documents are those of public bodies a
+> customer may genuinely need: the Financial Ombudsman, Report Fraud and the
+> FCA register.
 > The eighteen documents it answers from were reviewed against primary sources
 > (gov.uk, FSCS, the Financial Ombudsman) on 20 October 2026; `corpus/README.md`
 > lists every public figure with its source. A personal learning project; no
@@ -76,6 +79,7 @@ pytest                         # 442 tests, under twenty seconds, no API calls, 
 - [Known limitations](#known-limitations)
 - [Running it](#running-it)
 - [What I would do next](#what-i-would-do-next)
+- [Licence](#licence)
 - [Changelog](CHANGELOG.md)
 
 ---
@@ -97,6 +101,13 @@ The answer, repeatedly, was **code**. Every hard guarantee here is enforced in
 Python, because a system prompt is a strong suggestion and nothing more —
 something demonstrated below by a model that broke a rule marked MUST, and was
 right to.
+
+The first version was a single agent with guards and offline checks. Version 2
+rebuilt it in four phases, each one pull request, and the README refers to
+them by number: **Phase 1** the engineering foundations, **Phase 2** the
+document corpus and hybrid retrieval, **Phase 3** the evaluation, **Phase 4**
+the service, its logs and its container. The [changelog](CHANGELOG.md) lists
+what each added.
 
 ---
 
@@ -185,8 +196,8 @@ method can see scores below chunks both methods rank moderately. Asked about
 *a missed call from 0161 496 0170*, BM25 put the Manchester office first (it
 holds the number) and the vector index never returned it (a phone number means
 nothing to an embedding), while both matched the security guidance on
-*unexpected calls*; fused, the one chunk with the answer fell to sixth and out
-of the candidates once the lexical query was widened. So BM25's first choice
+*unexpected calls*; fused, once the lexical query was widened, the one chunk
+with the answer fell out of the six candidates the reranker reads. So BM25's first choice
 is guaranteed a place among the candidates the reranker reads: an exact string
 — a number, a reference, a postcode — is the one thing fusion can lose, and
 the reranker still decides whether it stays.
@@ -424,15 +435,18 @@ with the exception's type — not its text, which can carry the customer's
 words as easily as anything else — so alerting needs no parsing.
 
 **Prompt caching.** The tool definitions and the system prompt, about 2,500
-tokens, are identical on every main-model call of every conversation, and a
-turn makes two or three such calls. The system prompt carries a cache
+tokens, are identical on every main-model call that offers the tools, in every
+conversation, and a turn makes two or three such calls. The system prompt carries a cache
 breakpoint, which caches the tools with it (the API caches in the order
 tools, system, messages), and automatic caching adds a second breakpoint that
 moves to the end of the conversation, so the later calls in a turn read the
 conversation so far from the cache. A cached read is priced at a twentieth of
 fresh input; what it saved on the labelled set is measured in
 [Evaluation](#evaluation). `SUPPORT_BOT_PROMPT_CACHING=false` switches it off,
-which exists to make that measurement.
+which exists to make that measurement. Two kinds of call cannot use the cached
+prefix: a rewrite and a greeting are sent without the tools, so their prefix
+differs from the first token. Sending the tools with `tool_choice` set to
+`none` would let them read it, and is the next saving to measure.
 
 Cost comes from `pricing.py`: the Claude API's per-million-token prices for
 the two models, with the page and the date they were read, applied to every
@@ -630,7 +644,7 @@ happen. The customer never typed `FW-1002`; the model did.
 
 **Fix.** `look_up_client_query` runs only for a reference the customer typed in
 full somewhere in the conversation, matched whole whatever its case or
-punctuation: *fw 1002* is `FW-1002`, but *FW-10021* is not. (An independent
+punctuation: *fw 1002* is `FW-1002`, but *FW-10021* is not. (An independent AI
 review caught the first version accepting the reference anywhere inside a
 longer one.) Otherwise it returns `REFERENCE_NOT_GIVEN`, which the policy treats as
 unresolved: one question back is allowed, a declarative reply is escalated.
@@ -675,14 +689,14 @@ in the user role is by construction the customer's. Numbers the customer
 wrote may be repeated back — an age, an amount, a year — but not a phone
 number or a URL, because repeating either lends the firm's authority to
 something a fraudster may have given the customer. (The first version
-allowed any number the customer wrote; an independent review showed it
+allowed any number the customer wrote; an independent AI review showed it
 repeating a customer's "fraud line" back as genuine.) A test proves an
 instruction that names an unsupported number does not make it the
 customer's.
 
 ### 15. Replies no guard read
 
-**Symptom.** An independent review scripted the rewrite that follows a policy
+**Symptom.** An independent AI review scripted the rewrite that follows a policy
 escalation to say *"Our mortgage desk is on 0999 123 4567"*. It reached the
 customer with no warning.
 
@@ -706,8 +720,9 @@ A labelled set of 169 questions (`eval/questions.yaml`) says what a correct
 turn looks like: the behaviour (answer, escalate, clarify, decline, greeting),
 the corpus sections that answer or signpost it, the strings a correct answer
 must copy, and the tools a correct turn uses. The questions are written the
-way customers write; the set was reviewed by an independent compliance-style
-reviewer and again after the first end-to-end run, and the validator
+way customers write; the set was reviewed by a separate AI reviewer briefed
+as a compliance officer, every failing label was read again after the first
+end-to-end run, and the validator
 (`python -m eval.dataset`) checks every label against the corpus. Two
 harnesses score the agent against it:
 
@@ -814,8 +829,9 @@ vector store was compiled against the project's lockfile to count what it adds:
 | langgraph | +17 | langchain-core, langsmith (inert without a key), small utilities |
 
 Phase 1 chose reranking *instead of* embeddings on the grounds that embeddings
-would cost two gigabytes; measurement showed the right stack costs a few
-megabytes, so Phase 2 added them. Measuring first is the point.
+would cost two gigabytes; measurement showed the right stack costs about
+170 MB with the model (ONNX Runtime 69 MB of it), against about 2 GB for
+PyTorch, so Phase 2 added them. Measuring first is the point.
 
 **Two implementations of one agent.** The hand-written loop is the default and
 has the most live mileage; the LangGraph graph exists so the structure is
@@ -895,7 +911,7 @@ one whose weaknesses are unknown.
 - **The fact-checker is itself a model.** It can be wrong in both directions.
   It is a second opinion, not a proof — which is why the deterministic guard
   runs first and independently. It rewrote 18% of the baseline's answers
-  and 23% of the second run's; how many of those rewrites were needed is not
+  and 21% of the current run's; how many of those rewrites were needed is not
   yet measured.
 - **Declining and clarifying are the model's judgement.** The code guarantees
   what happens once it decides — the turn ends, nothing else runs, the second
@@ -923,7 +939,7 @@ Requires Python 3.11–3.13 and an Anthropic API key.
 git clone https://github.com/jitendraSuwalka/support-bot.git
 cd support-bot
 python -m venv .venv
-.venv\Scripts\activate          # Windows;  source .venv/bin/activate on macOS/Linux
+source .venv/bin/activate       # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
@@ -993,9 +1009,6 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `.github/workflows/` | `ci.yml`: lint, tests and the container on every push; `release.yml`: a version tag published as an image and a release |
 | `requirements.txt` / `requirements.lock` | Direct dependencies / every resolved dependency |
 
-The intermediate build stages that show how each guard arose are preserved in the
-git history (commit `f662959`, folder `archive/`); they were removed from the
-working tree because nothing runs or tests them.
 
 ### Try these
 

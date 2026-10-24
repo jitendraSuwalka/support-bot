@@ -317,6 +317,6 @@ if __name__ == "__main__":
     # the one that pays for loading (and, on a new machine, downloading) the
     # embedding model. The trace line it logs is printed, as there is no run.
     observability.configure_logging(agent.SETTINGS)
-    print("Preparing the document index (first run: downloads the embedding model, about 70 MB)")
+    print("Preparing the document index (first run: downloads the embedding model, 67 MB)")
     agent.get_retriever()
     demo.queue(default_concurrency_limit=4).launch(theme=THEME, css=CSS)

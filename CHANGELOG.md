@@ -11,8 +11,9 @@ the version.
 
 The agent rebuilt as a measured system: a document corpus and hybrid
 retrieval in place of hand-written snippets, a labelled evaluation set that
-every number in the README comes from, guards enforced in code, and the agent
-served over HTTP from a container that CI builds and tests.
+the README's results tables and headline numbers are rendered from, guards
+enforced in code, and the agent served over HTTP from a container that CI
+builds and tests.
 
 ### Added
 
@@ -28,12 +29,13 @@ served over HTTP from a container that CI builds and tests.
 - **The agent as a graph.** The same turn as a LangGraph state graph, selectable
   by a setting, with its Mermaid diagram generated and held to the README by a
   test; the scenario tests run on both implementations.
-- **An evaluation harness.** A labelled set of 169 customer questions reviewed
-  for compliance twice; retrieval metrics per search mode with a sweep of the
-  fusion constant; an end-to-end scorer of behaviour, escalation, required
-  facts, guards, latency, tokens and cost; and the README's tables and
-  headline rendered from the committed reports, so a number can only be
-  measured.
+- **An evaluation harness.** A labelled set of 169 customer questions,
+  reviewed by a separate AI reviewer briefed as a compliance officer and read
+  again against the first run; retrieval metrics per search mode with a sweep
+  of the fusion constant; an end-to-end scorer of behaviour, escalation,
+  required facts, guards, latency, tokens and cost; and the README's tables
+  and headline rendered from the committed reports and held to them by a
+  test, so those numbers can only be measured.
 - **Behaviours that end a turn in code.** Clarify once, then escalate; decline
   what is out of scope; answer a greeting without tools; look up a case
   reference only if the customer gave it.
@@ -77,12 +79,29 @@ Each found by a test or by the evaluation, and described in the README's
 - A fact-check rewrite that was never itself citation-checked.
 - A tokenizer that dropped the last word of every sentence, and plural folding
   that turned "branches" into "branche".
-- A dense-similarity floor set from two probes that dropped about one in ten
+- A dense-similarity floor set from two probes that dropped 8 of 131
   answering passages and filtered nothing.
 - Telemetry sent by the web framework and the embedding runtime.
 - A prompt injection answered with a poem, a case reference completed from a
   guess, greetings with a pleasantry escalated, and the agent's own
   instructions counted as customer turns.
+
+Found by an independent AI review of this release before it was published:
+
+- Three replies the model writes outside the evidence path (the rewrite after
+  a policy escalation, a clarifying question, a greeting) were never checked
+  for numbers and links; a last-line check now replaces a failing one with a
+  fixed reply.
+- A phone number the customer wrote was accepted as evidence, and a case
+  reference was matched inside a longer one (FW-10021 authorised FW-1002).
+- A turn that failed after a tool call left the conversation unusable, and
+  the web interface showed the exception to the customer.
+- The exception's text reached the log; conversation ids had 122 random bits,
+  not 128.
+- Tokens per case left out cached tokens, and a retrieval miss was counted at
+  ten results where the README read it at six.
+- The service could rewrite its own code inside the container, and the
+  suggested run command published an unauthenticated port to the network.
 
 ## [1.0.0] - 2026-08-06
 
@@ -91,5 +110,4 @@ interface, a citation guard, an independent fact-check, policy-enforced
 escalation and 52 offline checks, answering from short passages paraphrased
 from a real firm's public web pages.
 
-[2.0.0]: https://github.com/jitendraSuwalka/support-bot/compare/f662959...v2.0.0
-[1.0.0]: https://github.com/jitendraSuwalka/support-bot/tree/f662959
+[2.0.0]: https://github.com/jitendraSuwalka/support-bot/commits/v2.0.0
