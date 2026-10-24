@@ -49,7 +49,7 @@ python app.py                  # web interface, as in the recording above
 uvicorn api:app                # the same agent as an HTTP service; docs at /docs
 docker build -t support-bot .  # the service as a container (CI builds and tests it)
 python agent.py                # same agent, in the terminal
-pytest                         # 487 tests, under twenty seconds, no API calls, no network
+pytest                         # 531 tests, under twenty seconds, no API calls, no network
 ```
 
 > **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
@@ -65,6 +65,29 @@ pytest                         # 487 tests, under twenty seconds, no API calls, 
 > (gov.uk, FSCS, the Financial Ombudsman) on 20 October 2026; `corpus/README.md`
 > lists every public figure with its source. A personal learning project; no
 > real client data is used anywhere.
+
+**Two minutes, for a reviewer:**
+
+- **The guarantees are code, not prompt.** In `agent.py`: `check_citations`
+  (every number and link must appear in the evidence), `verify_answer` (an
+  independent model reads the answer against it), `enforce_escalation`
+  (clarify once, then a person) and `last_line_check` (the replies no other
+  guard reads).
+- **Every number is measured.** [Evaluation](#evaluation): 169 labelled
+  questions, three runs of the same code with a confidence interval, five
+  ablations, and the fact-checker's own rewrites judged by hand. The tables are
+  rendered from `reports/`, and a test fails if the README disagrees with them.
+- **The measurement changed the system.** Judging the fact-checker by hand
+  found that most of its rewrites were false alarms, that one in six spoke to
+  the check instead of the customer, and that complaints were being handed
+  back to an adviser ([failure modes 16 to 18](#16-a-fact-checker-that-could-not-see-the-question)).
+- **Written for a regulated firm.** No advice, ever; case statuses quoted word
+  for word; a complaint to the complaints team; a customer who has just paid a
+  scammer to the fraud team and told to call their own bank.
+- **Engineered to be run by someone else.** 531 offline tests on two
+  implementations (a plain loop and a LangGraph graph), CI on three Python
+  versions and Windows, a container built and smoke-tested on every push, and
+  tagged releases whose notes carry the measured numbers.
 
 ---
 
@@ -106,8 +129,10 @@ The first version was a single agent with guards and offline checks. Version 2
 rebuilt it in four phases, each one pull request, and the README refers to
 them by number: **Phase 1** the engineering foundations, **Phase 2** the
 document corpus and hybrid retrieval, **Phase 3** the evaluation, **Phase 4**
-the service, its logs and its container. The [changelog](CHANGELOG.md) lists
-what each added.
+the service, its logs and its container. **Phase 5** added releases, and
+**Phase 6**, version 2.1, measured the system: repeated runs, ablations and the
+fact-checker's rewrites judged by hand, then changes where the measurement
+showed it wrong. The [changelog](CHANGELOG.md) lists what each added.
 
 ---
 
@@ -121,7 +146,7 @@ tested as one (see [The agent as a graph](#the-agent-as-a-graph)).
 |---|---|
 | `search_knowledge_base` | the firm's documents in `corpus/` — 18 pages, hybrid BM25 + vector search |
 | `look_up_client_query` | Case status by reference (synthetic data) — only a reference the customer typed |
-| `escalate_to_adviser` | Hand-off to a human: advice, a complaint being raised, a death, divorce or power of attorney being acted on, fraud, an instruction to deal |
+| `escalate_to_adviser` | Hand-off to a person, routed by its reason: a complaint to Client Resolution, a scam payment or missing money to Fraud and Security, a death, divorce, serious illness or power of attorney to the life events team; advice, an instruction to deal and anything the documents do not cover to an adviser |
 | `ask_for_clarification` | One question back when a message is too vague to act on; the turn ends in code |
 | `decline_out_of_scope` | A fixed reply for requests outside the firm's business; the turn ends in code and nothing else runs |
 
@@ -144,7 +169,8 @@ user question
      │    ├─ decline_out_of_scope → fixed reply; the turn ends here, nothing else runs
      │    ├─ ask_for_clarification → the question; the turn ends here, the policy counts it
      │    ├─ look_up_client_query — refused unless the customer typed the reference
-     │    └─ escalate_to_adviser — the model writes the reply knowing it has happened
+     │    └─ escalate_to_adviser — routed to the team that handles it; the model
+     │                              writes the reply knowing it has happened
      │
      ├─ RETRIEVAL — hybrid, over 18 documents in 129 chunks
      │    ├─ LLM query expansion                          (widens the lexical side only)
@@ -159,7 +185,9 @@ user question
      │
      ├─ CHECK 0: evidence guard — deterministic           (no answering from memory)
      ├─ CHECK 1: citation guard — deterministic           (URLs and numbers)
-     ├─ CHECK 2: groundedness — independent LLM           (semantic drift; any rewrite meets CHECK 1 again)
+     ├─ CHECK 2: groundedness — independent LLM           (semantic drift, read against the evidence with
+     │                                                     the customer's message as context; any rewrite
+     │                                                     meets CHECK 1 again)
      ├─ CHECK 3: escalation policy — deterministic        (clarify once, then escalate)
      ├─ CHECK 4: last-line check — deterministic          (greetings, clarifying questions and the
      │                                                     post-escalation rewrite; a fixed reply if they fail)
@@ -720,6 +748,86 @@ reply that fails is replaced by a fixed one rather than rewritten again,
 because a fixed reply cannot fail, and the web interface shows *Replaced with
 a fixed reply*. Tested on both implementations.
 
+### 16. A fact-checker that could not see the question
+
+**Symptom.** Judged by hand, 22 of 40 rewrites the fact-checker forced were
+false alarms (the table under [Evaluation](#evaluation)). A customer asked
+*"I asked for a call back at 10am. Does that mean the office opens at 10?"*;
+the draft answered *"No"* and gave the opening hours, 09:00 to 17:30; the
+fact-checker flagged the *"No"* as a claim about call backs, and the customer
+was told *"I can't say how your 10am request relates to opening hours."* A
+customer holding power of attorney for their mother had the answer's *"you"*
+flagged twice, because the documents speak of *the attorney*.
+
+**Cause.** It was shown the evidence and the answer, never the message the
+answer replied to, so a detail the customer had given and a plain answer to
+their question both looked like inventions. Nor did it know the switchboard
+number or the reference format, which the agent has from its instructions
+rather than from a search.
+
+**Fix.** It reads the customer's latest message, fenced in tags as context and
+never evidence or instructions, and is told those two are the agent's own. It
+is still told to flag a claim about the firm that the customer made, and a
+*"Yes"* where the evidence only says something *may* happen. The labels stand: they
+describe the fact-checker before the change, and the labelling tool keeps any
+later sample in a file of its own, so the two are never mixed. The same labels
+showed what the fact-checker is for: a Lifetime ISA answer that listed the
+penalty-free withdrawals without their conditions (a first home only once the
+account has been open a year; terminal illness only with less than twelve
+months to live), and a *"Yes"* to *"Are my calls recorded?"* where the
+documents say *may be recorded*.
+
+### 17. Rewrites that answered the check, not the customer
+
+**Symptom.** 48 of the 293 rewrites the fact-checker forced in the Phase 6
+runs began *"Here is a corrected answer"*, *"Here is the answer again, kept to
+what the documents say"* or *"You're right, that wording was off"*, about an
+answer the customer never saw. Others dropped what was right along with what
+was flagged: the offer to raise a complaint about a charge, a link to the
+page, the sentence declining to say whether a pension transfer was right for
+the customer.
+
+**Cause.** The instruction to rewrite is sent in the user role, as every
+instruction to the model must be, and said only what was wrong. The model
+answered it as it would a customer who had complained, and rebuilt the whole
+answer from the evidence rather than mending the part that was flagged.
+
+**Fix.** The instruction says it comes from the system and that the customer
+sees only the new reply, asks for only the changes the problems need, and
+lists what to keep: refusals, caveats, links, phone numbers, an offer to pass
+the matter on, any mention of a complaint. An opening that still gets through
+is removed in code and logged (`rewrite_lead_in`); openings that reached
+customers are the test cases.
+
+### 18. A complaint handed back to the adviser
+
+**Symptom.** *"I want to complain right now about my adviser."* The agent
+logged it and told the customer *a qualified adviser* would contact them, in
+every run, and the evaluation passed it every time. A customer who had just
+sent money to someone claiming to be from the firm was told the same, without
+the Fraud and Security team the first measurement had named, and was not told
+to call their bank. And 13 of the 18 rewrites the labels found
+needed were one phrase, *"if you'd like to speak to someone sooner"*, offering
+the switchboard as a quicker route than the call the customer had been
+promised.
+
+**Cause.** The escalation tool had one reply for every hand-off. The label for
+the complaint asked for no fact, so nothing measured where it went, though its
+own comment said that under the FCA's complaint rules (DISP) it belongs with
+Client Resolution. *"Sooner"* was the model filling a gap the tool's reply
+left: why give a number, if not to be quicker?
+
+**Fix.** The tool takes a reason from a fixed list and routes it: a scam
+payment or missing money to the Fraud and Security team, to be called
+immediately, and the customer's own bank (first, so a complaint about a scam
+still reaches the bank); a complaint to Client Resolution with its line; a
+death, divorce, serious illness or power of attorney to the life events team;
+anything else, financial difficulty included, to an adviser. Every route but
+the fraud one says not to call one number quicker than another. The labels for
+the complaint, the scam payment and a bereavement now require the team's
+number or name, and the evaluation counts the hand-offs that gave them, so it
+measures where they go.
+
 ---
 
 ## Evaluation
@@ -829,7 +937,7 @@ Caching cut the cost of an answer by 64%, from $0.0155 to $0.0056.
 
 ## Testing strategy
 
-`tests/` — **487 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
+`tests/` — **531 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
 Eight further tests call the real API and run only on request: `pytest -m live`;
 two download and run the real embedding model: `pytest -m model`.
 
@@ -954,9 +1062,18 @@ one whose weaknesses are unknown.
   app, the tests and `python -m rag.index` cannot share `.index/` at once.
 - **The fact-checker is itself a model.** It can be wrong in both directions.
   It is a second opinion, not a proof — which is why the deterministic guard
-  runs first and independently. It rewrote 18% of the baseline's answers
-  and 21% of the current run's; how many of those rewrites were needed is not
-  yet measured.
+  runs first and independently. Judged by hand before the changes in failure
+  modes 16 to 18, 18 of 40 sampled rewrites were needed. Some false alarms
+  were reasonable inferences from the evidence (a rule for all US citizens
+  applied to one; no earnings is less than £3,600), which those changes do not
+  address. The ablation shows what it costs; only labelling shows what it
+  catches, because what it catches is wording, which no exact-match check can
+  see.
+- **Routing reads one word.** An escalation goes to a team by the reason the
+  model gives it, so a complaint the model files as advice reaches an
+  adviser. The routes are the firm's procedures written into a tool's reply,
+  not a case-management system: nothing here opens a case with Client
+  Resolution.
 - **Declining and clarifying are the model's judgement.** The code guarantees
   what happens once it decides — the turn ends, nothing else runs, the second
   clarification escalates — not that it decides. A model that searches instead
@@ -1043,8 +1160,8 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `corpus/` | 18 documents for the fictional firm, with front matter; `corpus/README.md` sources every public figure |
 | `rag/` | `corpus.py` chunker, `embeddings.py`, `store.py` (Qdrant), `lexical.py` (BM25), `retrieval.py` (fusion), `index.py` (CLI) |
 | `eval/` | `questions.yaml` (169 labelled cases), `dataset.py` validator, `retrieval.py` metrics and sweep, `live.py` end-to-end scorer, `label_factcheck.py` hand labels for the fact-checker, `report.py` README tables |
-| `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json`, `caching-off.json`, `caching-on.json` |
-| `tests/` | 487 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
+| `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json` and its repeats in `repeats/`, the ablations in `ablations/`, `caching-off.json`, `caching-on.json`, and the hand labels in `factcheck-labels.json` |
+| `tests/` | 531 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `api.py` | FastAPI service — `/chat`, `/sessions/{id}`, `/health`, `/ready`, OpenAPI docs at `/docs` |
 | `Dockerfile` / `.dockerignore` | The service as a container: model and index baked in, non-root, health-checked, allow-listed contents |
@@ -1075,9 +1192,10 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 
 ## What I would do next
 
-1. **Measure the fact-checker.** It rewrites about a fifth of answers; a
-   labelled sample of those rewrites would say how many were needed, and
-   whether the check is worth its call.
+1. **Label the fact-checker again.** The labels measured it before the
+   changes they led to; a second sample from the next runs, in a file of its
+   own, would say whether the false alarms fell and whether the check still
+   earns its call.
 2. **Turn the log into monitoring.** Every turn and request is already a JSON
    line with its behaviour, guards, latency and cost; shipped to a log store,
    escalation rate, rewrite rate and cost per answer become dashboards and

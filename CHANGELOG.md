@@ -45,13 +45,46 @@ the version.
   forced rewrites, with the claims it flagged, the draft and the evidence,
   and records a person's verdict on each (needed, a false alarm, unsure),
   resumable across sittings; the README shows the precision with a 95%
-  interval.
+  interval. The labels file records the runs its sample was drawn from and
+  refuses to mix in a later run's rewrites (`--labels` names a new file), and
+  the README's table says which runs it describes.
+- Escalations routed by their reason, chosen from a fixed list: a scam
+  payment or missing money to the Fraud and Security team, to be called
+  immediately, with the advice to call the customer's own bank; a complaint to
+  Client Resolution with its number; a death, divorce, serious illness or power
+  of attorney to the life events team; anything else, financial difficulty
+  included, to an adviser.
+- The evaluation counts the hand-offs that gave the facts their label asks
+  for, and the labels for the complaint (`handoff-complaint`), the scam payment
+  (`security-06`) and a bereavement (`life-01`) now require the team's number
+  or name.
+- The ablation table says how far repeated runs of the same code moved, so a
+  smaller difference is not read as an effect.
+- The README opens with a two-minute tour for reviewers, and failure modes 16
+  to 18 describe what labelling the fact-checker found.
 
 ### Fixed
 
 - The release notes ran on past their own entry when the next heading had no
   brackets: the 2.0.0 notes carried the 1.0.0 entry before their measured
   numbers. Any second-level heading now ends an entry.
+- Judged by hand, 22 of 40 sampled fact-check rewrites were false alarms, most
+  of them details the customer had given or plain answers to the question,
+  which the fact-checker never saw. It now reads the customer's latest message,
+  fenced in tags as context and never evidence or instructions, and is told
+  the switchboard number and the reference format are the agent's own.
+- 48 of the 293 fact-check rewrites in the Phase 6 runs opened by addressing
+  the check (*Here is a corrected answer*, *You're right*), and some dropped a
+  refusal, a link or the offer to raise a complaint with the flagged claim.
+  The rewrite instruction says it comes from the system and lists what to
+  keep, and an opening that still gets through is removed and logged.
+- A complaint about an adviser was handed back to *a qualified adviser* in
+  every run, and the evaluation passed it because its label asked for no fact.
+- 13 of the 18 rewrites judged needed were the agent offering the switchboard
+  as a way to reach someone *sooner*. Every escalation route but the fraud one
+  now says not to call one number quicker than another.
+- The labelling tool took a note pasted at the verdict prompt as a verdict,
+  from its first letter; it now takes one letter exactly.
 
 ## [2.0.0] - 2026-10-24
 
