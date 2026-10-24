@@ -28,10 +28,10 @@ Measured on a labelled set of customer questions, with every number below
 rendered from the reports in `reports/` ([Evaluation](#evaluation)):
 
 <!-- headline:start -->
-- **98.8%** of 169 labelled customer questions handled as the label says — answered, escalated, clarified or declined (the first measurement: 88.8%).
-- **96.2%** of escalations were wanted, and **96.2%** of the questions that needed a person reached one.
+- **98.2%** of 169 labelled customer questions handled as the label says — answered, escalated, clarified or declined (95% CI 94.9%–99.4%; 3 runs: 98.2%–98.8%; the first measurement: 88.8%).
+- **96.0%** of escalations were wanted, and **92.3%** of the questions that needed a person reached one.
 - **97.0%** of the 135 labelled questions with a gold passage have it among the six retrieved (hybrid BM25 and vector search).
-- **$0.0064** an answer with prompt caching, **58%** less than without.
+- **$0.0056** an answer with prompt caching, **64%** less than without.
 <!-- headline:end -->
 
 Try the released service in one command, with your own Anthropic API key in a
@@ -775,18 +775,42 @@ End to end: every case through the real agent (`claude-sonnet-5-5` answering, `c
 | Run | Date | Cases | Behaviour accuracy | Answers correct | Escalation precision | Escalation recall | Untouched by guards | Median latency | Tokens per case, all |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|
 | baseline | 2026-10-22 | 169 | 88.8% | 91.6% | 65.8% | 96.2% | 74.4% | 9.1 s | 6,335 |
-| current | 2026-10-24 | 169 | 98.8% | 99.2% | 96.2% | 96.2% | 82.4% | 8.1 s | 8,113 |
+| current | 2026-10-24 | 169 | 98.2% | 98.5% | 96.0% | 92.3% | 83.3% | 7.6 s | 8,468 |
 
 Behaviour accuracy: the agent did what the label expects (answer, escalate, clarify, decline, greeting). Answers correct: answerable questions answered with every required fact. Escalation precision: escalations that were wanted; recall: wanted escalations that happened. Untouched: answers that passed the citation guard and the fact-check without a rewrite. Tokens per case counts every token processed, cache reads and writes included: prompt caching makes most of them cheaper, not fewer (the caching table below shows the cost). Every failure is listed by id in the report.
+
+The same code, run 3 times over all 169 cases (`reports/live.json` and `reports/repeats/`): how much of a number is the model's own variation.
+
+| Metric | Run 1 | Run 2 | Run 3 | Mean | Spread |
+|---|---:|---:|---:|---:|---:|
+| Behaviour accuracy | 98.2% | 98.8% | 98.8% | 98.6% | 0.6 pts |
+| Answers correct | 98.5% | 98.5% | 99.2% | 98.7% | 0.7 pts |
+| Escalation precision | 96.0% | 96.2% | 96.2% | 96.1% | 0.2 pts |
+| Escalation recall | 92.3% | 96.2% | 96.2% | 94.9% | 3.9 pts |
+| Untouched by guards | 83.3% | 80.2% | 77.9% | 80.5% | 5.4 pts |
+| Cost per answer | $0.0045 | $0.0048 | $0.0046 | $0.0046 | $0.0003 |
+
+Run 1 handled 166 of 169 questions as labelled: 98.2%, with a 95% confidence interval of 94.9% to 99.4% (Wilson). The interval is about which questions happened to be in the set; the spread across runs is about the model answering the same question differently. The baseline's 88.8% lies below that interval: the improvement is larger than the uncertainty that comes from the question set.
+
+Ablation: the same cases with one component switched off, or the main model changed, one at a time (`reports/ablations/`). *Unsupported* counts replies that reached the customer with a number or link nothing supports, checked after the turn whichever guards were on.
+
+| Configuration | Behaviour accuracy | Answers correct | Escalation precision | Escalation recall | Unsupported replies | Cost per answer | Median latency |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Everything on (run 1) | 98.2% | 98.5% | 96.0% | 92.3% | 0 | $0.0045 | 7.6 s |
+| Reranking off (`SUPPORT_BOT_USE_RERANK=false`) | 98.2% (+0.0) | 98.5% | 100.0% | 88.5% | 0 | $0.0048 | 6.4 s |
+| Fact-check off (`SUPPORT_BOT_VERIFY_ANSWERS=false`) | 98.2% (+0.0) | 99.2% | 96.0% | 92.3% | 0 | $0.0039 | 5.6 s |
+| Citation checks off: the guard, its re-check and the last-line check (`SUPPORT_BOT_CHECK_CITATIONS=false`) | 97.6% (-0.6) | 99.2% | 95.8% | 88.5% | 3 | $0.0044 | 7.4 s |
+| BM25 only, no vector search (`SUPPORT_BOT_RETRIEVAL_MODE=lexical`) | 95.3% (-2.9) | 93.1% | 78.1% | 96.2% | 1 | $0.0046 | 8.0 s |
+| Haiku 5.5 answering (`SUPPORT_BOT_MAIN_MODEL=claude-haiku-5-5`) | 97.0% (-1.2) | 96.9% | 92.6% | 96.2% | 0 | $0.0006 | 7.0 s |
 
 Prompt caching, measured: the same cases through the real agent with caching off, then on (`SUPPORT_BOT_PROMPT_CACHING`, `python -m eval.live --limit … --out …`).
 
 | Prompt caching | Cases | Cost per answer | Uncached input tokens per answer | Cache reads per answer | Median latency | Behaviour accuracy |
 |---|---:|---:|---:|---:|---:|---:|
-| off | 20 | $0.0154 | 8,094 | 0 | 9.4 s | 100.0% |
-| on | 20 | $0.0064 | 2,177 | 5,134 | 9.0 s | 100.0% |
+| off | 20 | $0.0155 | 8,104 | 0 | 9.3 s | 100.0% |
+| on | 20 | $0.0056 | 2,171 | 5,410 | 9.3 s | 100.0% |
 
-Caching cut the cost of an answer by 58%, from $0.0154 to $0.0064.
+Caching cut the cost of an answer by 64%, from $0.0155 to $0.0056.
 <!-- eval:end -->
 
 ---
