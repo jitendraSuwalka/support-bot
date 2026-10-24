@@ -213,6 +213,43 @@ def ablation_table(full: dict, ablations: list[tuple[str, dict]]) -> str:
     return "\n".join(lines)
 
 
+def load_labels(directory: Path = REPORTS) -> dict | None:
+    """The hand labels of the fact-checker's rewrites, if any have been given."""
+    path = directory / "factcheck-labels.json"
+    if not path.exists():
+        return None
+    labels = json.loads(path.read_text(encoding="utf-8"))
+    return labels if labels.get("items") else None
+
+
+def factcheck_table(labels: dict) -> str:
+    """How often the fact-checker's forced rewrites were needed, judged by hand."""
+    counts = {"needed": 0, "not needed": 0, "unsure": 0}
+    for item in labels["items"]:
+        counts[item["verdict"]] += 1
+    judged = counts["needed"] + counts["not needed"]
+    who = f" by {labels['labelled_by']}" if labels.get("labelled_by") else ""
+    lines = [
+        f"The fact-checker, judged by hand: {len(labels['items'])} of its forced rewrites, "
+        "sampled from the runs, were read against the same evidence it had"
+        f"{who} (`python -m eval.label_factcheck`, `reports/factcheck-labels.json`).",
+        "",
+        "| Verdict | Rewrites |",
+        "|---|---:|",
+        f"| Needed: the draft said something the evidence does not support | {counts['needed']} |",
+        f"| Not needed: a false alarm | {counts['not needed']} |",
+        f"| Unsure | {counts['unsure']} |",
+    ]
+    if judged:
+        low, high = wilson(counts["needed"], judged)
+        lines += [
+            "",
+            f"Precision {_pct(counts['needed'] / judged)} (95% CI {_pct(low)} to {_pct(high)}, "
+            f"Wilson, {judged} judged either way).",
+        ]
+    return "\n".join(lines)
+
+
 def caching_table(runs: dict[str, dict]) -> str:
     """Cost, tokens and latency with prompt caching off and on, on the same cases."""
     lines = [
@@ -383,6 +420,7 @@ def render(
     caching: dict[str, dict] | None = None,
     repeats: list[dict] | None = None,
     ablations: list[tuple[str, dict]] | None = None,
+    labels: dict | None = None,
 ) -> str:
     parts = []
     if retrieval:
@@ -393,6 +431,8 @@ def render(
         parts.append(stability_table(repeats, runs.get("baseline")))
     if ablations and "current" in runs:
         parts.append(ablation_table(runs["current"], ablations))
+    if labels:
+        parts.append(factcheck_table(labels))
     if caching:
         parts.append(caching_table(caching))
     if not parts:
@@ -406,6 +446,7 @@ def current_block(directory: Path = REPORTS) -> str:
         load_caching(directory),
         load_repeats(directory),
         load_ablations(directory),
+        load_labels(directory),
     )
 
 
