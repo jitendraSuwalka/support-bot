@@ -49,7 +49,7 @@ python app.py                  # web interface, as in the recording above
 uvicorn api:app                # the same agent as an HTTP service; docs at /docs
 docker build -t support-bot .  # the service as a container (CI builds and tests it)
 python agent.py                # same agent, in the terminal
-pytest                         # 452 tests, under twenty seconds, no API calls, no network
+pytest                         # 456 tests, under twenty seconds, no API calls, no network
 ```
 
 > **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
@@ -450,10 +450,10 @@ moves to the end of the conversation, so the later calls in a turn read the
 conversation so far from the cache. A cached read is priced at a twentieth of
 fresh input; what it saved on the labelled set is measured in
 [Evaluation](#evaluation). `SUPPORT_BOT_PROMPT_CACHING=false` switches it off,
-which exists to make that measurement. Two kinds of call cannot use the cached
-prefix: a rewrite and a greeting are sent without the tools, so their prefix
-differs from the first token. Sending the tools with `tool_choice` set to
-`none` would let them read it, and is the next saving to measure.
+which exists to make that measurement. A call that must not use a tool — a
+rewrite, a greeting — still sends the tools, with `tool_choice` set to `none`:
+the cache is keyed on the prompt from its first token, so leaving the tools
+out would make the prefix different and the cache unreadable.
 
 Cost comes from `pricing.py`: the Claude API's per-million-token prices for
 the two models, with the page and the date they were read, applied to every
@@ -793,7 +793,7 @@ Caching cut the cost of an answer by 58%, from $0.0154 to $0.0064.
 
 ## Testing strategy
 
-`tests/` — **452 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
+`tests/` — **456 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
 Eight further tests call the real API and run only on request: `pytest -m live`;
 two download and run the real embedding model: `pytest -m model`.
 
@@ -1006,7 +1006,7 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `rag/` | `corpus.py` chunker, `embeddings.py`, `store.py` (Qdrant), `lexical.py` (BM25), `retrieval.py` (fusion), `index.py` (CLI) |
 | `eval/` | `questions.yaml` (169 labelled cases), `dataset.py` validator, `retrieval.py` metrics and sweep, `live.py` end-to-end scorer, `report.py` README tables |
 | `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json`, `caching-off.json`, `caching-on.json` |
-| `tests/` | 452 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
+| `tests/` | 456 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `api.py` | FastAPI service — `/chat`, `/sessions/{id}`, `/health`, `/ready`, OpenAPI docs at `/docs` |
 | `Dockerfile` / `.dockerignore` | The service as a container: model and index baked in, non-root, health-checked, allow-listed contents |

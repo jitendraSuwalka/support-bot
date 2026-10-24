@@ -1157,6 +1157,14 @@ def _main_call(messages, use_tools):
     }
     if use_tools:
         request["tools"] = tools
+    elif SETTINGS.prompt_caching:
+        # A call that must not use a tool -- a rewrite, a greeting -- still
+        # sends the tools, with tool_choice none: the cache is keyed on the
+        # prompt from its first token (tools, then system), so a request
+        # without the tools could never read the cached prefix the other
+        # calls share, and would write a second one at a premium instead.
+        request["tools"] = tools
+        request["tool_choice"] = {"type": "none"}
     if SETTINGS.prompt_caching:
         # Automatic caching as well: a second breakpoint that moves to the end
         # of the conversation, so the calls within one turn (answer, tool

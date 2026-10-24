@@ -9,6 +9,12 @@ the version.
 
 ## [Unreleased]
 
+### Changed
+
+- A rewrite or a greeting sends the tools with `tool_choice` set to `none`,
+  so it reads the cached tools and system prompt like every other main-model
+  call, instead of writing a cache entry of its own.
+
 ### Fixed
 
 - The release notes ran on past their own entry when the next heading had no

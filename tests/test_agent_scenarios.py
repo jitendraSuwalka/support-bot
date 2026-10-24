@@ -6,6 +6,8 @@ net is known to work rather than hoped to. Every assertion reads the
 structured AgentResult, never printed text.
 """
 
+from dataclasses import replace
+
 import agent
 from tests.conftest import text_reply, tool_reply
 
@@ -442,7 +444,8 @@ def test_a_greeting_turn_offers_the_model_no_tools(run_scenario):
         script=[text_reply("You're welcome — anything else I can help with?")],
         user_messages=["Thanks a lot"],
     )
-    assert "tools" not in fake.calls[0]
+    # The tools are sent so the cached prefix can be read, but none may be used.
+    assert fake.calls[0]["tool_choice"] == {"type": "none"}
     assert results[0].tools_used == [] and results[0].declined is False
     assert results[0].answer.startswith("You're welcome")
 
@@ -685,3 +688,25 @@ def test_without_the_evidence_guard_an_unevidenced_figure_is_not_answered_as_a_g
         user_messages=["What is the ISA allowance?"],
     )
     assert results[0].answer == agent.SAFE_REPLIES["unevidenced reply"]
+
+
+def test_without_caching_a_call_that_must_not_use_tools_is_offered_none(run_scenario, monkeypatch):
+    monkeypatch.setattr(agent, "SETTINGS", replace(agent.SETTINGS, prompt_caching=False))
+    _, _, fake = run_scenario(
+        script=[text_reply("You're welcome.")],
+        user_messages=["Thanks a lot"],
+    )
+    assert "tools" not in fake.calls[0] and "tool_choice" not in fake.calls[0]
+
+
+def test_a_rewrite_reads_the_same_cached_prefix_as_the_answer(run_scenario):
+    results, _, fake = run_scenario(
+        TRUNCATED_URL_SCRIPT,
+        ["Do you have a Manchester office?"],
+        helper={"rerank": '{"relevant": [0]}'},
+    )
+    assert "rewritten after citation check" in results[0].notes
+    answer_call, rewrite_call = fake.calls[-2], fake.calls[-1]
+    assert rewrite_call["tools"] == answer_call["tools"]  # the same prefix
+    assert rewrite_call["tool_choice"] == {"type": "none"}
+    assert rewrite_call["system"] == answer_call["system"]
