@@ -13,7 +13,13 @@ reports/caching-on.json exist (the same cases with prompt caching off and
 on), a third table compares their cost, tokens and latency. A second pair
 of markers near the top of the README, ``<!-- headline:start -->`` and
 ``<!-- headline:end -->``, carries the four headline numbers from the same
-reports. The README carries the block between
+reports. Three further sections appear when their reports exist: the
+variation across repeated runs of the same code (reports/repeats/*.json,
+beside reports/live.json as run 1) with a 95% confidence interval, an
+ablation table of the same cases with one component switched off or the
+main model changed (reports/ablations/*.json), and the precision of the
+fact-checker's rewrites as labelled by hand (reports/factcheck-labels.json).
+The README carries the block between
 ``<!-- eval:start -->`` and ``<!-- eval:end -->``, and a test asserts that it
 is exactly what this module renders from the reports in the repository, so a
 number in the README can be measured and regenerated, never typed.
@@ -39,6 +45,16 @@ LIVE_RUNS = (("baseline", "live-baseline.json"), ("current", "live.json"))
 RETRIEVAL = "retrieval.json"
 # The same cases run with prompt caching off and on (Step 4.3).
 CACHING_RUNS = (("off", "caching-off.json"), ("on", "caching-on.json"))
+# Repeats of the current run on the same code: reports/repeats/*.json.
+REPEATS = "repeats"
+# The same cases with one thing changed, in the order the table shows them.
+ABLATIONS = (
+    ("no-rerank.json", "Reranking off (`SUPPORT_BOT_USE_RERANK=false`)"),
+    ("no-factcheck.json", "Fact-check off (`SUPPORT_BOT_VERIFY_ANSWERS=false`)"),
+    ("no-citation-guard.json", "Citation guard off (`SUPPORT_BOT_CHECK_CITATIONS=false`)"),
+    ("lexical-only.json", "BM25 only, no vector search (`SUPPORT_BOT_RETRIEVAL_MODE=lexical`)"),
+    ("haiku-main.json", "Haiku 5.5 answering (`SUPPORT_BOT_MAIN_MODEL=claude-haiku-5-5`)"),
+)
 
 
 def load_reports(directory: Path = REPORTS) -> tuple[dict | None, dict[str, dict]]:
@@ -63,6 +79,138 @@ def load_caching(directory: Path = REPORTS) -> dict[str, dict]:
         if path.exists():
             runs[label] = json.loads(path.read_text(encoding="utf-8"))
     return runs
+
+
+def load_repeats(directory: Path = REPORTS) -> list[dict]:
+    """Run 1 (reports/live.json) and its repeats, in name order; empty without repeats."""
+    repeats = sorted((directory / REPEATS).glob("*.json"))
+    first = directory / "live.json"
+    if not repeats or not first.exists():
+        return []
+    return [json.loads(path.read_text(encoding="utf-8")) for path in [first, *repeats]]
+
+
+def load_ablations(directory: Path = REPORTS) -> list[tuple[str, dict]]:
+    """The ablation runs that exist, with their labels, in table order."""
+    found = []
+    for name, label in ABLATIONS:
+        path = directory / "ablations" / name
+        if path.exists():
+            found.append((label, json.loads(path.read_text(encoding="utf-8"))))
+    return found
+
+
+def wilson(successes: int, n: int, z: float = 1.96) -> tuple[float, float]:
+    """The Wilson score interval for a proportion: sound near 0% and 100%,
+    where the textbook normal interval runs past the ends."""
+    if n == 0:
+        return (0.0, 1.0)
+    p = successes / n
+    centre = (p + z * z / (2 * n)) / (1 + z * z / n)
+    half = z * ((p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5) / (1 + z * z / n)
+    return (max(0.0, centre - half), min(1.0, centre + half))
+
+
+def behaviour_counts(summary: dict) -> tuple[int, int]:
+    """(cases handled as labelled, cases scored), from the lists the summary keeps."""
+    scored = summary["cases"] - len(summary.get("errors", []))
+    return scored - len(summary.get("wrong_behaviour", {})), scored
+
+
+def behaviour_interval(summary: dict) -> tuple[float, float]:
+    return wilson(*behaviour_counts(summary))
+
+
+def _unsupported(summary: dict) -> str:
+    ids = summary.get("unsupported_replies")
+    return "not measured" if ids is None else str(len(ids))
+
+
+def _cost(summary: dict) -> str:
+    cost = (summary.get("cost_usd") or {}).get("per_case_mean")
+    return "unpriced" if cost is None else f"${cost:.4f}"
+
+
+def stability_table(runs: list[dict], baseline: dict | None = None) -> str:
+    """The same code run several times: each metric per run, its mean and spread."""
+    metrics = (
+        ("Behaviour accuracy", lambda s: s["behaviour_accuracy"]),
+        ("Answers correct", lambda s: s["answers"]["correct"]),
+        ("Escalation precision", lambda s: s["escalation"]["precision"]),
+        ("Escalation recall", lambda s: s["escalation"]["recall"]),
+        ("Untouched by guards", lambda s: s["answers"]["untouched_by_guards"]),
+    )
+    summaries = [run["summary"] for run in runs]
+    header = " | ".join(f"Run {i}" for i in range(1, len(runs) + 1))
+    lines = [
+        f"The same code, run {len(runs)} times over all {summaries[0]['cases']} cases "
+        "(`reports/live.json` and `reports/repeats/`): how much of a number is the "
+        "model's own variation.",
+        "",
+        f"| Metric | {header} | Mean | Spread |",
+        "|---|" + "---:|" * (len(runs) + 2),
+    ]
+    for name, read in metrics:
+        values = [read(s) for s in summaries]
+        cells = " | ".join(_pct(v) for v in values)
+        spread = 100 * (max(values) - min(values))
+        lines.append(f"| {name} | {cells} | {_pct(sum(values) / len(values))} | {spread:.1f} pts |")
+    costs = [(s.get("cost_usd") or {}).get("per_case_mean") for s in summaries]
+    if all(c is not None for c in costs):
+        lines.append(
+            "| Cost per answer | "
+            + " | ".join(f"${c:.4f}" for c in costs)
+            + f" | ${sum(costs) / len(costs):.4f} | ${max(costs) - min(costs):.4f} |"
+        )
+    low, high = behaviour_interval(summaries[0])
+    ok, n = behaviour_counts(summaries[0])
+    lines += [
+        "",
+        f"Run 1 handled {ok} of {n} questions as labelled: {_pct(ok / n)}, with a 95% "
+        f"confidence interval of {_pct(low)} to {_pct(high)} (Wilson). The interval is "
+        "about which questions happened to be in the set; the spread across runs is about "
+        "the model answering the same question differently.",
+    ]
+    if baseline is not None:
+        before = baseline["summary"]["behaviour_accuracy"]
+        if before < low:
+            lines[-1] += (
+                f" The baseline's {_pct(before)} lies below that interval: the improvement is "
+                "larger than the uncertainty that comes from the question set."
+            )
+        else:
+            lines[-1] += (
+                f" The baseline's {_pct(before)} lies inside that interval: the difference is "
+                "within the uncertainty that comes from the question set."
+            )
+    return "\n".join(lines)
+
+
+def ablation_table(full: dict, ablations: list[tuple[str, dict]]) -> str:
+    """The same cases with one thing changed, against everything switched on."""
+    lines = [
+        "Ablation: the same cases with one component switched off, or the main model "
+        "changed, one at a time (`reports/ablations/`). *Unsupported* counts replies that "
+        "reached the customer with a number or link nothing supports, checked after the "
+        "turn whichever guards were on.",
+        "",
+        "| Configuration | Behaviour accuracy | Answers correct | Escalation precision | "
+        "Escalation recall | Unsupported replies | Cost per answer | Median latency |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|",
+    ]
+    base = full["summary"]["behaviour_accuracy"]
+    for label, report in [("Everything on (run 1)", full), *ablations]:
+        s = report["summary"]
+        delta = 100 * (s["behaviour_accuracy"] - base)
+        accuracy = _pct(s["behaviour_accuracy"]) + (
+            f" ({delta:+.1f})" if report is not full else ""
+        )
+        lines.append(
+            f"| {label} | {accuracy} | {_pct(s['answers']['correct'])} | "
+            f"{_pct(s['escalation']['precision'])} | {_pct(s['escalation']['recall'])} | "
+            f"{_unsupported(s)} | {_cost(s)} | {s['latency_seconds']['median']:.1f} s |"
+        )
+    return "\n".join(lines)
 
 
 def caching_table(runs: dict[str, dict]) -> str:
@@ -180,7 +328,10 @@ def live_table(runs: dict[str, dict]) -> str:
 
 
 def headline(
-    retrieval: dict | None, runs: dict[str, dict], caching: dict[str, dict] | None = None
+    retrieval: dict | None,
+    runs: dict[str, dict],
+    caching: dict[str, dict] | None = None,
+    repeats: list[dict] | None = None,
 ) -> str:
     """The numbers a reader should see first, each from a report, as bullets."""
     lines = []
@@ -191,8 +342,16 @@ def headline(
             f"- **{_pct(latest['behaviour_accuracy'])}** of {latest['cases']} labelled customer "
             "questions handled as the label says — answered, escalated, clarified or declined"
         )
+        notes = []
+        if repeats:
+            low, high = behaviour_interval(repeats[0]["summary"])
+            values = [run["summary"]["behaviour_accuracy"] for run in repeats]
+            notes.append(f"95% CI {_pct(low)}–{_pct(high)}")
+            notes.append(f"{len(repeats)} runs: {_pct(min(values))}–{_pct(max(values))}")
         if len(runs) > 1:
-            line += f" (the first measurement: {_pct(first['behaviour_accuracy'])})"
+            notes.append(f"the first measurement: {_pct(first['behaviour_accuracy'])}")
+        if notes:
+            line += f" ({'; '.join(notes)})"
         lines.append(line + ".")
         esc = latest["escalation"]
         lines.append(
@@ -219,13 +378,21 @@ def headline(
 
 
 def render(
-    retrieval: dict | None, runs: dict[str, dict], caching: dict[str, dict] | None = None
+    retrieval: dict | None,
+    runs: dict[str, dict],
+    caching: dict[str, dict] | None = None,
+    repeats: list[dict] | None = None,
+    ablations: list[tuple[str, dict]] | None = None,
 ) -> str:
     parts = []
     if retrieval:
         parts.append(retrieval_table(retrieval))
     if runs:
         parts.append(live_table(runs))
+    if repeats:
+        parts.append(stability_table(repeats, runs.get("baseline")))
+    if ablations and "current" in runs:
+        parts.append(ablation_table(runs["current"], ablations))
     if caching:
         parts.append(caching_table(caching))
     if not parts:
@@ -234,11 +401,16 @@ def render(
 
 
 def current_block(directory: Path = REPORTS) -> str:
-    return render(*load_reports(directory), load_caching(directory))
+    return render(
+        *load_reports(directory),
+        load_caching(directory),
+        load_repeats(directory),
+        load_ablations(directory),
+    )
 
 
 def current_headline(directory: Path = REPORTS) -> str:
-    return headline(*load_reports(directory), load_caching(directory))
+    return headline(*load_reports(directory), load_caching(directory), load_repeats(directory))
 
 
 def _block_pattern(start: str, end: str) -> re.Pattern:

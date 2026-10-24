@@ -27,6 +27,12 @@ the version.
   ablation can show what reaches the customer; and, when the fact-checker
   forced a rewrite, the claims it flagged, the draft it read and the evidence.
 
+- The README's evaluation gains a table of repeated runs of the same code,
+  with each metric's mean and spread and a 95% Wilson confidence interval on
+  behaviour accuracy, which the headline carries too; and an ablation table
+  of the same cases with one component switched off, or the main model
+  changed, against everything switched on.
+
 ### Fixed
 
 - The release notes ran on past their own entry when the next heading had no
