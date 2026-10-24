@@ -48,7 +48,7 @@ python app.py                  # web interface, as in the recording above
 uvicorn api:app                # the same agent as an HTTP service; docs at /docs
 docker build -t support-bot .  # the service as a container (CI builds and tests it)
 python agent.py                # same agent, in the terminal
-pytest                         # 421 tests, under twenty seconds, no API calls, no network
+pytest                         # 423 tests, under twenty seconds, no API calls, no network
 ```
 
 > **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
@@ -300,10 +300,13 @@ answer. The choices that make it a service rather than a demo:
 - **One turn at a time per conversation.** A turn extends the conversation it
   reads, so two requests for one conversation are answered in order; a test
   proves the lock, and fails without it.
-- **A failure leaks nothing.** An exception inside the agent is a 502 with a
-  request id to quote and none of the exception's text; the message is taken
-  back off the conversation so the customer can retry; the log line has the
-  exception type.
+- **A failure leaks nothing and breaks nothing.** An exception inside the
+  agent is a 502 with a request id to quote and none of the exception's text.
+  The conversation and its policy state are put back exactly as they were
+  before the turn — including any tool call the agent had already made, which
+  would otherwise leave a tool request without its result and fail every later
+  turn — so the customer can simply retry. The log line has the exception
+  type.
 - **Every response carries `X-Request-ID`**, the client's own if it sent a
   well-formed one, and the same id is in the turn's log line.
 - **No new dependencies.** FastAPI and uvicorn were already in the lockfile
@@ -723,7 +726,7 @@ Caching cut the cost of an answer by 58%, from $0.0154 to $0.0064.
 
 ## Testing strategy
 
-`tests/` — **421 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
+`tests/` — **423 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
 Eight further tests call the real API and run only on request: `pytest -m live`;
 two download and run the real embedding model: `pytest -m model`.
 
@@ -934,7 +937,7 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `rag/` | `corpus.py` chunker, `embeddings.py`, `store.py` (Qdrant), `lexical.py` (BM25), `retrieval.py` (fusion), `index.py` (CLI) |
 | `eval/` | `questions.yaml` (169 labelled cases), `dataset.py` validator, `retrieval.py` metrics and sweep, `live.py` end-to-end scorer, `report.py` README tables |
 | `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json`, `caching-off.json`, `caching-on.json` |
-| `tests/` | 421 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
+| `tests/` | 423 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `api.py` | FastAPI service — `/chat`, `/sessions/{id}`, `/health`, `/ready`, OpenAPI docs at `/docs` |
 | `Dockerfile` / `.dockerignore` | The service as a container: model and index baked in, non-root, health-checked, allow-listed contents |

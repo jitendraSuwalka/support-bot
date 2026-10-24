@@ -21,6 +21,7 @@ ARCHITECTURE NOTE
 Run:  python app.py      then open the local URL it prints
 """
 
+import copy
 import uuid
 
 import gradio as gr
@@ -101,6 +102,10 @@ def build_status(result):
 # =========================================================
 
 EMPTY_EVIDENCE = "_Evidence appears here once the agent has looked something up._"
+REQUEST_FAILED_REPLY = (
+    "Sorry, something went wrong on our side and I could not answer that. "
+    f"Please try again, or call the switchboard on {agent.SWITCHBOARD}."
+)
 
 
 def respond(question, history, conversation, state):
@@ -109,6 +114,8 @@ def respond(question, history, conversation, state):
         return history, "", conversation, state, "", EMPTY_EVIDENCE, ""
 
     history = history + [{"role": "user", "content": question}]
+    # What the conversation was before this turn, to put back if it fails.
+    before, saved_state = len(conversation), copy.deepcopy(state)
     conversation.append({"role": "user", "content": question})
 
     # The policy state lives for the conversation, so it carries the session id
@@ -117,12 +124,14 @@ def respond(question, history, conversation, state):
     try:
         result, _ = observability.run_logged_turn(conversation, state, session_id=session_id)
     except Exception as error:
-        history.append(
-            {
-                "role": "assistant",
-                "content": f"The agent could not complete that request. Details: `{error}`",
-            }
-        )
+        # Put the conversation back as it was (the agent extends it in place,
+        # so a failure after a tool call would leave a tool request without
+        # its result), and show the customer a plain message. The error's
+        # text goes to the pipeline-trace panel for whoever runs the app.
+        del conversation[before:]
+        state.clear()
+        state.update(saved_state)
+        history.append({"role": "assistant", "content": REQUEST_FAILED_REPLY})
         return (
             history,
             "",
@@ -130,7 +139,7 @@ def respond(question, history, conversation, state):
             state,
             '<span class="chip chip-bad">Request failed</span>',
             EMPTY_EVIDENCE,
-            str(error),
+            f"```\n{type(error).__name__}: {error}\n```",
         )
 
     history.append({"role": "assistant", "content": result.answer})

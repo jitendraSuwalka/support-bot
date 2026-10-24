@@ -74,3 +74,22 @@ def test_a_declined_turn_shows_the_decline_and_what_was_not_run():
     assert ("tool", "Declined: outside scope") in chips
     assert ("none", "Not run: Looked up case status") in chips
     assert ("tool", "Looked up case status") not in chips
+
+
+def test_a_failed_turn_puts_the_conversation_back_and_shows_no_error_text(monkeypatch):
+    # The agent extends the conversation in place: here it has already
+    # recorded a tool call when the model fails.
+    def failing(messages, state):
+        messages.append(
+            {"role": "assistant", "content": [{"type": "tool_use", "id": "t1", "name": "x"}]}
+        )
+        state["unclear_turns"] = 1
+        raise RuntimeError("secret internal detail sk-ant-123")
+
+    monkeypatch.setattr(app.agent, "run_agent", failing)
+    state = {"unclear_turns": 0, "session_id": "s"}
+    history, _, conversation, state, status, _, trace = app.respond("ISA?", [], [], state)
+    assert conversation == [] and state == {"unclear_turns": 0, "session_id": "s"}
+    assert history[-1]["content"] == app.REQUEST_FAILED_REPLY
+    assert "secret" not in history[-1]["content"] and "Request failed" in status
+    assert "RuntimeError" in trace  # for whoever runs the app, in the trace panel
