@@ -9,6 +9,7 @@ API unless it is marked ``live``.
 
 from __future__ import annotations
 
+import socket
 import types
 
 import pytest
@@ -109,6 +110,42 @@ def offline_retriever(request, monkeypatch, corpus_retriever):
     must exercise the real model and the real index."""
     if request.node.get_closest_marker("live") is None:
         monkeypatch.setattr(agent, "_RETRIEVER", corpus_retriever)
+
+
+class NetworkUsed(RuntimeError):
+    """A test tried to reach another machine."""
+
+
+_LOCAL_HOSTS = {"127.0.0.1", "::1", "localhost"}
+
+
+@pytest.fixture(autouse=True)
+def no_network(request, monkeypatch):
+    """The suite says it needs no network; this makes that a checked fact.
+    A connection to anything but this machine fails the test that opened it.
+    Live and model tests are exempt: they call the API and download the
+    embedding model by design."""
+    if request.node.get_closest_marker("live") or request.node.get_closest_marker("model"):
+        return
+    real_connect, real_connect_ex = socket.socket.connect, socket.socket.connect_ex
+
+    def local(sock, address) -> bool:
+        if sock.family == getattr(socket, "AF_UNIX", None):
+            return True
+        return isinstance(address, tuple) and address[0] in _LOCAL_HOSTS
+
+    def connect(sock, address):
+        if not local(sock, address):
+            raise NetworkUsed(f"a test tried to connect to {address!r}")
+        return real_connect(sock, address)
+
+    def connect_ex(sock, address):
+        if not local(sock, address):
+            raise NetworkUsed(f"a test tried to connect to {address!r}")
+        return real_connect_ex(sock, address)
+
+    monkeypatch.setattr(socket.socket, "connect", connect)
+    monkeypatch.setattr(socket.socket, "connect_ex", connect_ex)
 
 
 @pytest.fixture(autouse=True)

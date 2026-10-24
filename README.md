@@ -49,7 +49,7 @@ python app.py                  # web interface, as in the recording above
 uvicorn api:app                # the same agent as an HTTP service; docs at /docs
 docker build -t support-bot .  # the service as a container (CI builds and tests it)
 python agent.py                # same agent, in the terminal
-pytest                         # 440 tests, under twenty seconds, no API calls, no network
+pytest                         # 442 tests, under twenty seconds, no API calls, no network
 ```
 
 > **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
@@ -577,7 +577,8 @@ offline suite it claims to be.
 
 **Fix.** Gradio analytics off in code; ONNX Runtime telemetry disabled before
 the model's first session, with a test. The suite now makes no outbound
-connection at all.
+connection at all, and an autouse fixture keeps it that way: any test that
+opens a connection to another machine fails.
 
 ### 10. A number that swallowed its neighbour
 
@@ -769,7 +770,7 @@ Caching cut the cost of an answer by 58%, from $0.0154 to $0.0064.
 
 ## Testing strategy
 
-`tests/` — **440 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
+`tests/` — **442 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
 Eight further tests call the real API and run only on request: `pytest -m live`;
 two download and run the real embedding model: `pytest -m model`.
 
@@ -822,7 +823,8 @@ explicit and drawable, and both share one body of code so a reviewer can see the
 framework used for what it adds, not depended on.
 
 **No telemetry.** Gradio analytics and ONNX Runtime telemetry are switched off in
-code; the test suite makes no outbound connection, and that is checked.
+code; the test suite makes no outbound connection, and a fixture fails any test
+that tries.
 
 **Selective staleness.** Case statuses expire from conversation history; FAQ
 content does not. Wiping static content would cost calls and latency for no
@@ -980,7 +982,7 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `rag/` | `corpus.py` chunker, `embeddings.py`, `store.py` (Qdrant), `lexical.py` (BM25), `retrieval.py` (fusion), `index.py` (CLI) |
 | `eval/` | `questions.yaml` (169 labelled cases), `dataset.py` validator, `retrieval.py` metrics and sweep, `live.py` end-to-end scorer, `report.py` README tables |
 | `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json`, `caching-off.json`, `caching-on.json` |
-| `tests/` | 440 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
+| `tests/` | 442 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `api.py` | FastAPI service — `/chat`, `/sessions/{id}`, `/health`, `/ready`, OpenAPI docs at `/docs` |
 | `Dockerfile` / `.dockerignore` | The service as a container: model and index baked in, non-root, health-checked, allow-listed contents |
