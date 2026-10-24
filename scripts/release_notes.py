@@ -128,13 +128,14 @@ def notes(entry: Entry, root: Path = ROOT, image: str = IMAGE) -> str:
         "From the reports committed in `reports/`, as on the README:\n\n"
         + report.current_headline(root / "reports"),
         "### Run it",
-        "```bash\n"
+        "With your Anthropic API key in a file `.env` (one line, `ANTHROPIC_API_KEY=sk-ant-...`):"
+        "\n\n```bash\n"
         f"docker pull {image}:{entry.version}\n"
-        f"docker run -p 8000:8000 -e ANTHROPIC_API_KEY=sk-ant-... {image}:{entry.version}\n"
+        f"docker run --env-file .env -p 127.0.0.1:8000:8000 {image}:{entry.version}\n"
         "```\n\n"
         "Then open http://127.0.0.1:8000/docs. The image carries the embedding model and the "
-        "document index, runs as a non-root user and makes no outbound call except to the "
-        "Anthropic API.",
+        "document index, runs as a non-root user that cannot rewrite its own code, and makes "
+        "no outbound call except to the Anthropic API.",
     ]
     if entry.link:
         parts.append(f"**Full changes:** {entry.link}")

@@ -34,11 +34,12 @@ rendered from the reports in `reports/` ([Evaluation](#evaluation)):
 - **$0.0064** an answer with prompt caching, **58%** less than without.
 <!-- headline:end -->
 
-Try the released service in one command, with your own Anthropic API key, then
-open http://127.0.0.1:8000/docs:
+Try the released service in one command, with your own Anthropic API key in a
+file `.env` (one line, `ANTHROPIC_API_KEY=sk-ant-...`), then open
+http://127.0.0.1:8000/docs:
 
 ```bash
-docker run -p 8000:8000 -e ANTHROPIC_API_KEY=sk-ant-... ghcr.io/jitendrasuwalka/support-bot:latest
+docker run --env-file .env -p 127.0.0.1:8000:8000 ghcr.io/jitendrasuwalka/support-bot:latest
 ```
 
 Or from a clone ([Running it](#running-it) has the set-up):
@@ -321,8 +322,13 @@ answer. The choices that make it a service rather than a demo:
 
 ```bash
 docker build -t support-bot .
-docker run -p 8000:8000 -e ANTHROPIC_API_KEY=sk-ant-... support-bot
+docker run --env-file .env -p 127.0.0.1:8000:8000 support-bot
 ```
+
+The key comes from a file rather than the command line, so it stays out of
+shell history, and the port is published on this machine only: the service
+has no authentication of its own (see [Known limitations](#known-limitations)),
+so it should not be reachable from the network without a gateway in front.
 
 Or skip the build: every release publishes the image, so
 `docker pull ghcr.io/jitendrasuwalka/support-bot:2.0.0` fetches exactly what
@@ -337,8 +343,9 @@ guarantees, and the smoke test checks:
   document index built at *build* time, then `HF_HUB_OFFLINE=1` is set: a
   container never reaches out to the model hub, its only outbound calls are
   to the Anthropic API, and `/ready` is green from the first second.
-- **It runs as an unprivileged user** (uid 10001), and nothing in it needs
-  root once built.
+- **It runs as an unprivileged user** (uid 10001) that cannot rewrite the
+  code it runs: the code is owned by root, and the user owns only the model
+  cache and the index directory.
 - **Only what it needs goes in.** `.dockerignore` is an allow-list — the
   service's modules, `rag/`, `corpus/` and the requirements — so a `.env`
   with a key in it, a local index, the tests or the git history can never be
@@ -354,8 +361,8 @@ guarantees, and the smoke test checks:
 
 The smoke test needs no secret and calls no model: health, readiness, the
 redirect and the docs, an empty message refused with 422, an unknown
-conversation with 404, a request id on every response, a non-root user, no
-tests or `.env` inside, the model and index present, Docker's health check
+conversation with 404, a request id on every response, a non-root user that
+cannot rewrite its code, no tests or `.env` inside, the model and index present, Docker's health check
 passing, and no traceback in the logs. Dependabot proposes base-image
 updates, which CI then builds and smoke-tests before anyone merges them.
 
@@ -380,7 +387,10 @@ which publishes nothing until every step before it has passed:
    the release page carries measured numbers, never typed ones.
 
 Only GitHub's own short-lived token is used: no secret is stored in the
-repository. **Run workflow** on the workflow's page in the Actions tab is a
+repository. The registry makes a new package private whatever the
+repository's visibility, so after the first release the package is made
+public once by hand; the workflow's last step pulls the image as a stranger
+would and warns until it is. **Run workflow** on the workflow's page in the Actions tab is a
 rehearsal: every step above for the version in `pyproject.toml`, except
 pushing the image and creating the release, with the notes it would publish
 shown on the run's page.

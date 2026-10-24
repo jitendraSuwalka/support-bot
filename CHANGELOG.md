@@ -47,7 +47,7 @@ served over HTTP from a container that CI builds and tests.
   table with its source and date; prompt caching, measured off and on.
 - **A container.** The model and index built into the image, a non-root user,
   a Docker health check and an allow-listed build context; CI builds it and
-  runs fourteen smoke checks on every push.
+  runs fifteen smoke checks on every push.
 - **Engineering foundations.** Pinned dependencies and a cross-platform
   lockfile, a pytest suite with a scripted fake model that needs no network,
   ruff for lint and format, CI on Python 3.11 to 3.13 and Windows, Dependabot

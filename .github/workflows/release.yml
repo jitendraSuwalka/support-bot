@@ -11,6 +11,12 @@
 # created with notes from CHANGELOG.md and the measured headline numbers.
 # Only GitHub's own token is used; no secret has to be added to the repository.
 #
+# Once, after the first release: the GitHub Container Registry makes a new
+# package private, whatever the repository's visibility. Open the package
+# (Packages on the repository page) > Package settings > Change visibility >
+# Public, or nobody else can pull the image. The last step below warns until
+# that is done.
+#
 # Run it from the Actions tab instead ("Run workflow") for a rehearsal: every
 # step for the version in pyproject.toml, except pushing the image and
 # creating the release. The notes it would publish appear on the run's page.
@@ -65,7 +71,9 @@ jobs:
       # First, before installing anything: a tag that disagrees with the code
       # or the changelog stops here, with every problem named.
       - name: Hold the tag to the code and the changelog
-        run: python -m scripts.release_notes "${{ steps.which.outputs.tag }}"
+        env:
+          TAG: ${{ steps.which.outputs.tag }}
+        run: python -m scripts.release_notes "$TAG"
 
       - name: Install the locked dependencies
         run: |
@@ -143,6 +151,19 @@ jobs:
             --verify-tag \
             --title "support-bot ${VERSION}" \
             --notes-file release-notes.md
+
+      # A new package is private until its visibility is changed by hand (see
+      # the top of this file); check as a stranger would, and warn if it is.
+      - name: Check that anyone can pull the image
+        if: github.event_name == 'push'
+        run: |
+          docker logout ghcr.io
+          docker rmi "${IMAGE}:${VERSION}" "${IMAGE}:latest" > /dev/null
+          if docker pull "${IMAGE}:${VERSION}" > /dev/null 2>&1; then
+            echo "Anyone can pull ${IMAGE}:${VERSION}."
+          else
+            echo "::warning title=Image not public::Nobody else can pull ${IMAGE}:${VERSION} yet. Make the package public: Packages > support-bot > Package settings > Change visibility."
+          fi
 
       - name: Say that a rehearsal published nothing
         if: github.event_name != 'push'

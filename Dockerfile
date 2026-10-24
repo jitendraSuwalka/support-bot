@@ -1,7 +1,7 @@
 # The HTTP service (api.py) in a container.
 #
 #   docker build -t support-bot .
-#   docker run -p 8000:8000 -e ANTHROPIC_API_KEY=sk-ant-... support-bot
+#   docker run --env-file .env -p 127.0.0.1:8000:8000 support-bot
 #
 # The embedding model and the document index are built into the image, so a
 # container is ready the moment it starts and makes no download at runtime:
@@ -20,8 +20,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 # An unprivileged user to run as. Nothing in the image needs root once built.
+# The code stays owned by root, so the service cannot rewrite itself; the user
+# owns only the two directories it writes: the model cache (at build time)
+# and the index (Qdrant keeps a lock file there at runtime).
 RUN useradd --create-home --uid 10001 --shell /usr/sbin/nologin app \
-    && chown app:app /app
+    && mkdir -p /app/.models /app/.index \
+    && chown app:app /app/.models /app/.index
 
 # Dependencies first, in their own layer, so a code change does not reinstall
 # them. Runtime dependencies only (requirements.txt), at the exact versions
@@ -29,9 +33,9 @@ RUN useradd --create-home --uid 10001 --shell /usr/sbin/nologin app \
 COPY requirements.txt requirements.lock ./
 RUN pip install -r requirements.txt -c requirements.lock
 
-COPY --chown=app:app agent.py agent_graph.py api.py app.py config.py observability.py pricing.py ./
-COPY --chown=app:app rag/ rag/
-COPY --chown=app:app corpus/ corpus/
+COPY agent.py agent_graph.py api.py app.py config.py observability.py pricing.py ./
+COPY rag/ rag/
+COPY corpus/ corpus/
 
 USER app
 

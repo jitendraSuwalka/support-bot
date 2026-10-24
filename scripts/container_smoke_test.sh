@@ -70,6 +70,8 @@ check "every response carries an X-Request-ID" \
     bash -c "curl -s -D - -o /dev/null '$BASE/health' | grep -qi '^x-request-id: [0-9a-f]\{32\}'"
 check "the service does not run as root" \
     bash -c "[ \"\$(docker exec '$NAME' id -u)\" != 0 ]"
+check "the service cannot rewrite its own code" \
+    docker exec "$NAME" sh -c '[ ! -w /app ] && [ ! -w /app/api.py ] && [ ! -w /app/rag ]'
 check "no tests, secrets or local state were copied into the image" \
     docker exec "$NAME" sh -c 'cd /app && [ ! -e tests ] && [ ! -e .env ] && [ ! -e .git ] && [ ! -e .venv ]'
 check "the embedding model and index were built into the image" \
