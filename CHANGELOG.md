@@ -7,6 +7,14 @@ version's notes from this file, adds the headline numbers from the committed
 reports, and refuses to publish if the tag, this file and the code disagree on
 the version.
 
+## [Unreleased]
+
+### Fixed
+
+- The release notes ran on past their own entry when the next heading had no
+  brackets: the 2.0.0 notes carried the 1.0.0 entry before their measured
+  numbers. Any second-level heading now ends an entry.
+
 ## [2.0.0] - 2026-10-24
 
 The agent rebuilt as a measured system: a document corpus and hybrid
