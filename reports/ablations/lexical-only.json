@@ -200,9 +200,7 @@
     "warnings": [
       "fees-13"
     ],
-    "unsupported_replies": [
-      "fees-13"
-    ],
+    "unsupported_replies": [],
     "factcheck_rewrites": 26,
     "wrong_behaviour": {
       "isa-03": "expected answer, observed escalate",
@@ -4404,9 +4402,7 @@
       "cache_read_tokens": 8403,
       "cache_write_tokens": 932,
       "cost_usd": 0.008484,
-      "unsupported_details": [
-        "URL 'https://www.fernhillwealth.example/fees-and-charges/.' was not given. Evidence has 'fernhillwealth.example/fees-and-charges'. Do not shorten or extend a URL."
-      ],
+      "unsupported_details": [],
       "factcheck": {
         "claims": [
           "I can check its status (the assistant's ability to check query references is not in the evidence)",
@@ -5367,5 +5363,6 @@
       "unsupported_details": [],
       "factcheck": null
     }
-  ]
+  ],
+  "rescored": "2026-10-25T01:13:52Z"
 }

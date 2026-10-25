@@ -909,8 +909,8 @@ Ablation: the same cases with one component switched off, or the main model chan
 | Everything on (run 1) | 98.2% | 99.2% | 96.0% | 92.3% | 0 | $0.0045 | 7.6 s |
 | Reranking off (`SUPPORT_BOT_USE_RERANK=false`) | 98.8% (+0.6) | 97.7% | 100.0% | 92.3% | 0 | $0.0047 | 6.2 s |
 | Fact-check off (`SUPPORT_BOT_VERIFY_ANSWERS=false`) | 98.8% (+0.6) | 99.2% | 96.2% | 96.2% | 0 | $0.0041 | 5.8 s |
-| Citation checks off: the guard, its re-check and the last-line check (`SUPPORT_BOT_CHECK_CITATIONS=false`) | 98.8% (+0.6) | 99.2% | 96.2% | 96.2% | 4 | $0.0043 | 8.0 s |
-| BM25 only, no vector search (`SUPPORT_BOT_RETRIEVAL_MODE=lexical`) | 94.7% (-3.5) | 91.6% | 75.8% | 96.2% | 1 | $0.0045 | 7.7 s |
+| Citation checks off: the guard, its re-check and the last-line check (`SUPPORT_BOT_CHECK_CITATIONS=false`) | 98.8% (+0.6) | 99.2% | 96.2% | 96.2% | 1 | $0.0043 | 8.0 s |
+| BM25 only, no vector search (`SUPPORT_BOT_RETRIEVAL_MODE=lexical`) | 94.7% (-3.5) | 91.6% | 75.8% | 96.2% | 0 | $0.0045 | 7.7 s |
 | Haiku 5.5 answering (`SUPPORT_BOT_MAIN_MODEL=claude-haiku-5-5`) | 98.2% (+0.0) | 97.7% | 100.0% | 96.2% | 1 | $0.0007 | 7.1 s |
 
 Repeated runs of the same code differ by up to 0.6 points of behaviour accuracy (the table above), so a change no larger than that is not evidence that the component matters to behaviour. 1 of the 5 changes differs by more.

@@ -171,10 +171,7 @@
       "cash-04",
       "client-05"
     ],
-    "unsupported_replies": [
-      "cash-04",
-      "client-05"
-    ],
+    "unsupported_replies": [],
     "factcheck_rewrites": 24,
     "wrong_behaviour": {
       "denial-cardiff": "expected answer, observed escalate",
@@ -1843,9 +1840,7 @@
       "cache_read_tokens": 8383,
       "cache_write_tokens": 1030,
       "cost_usd": 0.010543,
-      "unsupported_details": [
-        "URL 'https://www.fernhillwealth.example/client-support/.' was not given. Evidence has 'fernhillwealth.example/client-support'. Do not shorten or extend a URL."
-      ],
+      "unsupported_details": [],
       "factcheck": {
         "claims": [
           "\"Your adviser can confirm.\" The evidence does not say the customer has an adviser.",
@@ -4355,9 +4350,7 @@
       "cache_read_tokens": 8364,
       "cache_write_tokens": 852,
       "cost_usd": 0.006549,
-      "unsupported_details": [
-        "URL 'https://www.fernhillwealth.example/becoming-a-client/.' was not given. Evidence has 'fernhillwealth.example/becoming-a-client'. Do not shorten or extend a URL."
-      ],
+      "unsupported_details": [],
       "factcheck": {
         "claims": [
           "\"Yes\" as a firm answer that the couple can have a joint account, and \"it offers joint accounts\": the evidence only mentions that joint accounts need identity checks for each holder. It does not state that the firm offers joint accounts or that a couple can hold one. The answer's own later admission that the documents don't say which account types can be held jointly contradicts the firm \"Yes.\""
@@ -5266,5 +5259,6 @@
       "unsupported_details": [],
       "factcheck": null
     }
-  ]
+  ],
+  "rescored": "2026-10-25T01:12:36Z"
 }

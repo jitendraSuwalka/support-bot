@@ -167,10 +167,7 @@
     },
     "warnings": [],
     "unsupported_replies": [
-      "isa-10",
-      "fees-03",
-      "admin-05",
-      "cash-04"
+      "fees-03"
     ],
     "factcheck_rewrites": 17,
     "wrong_behaviour": {
@@ -474,9 +471,7 @@
       "cache_read_tokens": 5400,
       "cache_write_tokens": 273,
       "cost_usd": 0.004333,
-      "unsupported_details": [
-        "URL 'https://www.fernhillwealth.example/guides/isas/.' was not given. Evidence has 'fernhillwealth.example/guides/isas'. Do not shorten or extend a URL."
-      ],
+      "unsupported_details": [],
       "factcheck": null
     },
     {
@@ -1633,9 +1628,7 @@
       "cache_read_tokens": 5317,
       "cache_write_tokens": 424,
       "cost_usd": 0.00408,
-      "unsupported_details": [
-        "URL 'https://www.fernhillwealth.example/client-support/.' was not given. Evidence has 'fernhillwealth.example/client-support'. Do not shorten or extend a URL."
-      ],
+      "unsupported_details": [],
       "factcheck": null
     },
     {
@@ -1779,9 +1772,7 @@
       "cache_read_tokens": 8545,
       "cache_write_tokens": 1131,
       "cost_usd": 0.009028,
-      "unsupported_details": [
-        "URL 'https://www.fernhillwealth.example/client-support/cash-and-dealing/.' was not given. Evidence has 'fernhillwealth.example/client-support/cash-and-dealing'. Do not shorten or extend a URL."
-      ],
+      "unsupported_details": [],
       "factcheck": {
         "claims": [
           "The answer cites https://www.fernhillwealth.example/client-support/cash-and-dealing/ as where 'more detail' on withdrawal timing is found. That page covers dealing and settlement only. The five-working-day withdrawal rule comes from the 'Account administration and statements \u203a Withdrawals' section, which has a different source URL.",
@@ -5175,5 +5166,6 @@
       "unsupported_details": [],
       "factcheck": null
     }
-  ]
+  ],
+  "rescored": "2026-10-25T01:13:36Z"
 }
