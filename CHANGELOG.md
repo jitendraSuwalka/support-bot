@@ -9,6 +9,16 @@ the version.
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-10-25
+
+The agent measured, and changed where the measurement showed it wrong: three
+runs of the same code with a confidence interval, five ablations, and a sample
+of the fact-checker's rewrites judged by hand. The labels found most of those
+rewrites to be false alarms, one in six speaking to the check instead of the
+customer, and complaints handed back to an adviser; the fixes are below, and
+the README's numbers are measured on them, all but one: a link check that
+misread a full stop, found by reading the measurement and fixed after it.
+
 ### Changed
 
 - A rewrite or a greeting sends the tools with `tool_choice` set to `none`,
@@ -61,7 +71,8 @@ the version.
 - The ablation table says how far repeated runs of the same code moved, so a
   smaller difference is not read as an effect.
 - The README opens with a two-minute tour for reviewers, and failure modes 16
-  to 18 describe what labelling the fact-checker found.
+  to 19 describe what labelling the fact-checker, and reading the measurement,
+  found.
 
 ### Fixed
 
@@ -197,4 +208,5 @@ interface, a citation guard, an independent fact-check, policy-enforced
 escalation and 52 offline checks, answering from short passages paraphrased
 from a real firm's public web pages.
 
+[2.1.0]: https://github.com/jitendraSuwalka/support-bot/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/jitendraSuwalka/support-bot/commits/v2.0.0
