@@ -39,8 +39,6 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 
-from eval.dataset import load_cases
-
 ROOT = Path(__file__).resolve().parent.parent
 REPORTS = ROOT / "reports"
 LABELS = REPORTS / "factcheck-labels.json"
@@ -172,6 +170,11 @@ def label(
     if by:
         labels["labelled_by"] = by
     labels["started"] = labels["started"] or time.strftime("%Y-%m-%d")
+    # Imported here, not at the top: eval.report reads this module, and the
+    # release notes read eval.report before anything beyond the standard
+    # library is installed. The question set needs PyYAML.
+    from eval.dataset import load_cases
+
     questions = {case.id: case.question for case in load_cases()}
     found = rewrites(directory)
     labels["drawn_from"], labels["population"] = drawn, len(found)
