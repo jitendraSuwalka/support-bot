@@ -85,6 +85,14 @@ the version.
   now says not to call one number quicker than another.
 - The labelling tool took a note pasted at the verdict prompt as a verdict,
   from its first letter; it now takes one letter exactly.
+- The citation check read a link at the end of a sentence with its full stop,
+  and flagged it as a link the evidence does not have: six of the eight
+  unsupported replies the 2.1 measurement counted. Punctuation after a link
+  now ends the sentence, and `python -m eval.live --rescore` reads recorded
+  links again with the corrected check.
+- A caching run left over from before the 2.1 fixes reached the README beside
+  one made after them. The report now refuses a caching, repeat or ablation
+  run generated before run 1.
 
 ## [2.0.0] - 2026-10-24
 

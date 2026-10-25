@@ -49,7 +49,7 @@ python app.py                  # web interface, as in the recording above
 uvicorn api:app                # the same agent as an HTTP service; docs at /docs
 docker build -t support-bot .  # the service as a container (CI builds and tests it)
 python agent.py                # same agent, in the terminal
-pytest                         # 531 tests, under twenty seconds, no API calls, no network
+pytest                         # 546 tests, under twenty seconds, no API calls, no network
 ```
 
 > **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
@@ -80,11 +80,11 @@ pytest                         # 531 tests, under twenty seconds, no API calls, 
 - **The measurement changed the system.** Judging the fact-checker by hand
   found that most of its rewrites were false alarms, that one in six spoke to
   the check instead of the customer, and that complaints were being handed
-  back to an adviser ([failure modes 16 to 18](#16-a-fact-checker-that-could-not-see-the-question)).
+  back to an adviser ([failure modes 16 to 19](#16-a-fact-checker-that-could-not-see-the-question)).
 - **Written for a regulated firm.** No advice, ever; case statuses quoted word
   for word; a complaint to the complaints team; a customer who has just paid a
   scammer to the fraud team and told to call their own bank.
-- **Engineered to be run by someone else.** 531 offline tests on two
+- **Engineered to be run by someone else.** 546 offline tests on two
   implementations (a plain loop and a LangGraph graph), CI on three Python
   versions and Windows, a container built and smoke-tested on every push, and
   tagged releases whose notes carry the measured numbers.
@@ -828,6 +828,30 @@ the complaint, the scam payment and a bereavement now require the team's
 number or name, and the evaluation counts the hand-offs that gave them, so it
 measures where they go.
 
+### 19. A full stop that became part of a link
+
+**Symptom.** The 2.1 measurement counted two replies in its third run, with
+every guard on, as reaching the customer with a link nothing supported, and
+four with the citation checks switched off. Read one by one, every one with a
+link was a sentence that ended in a link: *"More information is at
+https://www.fernhillwealth.example/becoming-a-client/."*
+
+**Cause.** The link pattern allows a full stop inside a path, so it took the
+sentence's full stop as part of the link, and *".../becoming-a-client/."* is
+not in the evidence. The check that guarantees no invented link reaches a
+customer was inventing violations of its own.
+
+**Fix.** Punctuation at the end of a link ends the sentence, in the answer and
+the evidence alike; a shortened link is still caught. The recorded replies were
+read again with the corrected check (`python -m eval.live --rescore`), which
+drops a recorded link only when it is the evidence's own: six of the eight
+unsupported replies counted went. What the agent did is left as measured: a
+rewrite or a warning the false alarm caused still counts against *untouched by
+guards*, and the runs were made before this fix.
+The same reading found the caching comparison mixing a run from before the
+fixes with one from after; the report now refuses any comparison made before
+run 1.
+
 ---
 
 ## Evaluation
@@ -941,7 +965,7 @@ Caching cut the cost of an answer by 63%, from $0.0151 to $0.0056.
 
 ## Testing strategy
 
-`tests/` — **531 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
+`tests/` — **546 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
 Eight further tests call the real API and run only on request: `pytest -m live`;
 two download and run the real embedding model: `pytest -m model`.
 
@@ -1165,7 +1189,7 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `rag/` | `corpus.py` chunker, `embeddings.py`, `store.py` (Qdrant), `lexical.py` (BM25), `retrieval.py` (fusion), `index.py` (CLI) |
 | `eval/` | `questions.yaml` (169 labelled cases), `dataset.py` validator, `retrieval.py` metrics and sweep, `live.py` end-to-end scorer, `label_factcheck.py` hand labels for the fact-checker, `report.py` README tables |
 | `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json` and its repeats in `repeats/`, the ablations in `ablations/`, `caching-off.json`, `caching-on.json`, and the hand labels in `factcheck-labels.json` |
-| `tests/` | 531 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
+| `tests/` | 546 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `api.py` | FastAPI service — `/chat`, `/sessions/{id}`, `/health`, `/ready`, OpenAPI docs at `/docs` |
 | `Dockerfile` / `.dockerignore` | The service as a container: model and index baked in, non-root, health-checked, allow-listed contents |
