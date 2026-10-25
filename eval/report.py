@@ -88,13 +88,34 @@ def load_reports(directory: Path = REPORTS) -> tuple[dict | None, dict[str, dict
     return retrieval, runs
 
 
+def _run_one(directory: Path) -> dict | None:
+    path = directory / "live.json"
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+
+
+def _not_before_run_one(report: dict, first: dict | None, name: str) -> None:
+    """Refuse a run made before run 1: it measured earlier code.
+
+    The measurement is run 1 first, then everything compared with it. A
+    comparison left over from an earlier measurement once reached the README:
+    caching on from the code before the 2.1 fixes, against caching off after.
+    """
+    if first and report.get("generated", "") < first.get("generated", ""):
+        raise ReportMismatch(
+            f"{name} was generated on {report.get('generated')}, before run 1 "
+            f"({first.get('generated')}): it measured earlier code, so run it again"
+        )
+
+
 def load_caching(directory: Path = REPORTS) -> dict[str, dict]:
     """The prompt-caching comparison runs that exist, off first."""
+    first = _run_one(directory)
     runs = {}
     for label, name in CACHING_RUNS:
         path = directory / name
         if path.exists():
             runs[label] = json.loads(path.read_text(encoding="utf-8"))
+            _not_before_run_one(runs[label], first, name)
     return runs
 
 
@@ -121,6 +142,7 @@ def load_repeats(directory: Path = REPORTS) -> list[dict]:
     for path in repeats:
         run = json.loads(path.read_text(encoding="utf-8"))
         _same_cases(run, first, f"repeats/{path.name}")
+        _not_before_run_one(run, first, f"repeats/{path.name}")
         if run.get("settings") != first.get("settings"):
             raise ReportMismatch(f"repeats/{path.name} ran with different settings from run 1")
         runs.append(run)
@@ -160,6 +182,7 @@ def load_ablations(directory: Path = REPORTS) -> list[tuple[str, dict]]:
             )
         if first is not None:
             _same_cases(report, first, f"ablations/{name}")
+            _not_before_run_one(report, first, f"ablations/{name}")
         setting = f"`{_setting_name(field)}={str(value).lower() if value is False else value}`"
         found.append((f"{label} ({setting})", report))
     return found
@@ -299,7 +322,7 @@ def ablation_table(
             f"Repeated runs of the same code differ by up to {spread:.1f} points of behaviour "
             "accuracy (the table above), so a change no larger than that is not evidence that "
             f"the component matters to behaviour. {larger} of the {len(ablations)} changes "
-            "differ by more.",
+            f"{'differs' if larger == 1 else 'differ'} by more.",
         ]
     return "\n".join(lines)
 

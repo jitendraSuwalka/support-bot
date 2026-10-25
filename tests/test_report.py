@@ -383,3 +383,25 @@ def test_the_live_table_says_which_hand_offs_gave_their_facts():
     new["summary"]["handoffs"] = {"with_facts": 3, "given": 2, "failed": {"x": ["F"]}}
     text = report.live_table({"baseline": old, "current": new})
     assert "baseline 1 of 3; current 2 of 3. Missing in the current run: x (F)." in text
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["caching-on.json", "repeats/live-2.json", "ablations/no-rerank.json"],
+)
+def test_a_comparison_made_before_run_1_is_refused(tmp_path, path):
+    # The 2.1 measurement: caching on from the code before the fixes reached the
+    # README beside caching off from the code after them.
+    write(tmp_path / "live.json", full_run(2))  # generated 2026-10-25T10:00:00Z
+    older = full_run(3, use_rerank=False) if "rerank" in path else full_run(3)
+    older["generated"] = "2026-10-24T20:51:54Z"
+    write(tmp_path / path, older)
+    with pytest.raises(report.ReportMismatch, match="before run 1"):
+        report.current_block(tmp_path)
+
+
+def test_the_ablation_note_agrees_with_its_count():
+    full = full_run(2)
+    one_more = full_run(4, use_rerank=False)  # 1.2 points off, beyond a 0.6 spread
+    text = report.ablation_table(full, [("Reranking off", one_more)], 0.6)
+    assert "1 of the 1 changes differs by more." in text

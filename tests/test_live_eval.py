@@ -536,3 +536,18 @@ def test_an_interrupted_parallel_run_stops_without_running_the_queue():
 def test_without_set_keeps_every_other_argument():
     argv = ["--set", "A=1", "--limit", "3", "--set=B=2", "--out", "o.json"]
     assert live.without_set(argv) == ["--limit", "3", "--out", "o.json"]
+
+
+def test_a_link_once_read_with_its_full_stop_is_dropped_on_rescoring():
+    misread = (
+        "URL 'https://www.fernhillwealth.example/becoming-a-client/.' was not given. "
+        "Evidence has 'fernhillwealth.example/becoming-a-client'. Do not shorten or extend a URL."
+    )
+    shortened = (
+        "URL 'https://www.fernhillwealth.example/client-support/' was not given. "
+        "Evidence has 'fernhillwealth.example/client-support/cash-and-dealing'. "
+        "Do not shorten or extend a URL."
+    )
+    number = "Number '6,000' does not appear in the evidence."
+    assert live.recheck([misread, shortened, number]) == [shortened, number]
+    assert live.recheck(None) is None  # not measured stays not measured

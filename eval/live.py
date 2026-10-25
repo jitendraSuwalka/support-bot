@@ -45,6 +45,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import statistics
 import subprocess
 import sys
@@ -220,13 +221,38 @@ def run_case(case: Case, runner: Runner) -> Observation:
         )
 
 
+_LINK_READ_WITH_ITS_FULL_STOP = re.compile(
+    r"URL '([^']+)' was not given\. Evidence has '([^']+)'\."
+)
+
+
+def recheck(details: list[str] | None) -> list[str] | None:
+    """Recorded unsupported details, read again with the citation check as it now is.
+
+    The check once read a link at the end of a sentence with its full stop
+    (fixed in 2.1.0). A recorded link that, read as it now is, is the
+    evidence's own link is dropped; everything else stands as recorded.
+    """
+    if details is None:
+        return None
+    kept = []
+    for detail in details:
+        link = _LINK_READ_WITH_ITS_FULL_STOP.match(detail)
+        if link and agent.normalise_url(link[1]) == agent.normalise_url(link[2]):
+            continue
+        kept.append(detail)
+    return kept
+
+
 def rescore(report: dict, cases: list[Case]) -> dict:
     """Score an earlier report's rows against the labels as they now stand.
 
     The rows record what the agent did (observed, answer, tools, escalated);
     expected, the fact check and the tool check are recomputed from the
-    current label, and the summary is rebuilt. The original generation time
-    and settings stay; `rescored` records when the labels were applied.
+    current label, the recorded unsupported details are read again with the
+    citation check as it now is (`recheck`), and the summary is rebuilt. The
+    original generation time and settings stay; `rescored` records when the
+    labels were applied.
     """
     by_id = {case.id: case for case in cases}
     rows = []
@@ -248,6 +274,7 @@ def rescore(report: dict, cases: list[Case]) -> dict:
                 facts_ok=(not missing) if case.must_contain else None,
                 missing_facts=missing,
                 tools_ok=set(case.tools) <= credited,
+                unsupported_details=recheck(row.unsupported_details),
             )
         )
     return {
