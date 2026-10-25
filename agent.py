@@ -395,8 +395,15 @@ NUMBER_ALLOWLIST = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
 
 
 def normalise_url(url):
-    """Strip scheme, www and trailing slash so URLs compare fairly."""
-    url = url.strip().lower()
+    """Strip scheme, www and trailing slash so URLs compare fairly.
+
+    A full stop or other punctuation after a link ends the sentence, not the
+    link: "the page is https://www.fernhillwealth.example/becoming-a-client/."
+    was once read as a link to ".../becoming-a-client/." and flagged as not in
+    the evidence. The 2.1 measurement found it, in every unsupported reply it
+    counted that had a link.
+    """
+    url = url.strip().lower().rstrip(".,;:!?*`")  # also Markdown bold or code around it
     url = re.sub(r"^https?://", "", url)
     url = re.sub(r"^www\.", "", url)
     return url.rstrip("/")
