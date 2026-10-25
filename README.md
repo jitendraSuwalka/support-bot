@@ -932,7 +932,7 @@ Prompt caching, measured: the same cases through the real agent with caching off
 | Prompt caching | Cases | Cost per answer | Uncached input tokens per answer | Cache reads per answer | Median latency | Behaviour accuracy |
 |---|---:|---:|---:|---:|---:|---:|
 | off | 20 | $0.0151 | 8,362 | 0 | 8.7 s | 100.0% |
-| on | 20 | $0.0056 | 2,171 | 5,410 | 9.3 s | 100.0% |
+| on | 20 | $0.0056 | 2,434 | 5,630 | 9.4 s | 100.0% |
 
 Caching cut the cost of an answer by 63%, from $0.0151 to $0.0056.
 <!-- eval:end -->
