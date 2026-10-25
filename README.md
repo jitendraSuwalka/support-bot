@@ -31,7 +31,7 @@ rendered from the reports in `reports/` ([Evaluation](#evaluation)):
 - **98.2%** of 169 labelled customer questions handled as the label says — answered, escalated, clarified or declined (95% CI 94.9%–99.4%; 3 runs: 98.2%–98.8%; the first measurement: 88.8%).
 - **96.0%** of escalations were wanted, and **92.3%** of the questions that needed a person reached one.
 - **97.0%** of the 135 labelled questions with a gold passage have it among the six retrieved (hybrid BM25 and vector search).
-- **$0.0056** an answer with prompt caching, **64%** less than without.
+- **$0.0056** an answer with prompt caching, **63%** less than without.
 <!-- headline:end -->
 
 Try the released service in one command, with your own Anthropic API key in a
@@ -883,20 +883,22 @@ End to end: every case through the real agent (`claude-sonnet-5-5` answering, `c
 | Run | Date | Cases | Behaviour accuracy | Answers correct | Escalation precision | Escalation recall | Untouched by guards | Median latency | Tokens per case, all |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|
 | baseline | 2026-10-22 | 169 | 88.8% | 91.6% | 65.8% | 96.2% | 74.4% | 9.1 s | 6,335 |
-| current | 2026-10-24 | 169 | 98.2% | 98.5% | 96.0% | 92.3% | 83.3% | 7.6 s | 8,468 |
+| current | 2026-10-24 | 169 | 98.2% | 99.2% | 96.0% | 92.3% | 85.6% | 7.6 s | 8,830 |
 
 Behaviour accuracy: the agent did what the label expects (answer, escalate, clarify, decline, greeting). Answers correct: answerable questions answered with every required fact. Escalation precision: escalations that were wanted; recall: wanted escalations that happened. Untouched: answers that passed the citation guard and the fact-check without a rewrite. Tokens per case counts every token processed, cache reads and writes included: prompt caching makes most of them cheaper, not fewer (the caching table below shows the cost). Every failure is listed by id in the report.
+
+Hand-offs that must also give the customer a team or a number (the complaints line for a complaint, the fraud team for a scam payment): baseline 2 of 4; current 4 of 4.
 
 The same code, run 3 times over all 169 cases (`reports/live.json` and `reports/repeats/`): how much of a number is the model's own variation.
 
 | Metric | Run 1 | Run 2 | Run 3 | Mean | Spread |
 |---|---:|---:|---:|---:|---:|
-| Behaviour accuracy | 98.2% | 98.8% | 98.8% | 98.6% | 0.6 pts |
-| Answers correct | 98.5% | 98.5% | 99.2% | 98.7% | 0.7 pts |
-| Escalation precision | 96.0% | 96.2% | 96.2% | 96.1% | 0.2 pts |
-| Escalation recall | 92.3% | 96.2% | 96.2% | 94.9% | 3.9 pts |
-| Untouched by guards | 83.3% | 80.2% | 77.9% | 80.5% | 5.4 pts |
-| Cost per answer | $0.0045 | $0.0048 | $0.0046 | $0.0046 | $0.0003 |
+| Behaviour accuracy | 98.2% | 98.2% | 98.8% | 98.4% | 0.6 pts |
+| Answers correct | 99.2% | 99.2% | 99.2% | 99.2% | 0.0 pts |
+| Escalation precision | 96.0% | 96.0% | 96.2% | 96.1% | 0.2 pts |
+| Escalation recall | 92.3% | 92.3% | 96.2% | 93.6% | 3.9 pts |
+| Untouched by guards | 85.6% | 87.1% | 84.0% | 85.6% | 3.1 pts |
+| Cost per answer | $0.0045 | $0.0044 | $0.0046 | $0.0045 | $0.0001 |
 
 Run 1 handled 166 of 169 questions as labelled: 98.2%, with a 95% confidence interval of 94.9% to 99.4% (Wilson). The interval is about which questions happened to be in the set; the spread across runs is about the model answering the same question differently. The baseline's 88.8% lies below that interval: the improvement is larger than the uncertainty that comes from the question set.
 
@@ -904,14 +906,14 @@ Ablation: the same cases with one component switched off, or the main model chan
 
 | Configuration | Behaviour accuracy | Answers correct | Escalation precision | Escalation recall | Unsupported replies | Cost per answer | Median latency |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Everything on (run 1) | 98.2% | 98.5% | 96.0% | 92.3% | 0 | $0.0045 | 7.6 s |
-| Reranking off (`SUPPORT_BOT_USE_RERANK=false`) | 98.2% (+0.0) | 98.5% | 100.0% | 88.5% | 0 | $0.0048 | 6.4 s |
-| Fact-check off (`SUPPORT_BOT_VERIFY_ANSWERS=false`) | 98.2% (+0.0) | 99.2% | 96.0% | 92.3% | 0 | $0.0039 | 5.6 s |
-| Citation checks off: the guard, its re-check and the last-line check (`SUPPORT_BOT_CHECK_CITATIONS=false`) | 97.6% (-0.6) | 99.2% | 95.8% | 88.5% | 3 | $0.0044 | 7.4 s |
-| BM25 only, no vector search (`SUPPORT_BOT_RETRIEVAL_MODE=lexical`) | 95.3% (-2.9) | 93.1% | 78.1% | 96.2% | 1 | $0.0046 | 8.0 s |
-| Haiku 5.5 answering (`SUPPORT_BOT_MAIN_MODEL=claude-haiku-5-5`) | 97.0% (-1.2) | 96.9% | 92.6% | 96.2% | 0 | $0.0006 | 7.0 s |
+| Everything on (run 1) | 98.2% | 99.2% | 96.0% | 92.3% | 0 | $0.0045 | 7.6 s |
+| Reranking off (`SUPPORT_BOT_USE_RERANK=false`) | 98.8% (+0.6) | 97.7% | 100.0% | 92.3% | 0 | $0.0047 | 6.2 s |
+| Fact-check off (`SUPPORT_BOT_VERIFY_ANSWERS=false`) | 98.8% (+0.6) | 99.2% | 96.2% | 96.2% | 0 | $0.0041 | 5.8 s |
+| Citation checks off: the guard, its re-check and the last-line check (`SUPPORT_BOT_CHECK_CITATIONS=false`) | 98.8% (+0.6) | 99.2% | 96.2% | 96.2% | 4 | $0.0043 | 8.0 s |
+| BM25 only, no vector search (`SUPPORT_BOT_RETRIEVAL_MODE=lexical`) | 94.7% (-3.5) | 91.6% | 75.8% | 96.2% | 1 | $0.0045 | 7.7 s |
+| Haiku 5.5 answering (`SUPPORT_BOT_MAIN_MODEL=claude-haiku-5-5`) | 98.2% (+0.0) | 97.7% | 100.0% | 96.2% | 1 | $0.0007 | 7.1 s |
 
-Repeated runs of the same code differ by up to 0.6 points of behaviour accuracy (the table above), so a change no larger than that is not evidence that the component matters to behaviour. 2 of the 5 changes differ by more.
+Repeated runs of the same code differ by up to 0.6 points of behaviour accuracy (the table above), so a change no larger than that is not evidence that the component matters to behaviour. 1 of the 5 changes differ by more.
 
 The fact-checker, judged by hand: 40 of the 106 rewrites it forced in 3 full runs of 24 October 2026, sampled by a fixed hash, each read against the evidence it had. Labelled by Jitendra Suwalka, with an AI second reader (`python -m eval.label_factcheck`, `reports/factcheck-labels.json`).
 
@@ -923,14 +925,16 @@ The fact-checker, judged by hand: 40 of the 106 rewrites it forced in 3 full run
 
 Precision 45.0% (95% CI 30.7% to 60.2%, Wilson, 40 judged either way).
 
+These labels describe the fact-checker as it was in those runs. The runs now in `reports/` are different ones: in 3 full runs it forced 62 rewrites.
+
 Prompt caching, measured: the same cases through the real agent with caching off, then on (`SUPPORT_BOT_PROMPT_CACHING`, `python -m eval.live --limit … --out …`).
 
 | Prompt caching | Cases | Cost per answer | Uncached input tokens per answer | Cache reads per answer | Median latency | Behaviour accuracy |
 |---|---:|---:|---:|---:|---:|---:|
-| off | 20 | $0.0155 | 8,104 | 0 | 9.3 s | 100.0% |
+| off | 20 | $0.0151 | 8,362 | 0 | 8.7 s | 100.0% |
 | on | 20 | $0.0056 | 2,171 | 5,410 | 9.3 s | 100.0% |
 
-Caching cut the cost of an answer by 64%, from $0.0155 to $0.0056.
+Caching cut the cost of an answer by 63%, from $0.0151 to $0.0056.
 <!-- eval:end -->
 
 ---
