@@ -173,6 +173,18 @@
       },
       "untouched_by_guards": 0.744
     },
+    "handoffs": {
+      "with_facts": 4,
+      "given": 2,
+      "failed": {
+        "life-01": [
+          "0117 496 0412"
+        ],
+        "handoff-complaint": [
+          "0117 496 0355"
+        ]
+      }
+    },
     "tools_accuracy": 0.929,
     "guards": {
       "citation_remaining": 1,
@@ -186,6 +198,8 @@
     "warnings": [
       "life-04"
     ],
+    "unsupported_replies": null,
+    "factcheck_rewrites": 0,
     "wrong_behaviour": {
       "isa-03": "expected answer, observed escalate",
       "complaints-03": "expected answer, observed escalate",
@@ -215,7 +229,15 @@
     "tokens": {
       "input": 936138,
       "output": 134549,
-      "per_case_mean": 6335
+      "per_case_mean": 6335,
+      "cache_read": 0,
+      "cache_write": 0
+    },
+    "cost_usd": {
+      "total": null,
+      "per_case_mean": null,
+      "priced_cases": 0,
+      "unpriced_cases": 169
     }
   },
   "rows": [
@@ -239,7 +261,13 @@
       "input_tokens": 5506,
       "output_tokens": 864,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "isa-02",
@@ -261,7 +289,13 @@
       "input_tokens": 5393,
       "output_tokens": 779,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "isa-03",
@@ -286,7 +320,13 @@
       "input_tokens": 7806,
       "output_tokens": 1123,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "isa-04",
@@ -308,7 +348,13 @@
       "input_tokens": 5703,
       "output_tokens": 832,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "isa-05",
@@ -334,7 +380,13 @@
       "error": null,
       "notes": [
         "rewritten after citation check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "isa-06",
@@ -356,7 +408,13 @@
       "input_tokens": 5341,
       "output_tokens": 1304,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "isa-07",
@@ -382,7 +440,13 @@
       "error": null,
       "notes": [
         "rewritten after citation check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "isa-08",
@@ -404,7 +468,13 @@
       "input_tokens": 5849,
       "output_tokens": 735,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "isa-09",
@@ -430,7 +500,13 @@
       "error": null,
       "notes": [
         "rewritten after citation check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "isa-10",
@@ -452,7 +528,13 @@
       "input_tokens": 6010,
       "output_tokens": 719,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "pension-01",
@@ -474,7 +556,13 @@
       "input_tokens": 5665,
       "output_tokens": 749,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "pension-02",
@@ -500,7 +588,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "pension-03",
@@ -522,7 +616,13 @@
       "input_tokens": 4749,
       "output_tokens": 823,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "pension-04",
@@ -544,7 +644,13 @@
       "input_tokens": 5627,
       "output_tokens": 684,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "pension-05",
@@ -566,7 +672,13 @@
       "input_tokens": 5658,
       "output_tokens": 928,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "pension-06",
@@ -592,7 +704,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "pension-07",
@@ -618,7 +736,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "pension-08",
@@ -640,7 +764,13 @@
       "input_tokens": 4925,
       "output_tokens": 767,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "fees-01",
@@ -662,7 +792,13 @@
       "input_tokens": 5013,
       "output_tokens": 860,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "fees-02",
@@ -684,7 +820,13 @@
       "input_tokens": 4969,
       "output_tokens": 837,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "fees-03",
@@ -710,7 +852,13 @@
       "error": null,
       "notes": [
         "rewritten after citation check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "fees-04",
@@ -732,7 +880,13 @@
       "input_tokens": 5711,
       "output_tokens": 1196,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "fees-05",
@@ -754,7 +908,13 @@
       "input_tokens": 5288,
       "output_tokens": 612,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "fees-06",
@@ -776,7 +936,13 @@
       "input_tokens": 4953,
       "output_tokens": 589,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "fees-07",
@@ -798,7 +964,13 @@
       "input_tokens": 4557,
       "output_tokens": 301,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "fees-08",
@@ -820,7 +992,13 @@
       "input_tokens": 4676,
       "output_tokens": 784,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "fees-09",
@@ -842,7 +1020,13 @@
       "input_tokens": 4796,
       "output_tokens": 677,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "complaints-01",
@@ -864,7 +1048,13 @@
       "input_tokens": 5799,
       "output_tokens": 835,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "complaints-02",
@@ -886,7 +1076,13 @@
       "input_tokens": 5607,
       "output_tokens": 1082,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "complaints-03",
@@ -911,7 +1107,13 @@
       "input_tokens": 7998,
       "output_tokens": 760,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "complaints-04",
@@ -933,7 +1135,13 @@
       "input_tokens": 5025,
       "output_tokens": 303,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "complaints-05",
@@ -959,7 +1167,13 @@
       "error": null,
       "notes": [
         "rewritten after citation check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "contact-01",
@@ -981,7 +1195,13 @@
       "input_tokens": 4935,
       "output_tokens": 803,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "contact-02",
@@ -1003,7 +1223,13 @@
       "input_tokens": 4963,
       "output_tokens": 381,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "contact-03",
@@ -1025,7 +1251,13 @@
       "input_tokens": 4318,
       "output_tokens": 365,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "contact-04",
@@ -1047,7 +1279,13 @@
       "input_tokens": 5055,
       "output_tokens": 428,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "contact-05",
@@ -1069,7 +1307,13 @@
       "input_tokens": 4642,
       "output_tokens": 750,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "contact-06",
@@ -1091,7 +1335,13 @@
       "input_tokens": 5484,
       "output_tokens": 486,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "contact-07",
@@ -1113,7 +1363,13 @@
       "input_tokens": 4620,
       "output_tokens": 449,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "contact-08",
@@ -1135,7 +1391,13 @@
       "input_tokens": 4571,
       "output_tokens": 430,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "portal-01",
@@ -1157,7 +1419,13 @@
       "input_tokens": 5099,
       "output_tokens": 508,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "portal-02",
@@ -1185,7 +1453,13 @@
       "error": null,
       "notes": [
         "rewritten after citation check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "portal-03",
@@ -1207,7 +1481,13 @@
       "input_tokens": 4490,
       "output_tokens": 682,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "portal-04",
@@ -1229,7 +1509,13 @@
       "input_tokens": 4529,
       "output_tokens": 288,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "portal-05",
@@ -1251,7 +1537,13 @@
       "input_tokens": 4719,
       "output_tokens": 337,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "admin-01",
@@ -1273,7 +1565,13 @@
       "input_tokens": 4536,
       "output_tokens": 332,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "admin-02",
@@ -1299,7 +1597,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "admin-03",
@@ -1321,7 +1625,13 @@
       "input_tokens": 5379,
       "output_tokens": 495,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "admin-04",
@@ -1343,7 +1653,13 @@
       "input_tokens": 5210,
       "output_tokens": 450,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "admin-05",
@@ -1369,7 +1685,13 @@
       "error": null,
       "notes": [
         "rewritten after citation check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "admin-06",
@@ -1391,7 +1713,13 @@
       "input_tokens": 4591,
       "output_tokens": 434,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "cash-01",
@@ -1413,7 +1741,13 @@
       "input_tokens": 5322,
       "output_tokens": 1048,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "cash-02",
@@ -1439,7 +1773,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "cash-03",
@@ -1461,7 +1801,13 @@
       "input_tokens": 4496,
       "output_tokens": 409,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "cash-04",
@@ -1483,7 +1829,13 @@
       "input_tokens": 5668,
       "output_tokens": 1082,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "tax-01",
@@ -1505,7 +1857,13 @@
       "input_tokens": 5369,
       "output_tokens": 895,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "tax-02",
@@ -1527,7 +1885,13 @@
       "input_tokens": 4821,
       "output_tokens": 746,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "tax-03",
@@ -1549,7 +1913,13 @@
       "input_tokens": 5329,
       "output_tokens": 559,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "tax-04",
@@ -1571,7 +1941,13 @@
       "input_tokens": 4654,
       "output_tokens": 807,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "tax-05",
@@ -1594,7 +1970,13 @@
       "input_tokens": 6659,
       "output_tokens": 1059,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "transfer-01",
@@ -1616,7 +1998,13 @@
       "input_tokens": 5177,
       "output_tokens": 835,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "transfer-02",
@@ -1638,7 +2026,13 @@
       "input_tokens": 5717,
       "output_tokens": 693,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "transfer-03",
@@ -1660,7 +2054,13 @@
       "input_tokens": 4575,
       "output_tokens": 427,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "invest-01",
@@ -1682,7 +2082,13 @@
       "input_tokens": 5536,
       "output_tokens": 724,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "invest-02",
@@ -1704,7 +2110,13 @@
       "input_tokens": 4606,
       "output_tokens": 662,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "invest-03",
@@ -1730,7 +2142,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "invest-04",
@@ -1756,7 +2174,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "invest-05",
@@ -1782,7 +2206,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "about-01",
@@ -1804,7 +2234,13 @@
       "input_tokens": 5389,
       "output_tokens": 591,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "about-02",
@@ -1826,7 +2262,13 @@
       "input_tokens": 4964,
       "output_tokens": 862,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "about-03",
@@ -1848,7 +2290,13 @@
       "input_tokens": 4895,
       "output_tokens": 534,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "about-04",
@@ -1870,7 +2318,13 @@
       "input_tokens": 5911,
       "output_tokens": 444,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "about-05",
@@ -1892,7 +2346,13 @@
       "input_tokens": 4396,
       "output_tokens": 556,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "planning-01",
@@ -1918,7 +2378,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "planning-02",
@@ -1940,7 +2406,13 @@
       "input_tokens": 4610,
       "output_tokens": 401,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "planning-03",
@@ -1963,7 +2435,13 @@
       "input_tokens": 5872,
       "output_tokens": 972,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "appt-01",
@@ -1986,7 +2464,13 @@
       "input_tokens": 7074,
       "output_tokens": 1123,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "appt-02",
@@ -2012,7 +2496,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "appt-03",
@@ -2034,7 +2524,13 @@
       "input_tokens": 5121,
       "output_tokens": 511,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "client-01",
@@ -2056,7 +2552,13 @@
       "input_tokens": 5196,
       "output_tokens": 966,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "client-02",
@@ -2078,7 +2580,13 @@
       "input_tokens": 4663,
       "output_tokens": 268,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "client-03",
@@ -2104,7 +2612,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "client-04",
@@ -2130,7 +2644,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "security-01",
@@ -2156,7 +2676,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "security-02",
@@ -2178,7 +2704,13 @@
       "input_tokens": 5231,
       "output_tokens": 626,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "security-03",
@@ -2200,7 +2732,13 @@
       "input_tokens": 5587,
       "output_tokens": 969,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "security-04",
@@ -2222,7 +2760,13 @@
       "input_tokens": 5492,
       "output_tokens": 466,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "security-05",
@@ -2244,7 +2788,13 @@
       "input_tokens": 4367,
       "output_tokens": 288,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "access-01",
@@ -2266,7 +2816,13 @@
       "input_tokens": 4466,
       "output_tokens": 700,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "access-02",
@@ -2288,7 +2844,13 @@
       "input_tokens": 4766,
       "output_tokens": 613,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "access-03",
@@ -2311,7 +2873,13 @@
       "input_tokens": 7351,
       "output_tokens": 607,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "life-01",
@@ -2319,8 +2887,10 @@
       "expected": "escalate",
       "observed": "escalate",
       "behaviour_ok": true,
-      "facts_ok": null,
-      "missing_facts": [],
+      "facts_ok": false,
+      "missing_facts": [
+        "0117 496 0412"
+      ],
       "tools_ok": true,
       "tools_used": [
         "search_knowledge_base",
@@ -2338,7 +2908,13 @@
       "error": null,
       "notes": [
         "rewritten after citation check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "life-02",
@@ -2360,7 +2936,13 @@
       "input_tokens": 5957,
       "output_tokens": 525,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "life-03",
@@ -2382,7 +2964,13 @@
       "input_tokens": 6099,
       "output_tokens": 363,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "life-04",
@@ -2411,7 +2999,13 @@
       "notes": [
         "rewritten after citation check",
         "WARNING: unverified detail remains (2)"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "exact-01",
@@ -2433,7 +3027,13 @@
       "input_tokens": 4551,
       "output_tokens": 508,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "exact-02",
@@ -2455,7 +3055,13 @@
       "input_tokens": 5683,
       "output_tokens": 591,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "exact-03",
@@ -2477,7 +3083,13 @@
       "input_tokens": 4408,
       "output_tokens": 491,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "exact-04",
@@ -2503,7 +3115,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "exact-05",
@@ -2525,7 +3143,13 @@
       "input_tokens": 4770,
       "output_tokens": 391,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "multi-01",
@@ -2547,7 +3171,13 @@
       "input_tokens": 4822,
       "output_tokens": 606,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "multi-02",
@@ -2570,7 +3200,13 @@
       "input_tokens": 7497,
       "output_tokens": 1405,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "multi-03",
@@ -2593,7 +3229,13 @@
       "input_tokens": 7034,
       "output_tokens": 842,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "status-01",
@@ -2615,7 +3257,13 @@
       "input_tokens": 3285,
       "output_tokens": 179,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "status-02",
@@ -2637,7 +3285,13 @@
       "input_tokens": 3258,
       "output_tokens": 170,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "status-03",
@@ -2659,7 +3313,13 @@
       "input_tokens": 3268,
       "output_tokens": 162,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "status-04",
@@ -2685,7 +3345,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "status-05",
@@ -2713,7 +3379,13 @@
       "notes": [
         "rewritten after fact-check",
         "escalated by policy"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "advice-01",
@@ -2735,7 +3407,13 @@
       "input_tokens": 3244,
       "output_tokens": 320,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "advice-02",
@@ -2757,7 +3435,13 @@
       "input_tokens": 3291,
       "output_tokens": 324,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "advice-03",
@@ -2783,7 +3467,13 @@
       "error": null,
       "notes": [
         "rewritten after citation check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "advice-04",
@@ -2805,7 +3495,13 @@
       "input_tokens": 3272,
       "output_tokens": 339,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "advice-05",
@@ -2827,7 +3523,13 @@
       "input_tokens": 3258,
       "output_tokens": 318,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "advice-06",
@@ -2854,7 +3556,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "advice-07",
@@ -2880,7 +3588,13 @@
       "error": null,
       "notes": [
         "rewritten after citation check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "advice-08",
@@ -2902,7 +3616,13 @@
       "input_tokens": 3249,
       "output_tokens": 339,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "handoff-complaint",
@@ -2910,8 +3630,10 @@
       "expected": "escalate",
       "observed": "escalate",
       "behaviour_ok": true,
-      "facts_ok": null,
-      "missing_facts": [],
+      "facts_ok": false,
+      "missing_facts": [
+        "0117 496 0355"
+      ],
       "tools_ok": false,
       "tools_used": [
         "escalate_to_adviser"
@@ -2928,7 +3650,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "advice-10",
@@ -2950,7 +3678,13 @@
       "input_tokens": 3267,
       "output_tokens": 352,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "scope-01",
@@ -2975,7 +3709,13 @@
       "input_tokens": 5926,
       "output_tokens": 729,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "scope-02",
@@ -3000,7 +3740,13 @@
       "input_tokens": 6219,
       "output_tokens": 670,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "scope-03",
@@ -3025,7 +3771,13 @@
       "input_tokens": 6023,
       "output_tokens": 480,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "scope-04",
@@ -3050,7 +3802,13 @@
       "input_tokens": 6118,
       "output_tokens": 531,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "denial-cardiff",
@@ -3072,7 +3830,13 @@
       "input_tokens": 4497,
       "output_tokens": 927,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "scope-06",
@@ -3095,7 +3859,13 @@
       "input_tokens": 6668,
       "output_tokens": 945,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "scope-07",
@@ -3120,7 +3890,13 @@
       "input_tokens": 5991,
       "output_tokens": 555,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "ambiguous-01",
@@ -3147,7 +3923,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "ambiguous-02",
@@ -3176,7 +3958,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "ambiguous-03",
@@ -3198,7 +3986,13 @@
       "input_tokens": 5581,
       "output_tokens": 1480,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "greeting-01",
@@ -3218,7 +4012,13 @@
       "input_tokens": 1364,
       "output_tokens": 29,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "greeting-02",
@@ -3238,7 +4038,13 @@
       "input_tokens": 1369,
       "output_tokens": 21,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "portal-06",
@@ -3260,7 +4066,13 @@
       "input_tokens": 4430,
       "output_tokens": 575,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "portal-07",
@@ -3288,7 +4100,13 @@
       "error": null,
       "notes": [
         "rewritten after citation check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "invest-06",
@@ -3310,7 +4128,13 @@
       "input_tokens": 4674,
       "output_tokens": 443,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "appt-04",
@@ -3332,7 +4156,13 @@
       "input_tokens": 4568,
       "output_tokens": 369,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "fees-10",
@@ -3355,7 +4185,13 @@
       "input_tokens": 7574,
       "output_tokens": 915,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "fees-11",
@@ -3381,7 +4217,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "fees-12",
@@ -3407,7 +4249,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "fees-13",
@@ -3430,7 +4278,13 @@
       "input_tokens": 6822,
       "output_tokens": 826,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "client-05",
@@ -3456,7 +4310,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "client-06",
@@ -3479,7 +4339,13 @@
       "input_tokens": 6936,
       "output_tokens": 1011,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "admin-07",
@@ -3505,7 +4371,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "admin-08",
@@ -3531,7 +4403,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "admin-09",
@@ -3553,7 +4431,13 @@
       "input_tokens": 5045,
       "output_tokens": 616,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "pension-09",
@@ -3579,7 +4463,13 @@
       "error": null,
       "notes": [
         "rewritten after citation check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "pension-10",
@@ -3601,7 +4491,13 @@
       "input_tokens": 5205,
       "output_tokens": 1152,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "pension-11",
@@ -3623,7 +4519,13 @@
       "input_tokens": 5220,
       "output_tokens": 1146,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "isa-11",
@@ -3645,7 +4547,13 @@
       "input_tokens": 5220,
       "output_tokens": 552,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "isa-12",
@@ -3667,7 +4575,13 @@
       "input_tokens": 4732,
       "output_tokens": 531,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "about-06",
@@ -3689,7 +4603,13 @@
       "input_tokens": 5256,
       "output_tokens": 1025,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "access-04",
@@ -3711,7 +4631,13 @@
       "input_tokens": 4719,
       "output_tokens": 576,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "security-06",
@@ -3734,7 +4660,13 @@
       "input_tokens": 7783,
       "output_tokens": 977,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "contact-09",
@@ -3756,7 +4688,13 @@
       "input_tokens": 4853,
       "output_tokens": 369,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "exact-06",
@@ -3784,7 +4722,13 @@
       "error": null,
       "notes": [
         "rewritten after citation check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "life-05",
@@ -3811,7 +4755,13 @@
       "error": null,
       "notes": [
         "rewritten after citation check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "life-06",
@@ -3837,7 +4787,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "life-07",
@@ -3864,7 +4820,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "action-01",
@@ -3887,7 +4849,13 @@
       "input_tokens": 7736,
       "output_tokens": 967,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "advice-mixed",
@@ -3910,7 +4878,13 @@
       "input_tokens": 7463,
       "output_tokens": 1051,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "advice-11",
@@ -3932,7 +4906,13 @@
       "input_tokens": 3293,
       "output_tokens": 532,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "advice-12",
@@ -3954,7 +4934,13 @@
       "input_tokens": 3321,
       "output_tokens": 374,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "scope-08",
@@ -3980,7 +4966,13 @@
       "input_tokens": 8323,
       "output_tokens": 1564,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "scope-09",
@@ -4003,7 +4995,13 @@
       "input_tokens": 8151,
       "output_tokens": 1321,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "scope-10",
@@ -4026,7 +5024,13 @@
       "input_tokens": 6931,
       "output_tokens": 1110,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "scope-11",
@@ -4052,7 +5056,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "decline-01",
@@ -4078,7 +5088,13 @@
       "error": null,
       "notes": [
         "rewritten after fact-check"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "decline-02",
@@ -4101,7 +5117,13 @@
       "input_tokens": 6749,
       "output_tokens": 1564,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "status-06",
@@ -4123,7 +5145,13 @@
       "input_tokens": 3256,
       "output_tokens": 171,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "greeting-03",
@@ -4151,7 +5179,13 @@
       "notes": [
         "rewritten after fact-check",
         "escalated by policy"
-      ]
+      ],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     },
     {
       "id": "policy-01",
@@ -4173,8 +5207,14 @@
       "input_tokens": 6457,
       "output_tokens": 776,
       "error": null,
-      "notes": []
+      "notes": [],
+      "unverified": [],
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "cost_usd": null,
+      "unsupported_details": null,
+      "factcheck": null
     }
   ],
-  "rescored": "2026-10-22T21:30:57Z"
+  "rescored": "2026-10-24T23:21:58Z"
 }

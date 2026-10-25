@@ -29,6 +29,20 @@ def test_exact_url_passes():
     assert agent.check_citations(answer, EVIDENCE) == []
 
 
+@pytest.mark.parametrize("end", [".", ",", ";", ":", "!", "?", "**", "`"])
+def test_punctuation_after_a_link_ends_the_sentence_not_the_link(end):
+    # The 2.1 measurement: "...becoming-a-client/." was read as a link to a
+    # page ending in a full stop, and counted as an unsupported reply.
+    answer = f"More is at https://www.fernhillwealth.example/offices/bristol/{end} Thanks"
+    assert agent.check_citations(answer, EVIDENCE) == []
+    assert agent.check_citations(answer, EVIDENCE + ".") == []  # evidence ending a sentence too
+
+
+def test_a_shortened_link_ending_a_sentence_is_still_caught():
+    violations = agent.check_citations("See https://www.fernhillwealth.example/offices.", EVIDENCE)
+    assert any("shorten" in v for v in violations), violations
+
+
 def test_correct_numbers_pass():
     assert agent.check_citations("There are 21 offices. Call 0800 023 4567.", EVIDENCE) == []
 

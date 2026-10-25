@@ -28,10 +28,10 @@ Measured on a labelled set of customer questions, with every number below
 rendered from the reports in `reports/` ([Evaluation](#evaluation)):
 
 <!-- headline:start -->
-- **98.8%** of 169 labelled customer questions handled as the label says — answered, escalated, clarified or declined (the first measurement: 88.8%).
-- **96.2%** of escalations were wanted, and **96.2%** of the questions that needed a person reached one.
+- **98.2%** of 169 labelled customer questions handled as the label says — answered, escalated, clarified or declined (95% CI 94.9%–99.4%; 3 runs: 98.2%–98.8%; the first measurement: 88.8%).
+- **96.0%** of escalations were wanted, and **92.3%** of the questions that needed a person reached one.
 - **97.0%** of the 135 labelled questions with a gold passage have it among the six retrieved (hybrid BM25 and vector search).
-- **$0.0064** an answer with prompt caching, **58%** less than without.
+- **$0.0056** an answer with prompt caching, **63%** less than without.
 <!-- headline:end -->
 
 Try the released service in one command, with your own Anthropic API key in a
@@ -49,7 +49,7 @@ python app.py                  # web interface, as in the recording above
 uvicorn api:app                # the same agent as an HTTP service; docs at /docs
 docker build -t support-bot .  # the service as a container (CI builds and tests it)
 python agent.py                # same agent, in the terminal
-pytest                         # 452 tests, under twenty seconds, no API calls, no network
+pytest                         # 546 tests, under twenty seconds, no API calls, no network
 ```
 
 > **Fernhill Wealth is fictional.** It is modelled on how UK wealth-management
@@ -65,6 +65,29 @@ pytest                         # 452 tests, under twenty seconds, no API calls, 
 > (gov.uk, FSCS, the Financial Ombudsman) on 20 October 2026; `corpus/README.md`
 > lists every public figure with its source. A personal learning project; no
 > real client data is used anywhere.
+
+**Two minutes, for a reviewer:**
+
+- **The guarantees are code, not prompt.** In `agent.py`: `check_citations`
+  (every number and link must appear in the evidence), `verify_answer` (an
+  independent model reads the answer against it), `enforce_escalation`
+  (clarify once, then a person) and `last_line_check` (the replies no other
+  guard reads).
+- **Every number is measured.** [Evaluation](#evaluation): 169 labelled
+  questions, three runs of the same code with a confidence interval, five
+  ablations, and the fact-checker's own rewrites judged by hand. The tables are
+  rendered from `reports/`, and a test fails if the README disagrees with them.
+- **The measurement changed the system.** Judging the fact-checker by hand
+  found that most of its rewrites were false alarms, that one in six spoke to
+  the check instead of the customer, and that complaints were being handed
+  back to an adviser ([failure modes 16 to 19](#16-a-fact-checker-that-could-not-see-the-question)).
+- **Written for a regulated firm.** No advice, ever; case statuses quoted word
+  for word; a complaint to the complaints team; a customer who has just paid a
+  scammer to the fraud team and told to call their own bank.
+- **Engineered to be run by someone else.** 546 offline tests on two
+  implementations (a plain loop and a LangGraph graph), CI on three Python
+  versions and Windows, a container built and smoke-tested on every push, and
+  tagged releases whose notes carry the measured numbers.
 
 ---
 
@@ -106,8 +129,10 @@ The first version was a single agent with guards and offline checks. Version 2
 rebuilt it in four phases, each one pull request, and the README refers to
 them by number: **Phase 1** the engineering foundations, **Phase 2** the
 document corpus and hybrid retrieval, **Phase 3** the evaluation, **Phase 4**
-the service, its logs and its container. The [changelog](CHANGELOG.md) lists
-what each added.
+the service, its logs and its container. **Phase 5** added releases, and
+**Phase 6**, version 2.1, measured the system: repeated runs, ablations and the
+fact-checker's rewrites judged by hand, then changes where the measurement
+showed it wrong. The [changelog](CHANGELOG.md) lists what each added.
 
 ---
 
@@ -121,7 +146,7 @@ tested as one (see [The agent as a graph](#the-agent-as-a-graph)).
 |---|---|
 | `search_knowledge_base` | the firm's documents in `corpus/` — 18 pages, hybrid BM25 + vector search |
 | `look_up_client_query` | Case status by reference (synthetic data) — only a reference the customer typed |
-| `escalate_to_adviser` | Hand-off to a human: advice, a complaint being raised, a death, divorce or power of attorney being acted on, fraud, an instruction to deal |
+| `escalate_to_adviser` | Hand-off to a person, routed by its reason: a complaint to Client Resolution, a scam payment or missing money to Fraud and Security, a death, divorce, serious illness or power of attorney to the life events team; advice, an instruction to deal and anything the documents do not cover to an adviser |
 | `ask_for_clarification` | One question back when a message is too vague to act on; the turn ends in code |
 | `decline_out_of_scope` | A fixed reply for requests outside the firm's business; the turn ends in code and nothing else runs |
 
@@ -144,7 +169,8 @@ user question
      │    ├─ decline_out_of_scope → fixed reply; the turn ends here, nothing else runs
      │    ├─ ask_for_clarification → the question; the turn ends here, the policy counts it
      │    ├─ look_up_client_query — refused unless the customer typed the reference
-     │    └─ escalate_to_adviser — the model writes the reply knowing it has happened
+     │    └─ escalate_to_adviser — routed to the team that handles it; the model
+     │                              writes the reply knowing it has happened
      │
      ├─ RETRIEVAL — hybrid, over 18 documents in 129 chunks
      │    ├─ LLM query expansion                          (widens the lexical side only)
@@ -159,7 +185,9 @@ user question
      │
      ├─ CHECK 0: evidence guard — deterministic           (no answering from memory)
      ├─ CHECK 1: citation guard — deterministic           (URLs and numbers)
-     ├─ CHECK 2: groundedness — independent LLM           (semantic drift; any rewrite meets CHECK 1 again)
+     ├─ CHECK 2: groundedness — independent LLM           (semantic drift, read against the evidence with
+     │                                                     the customer's message as context; any rewrite
+     │                                                     meets CHECK 1 again)
      ├─ CHECK 3: escalation policy — deterministic        (clarify once, then escalate)
      ├─ CHECK 4: last-line check — deterministic          (greetings, clarifying questions and the
      │                                                     post-escalation rewrite; a fixed reply if they fail)
@@ -450,10 +478,10 @@ moves to the end of the conversation, so the later calls in a turn read the
 conversation so far from the cache. A cached read is priced at a twentieth of
 fresh input; what it saved on the labelled set is measured in
 [Evaluation](#evaluation). `SUPPORT_BOT_PROMPT_CACHING=false` switches it off,
-which exists to make that measurement. Two kinds of call cannot use the cached
-prefix: a rewrite and a greeting are sent without the tools, so their prefix
-differs from the first token. Sending the tools with `tool_choice` set to
-`none` would let them read it, and is the next saving to measure.
+which exists to make that measurement. A call that must not use a tool — a
+rewrite, a greeting — still sends the tools, with `tool_choice` set to `none`:
+the cache is keyed on the prompt from its first token, so leaving the tools
+out would make the prefix different and the cache unreadable.
 
 Cost comes from `pricing.py`: the Claude API's per-million-token prices for
 the two models, with the page and the date they were read, applied to every
@@ -720,6 +748,110 @@ reply that fails is replaced by a fixed one rather than rewritten again,
 because a fixed reply cannot fail, and the web interface shows *Replaced with
 a fixed reply*. Tested on both implementations.
 
+### 16. A fact-checker that could not see the question
+
+**Symptom.** Judged by hand, 22 of 40 rewrites the fact-checker forced were
+false alarms (the table under [Evaluation](#evaluation)). A customer asked
+*"I asked for a call back at 10am. Does that mean the office opens at 10?"*;
+the draft answered *"No"* and gave the opening hours, 09:00 to 17:30; the
+fact-checker flagged the *"No"* as a claim about call backs, and the customer
+was told *"I can't say how your 10am request relates to opening hours."* A
+customer holding power of attorney for their mother had the answer's *"you"*
+flagged twice, because the documents speak of *the attorney*.
+
+**Cause.** It was shown the evidence and the answer, never the message the
+answer replied to, so a detail the customer had given and a plain answer to
+their question both looked like inventions. Nor did it know the switchboard
+number or the reference format, which the agent has from its instructions
+rather than from a search.
+
+**Fix.** It reads the customer's latest message, fenced in tags as context and
+never evidence or instructions, and is told those two are the agent's own. It
+is still told to flag a claim about the firm that the customer made, and a
+*"Yes"* where the evidence only says something *may* happen. The labels stand: they
+describe the fact-checker before the change, and the labelling tool keeps any
+later sample in a file of its own, so the two are never mixed. The same labels
+showed what the fact-checker is for: a Lifetime ISA answer that listed the
+penalty-free withdrawals without their conditions (a first home only once the
+account has been open a year; terminal illness only with less than twelve
+months to live), and a *"Yes"* to *"Are my calls recorded?"* where the
+documents say *may be recorded*.
+
+### 17. Rewrites that answered the check, not the customer
+
+**Symptom.** 48 of the 293 rewrites the fact-checker forced in the Phase 6
+runs began *"Here is a corrected answer"*, *"Here is the answer again, kept to
+what the documents say"* or *"You're right, that wording was off"*, about an
+answer the customer never saw. Others dropped what was right along with what
+was flagged: the offer to raise a complaint about a charge, a link to the
+page, the sentence declining to say whether a pension transfer was right for
+the customer.
+
+**Cause.** The instruction to rewrite is sent in the user role, as every
+instruction to the model must be, and said only what was wrong. The model
+answered it as it would a customer who had complained, and rebuilt the whole
+answer from the evidence rather than mending the part that was flagged.
+
+**Fix.** The instruction says it comes from the system and that the customer
+sees only the new reply, asks for only the changes the problems need, and
+lists what to keep: refusals, caveats, links, phone numbers, an offer to pass
+the matter on, any mention of a complaint. An opening that still gets through
+is removed in code and logged (`rewrite_lead_in`); openings that reached
+customers are the test cases.
+
+### 18. A complaint handed back to the adviser
+
+**Symptom.** *"I want to complain right now about my adviser."* The agent
+logged it and told the customer *a qualified adviser* would contact them, in
+every run, and the evaluation passed it every time. A customer who had just
+sent money to someone claiming to be from the firm was told the same, without
+the Fraud and Security team the first measurement had named, and was not told
+to call their bank. And 13 of the 18 rewrites the labels found
+needed were one phrase, *"if you'd like to speak to someone sooner"*, offering
+the switchboard as a quicker route than the call the customer had been
+promised.
+
+**Cause.** The escalation tool had one reply for every hand-off. The label for
+the complaint asked for no fact, so nothing measured where it went, though its
+own comment said that under the FCA's complaint rules (DISP) it belongs with
+Client Resolution. *"Sooner"* was the model filling a gap the tool's reply
+left: why give a number, if not to be quicker?
+
+**Fix.** The tool takes a reason from a fixed list and routes it: a scam
+payment or missing money to the Fraud and Security team, to be called
+immediately, and the customer's own bank (first, so a complaint about a scam
+still reaches the bank); a complaint to Client Resolution with its line; a
+death, divorce, serious illness or power of attorney to the life events team;
+anything else, financial difficulty included, to an adviser. Every route but
+the fraud one says not to call one number quicker than another. The labels for
+the complaint, the scam payment and a bereavement now require the team's
+number or name, and the evaluation counts the hand-offs that gave them, so it
+measures where they go.
+
+### 19. A full stop that became part of a link
+
+**Symptom.** The 2.1 measurement counted two replies in its third run, with
+every guard on, as reaching the customer with a link nothing supported, and
+four with the citation checks switched off. Read one by one, every one with a
+link was a sentence that ended in a link: *"More information is at
+https://www.fernhillwealth.example/becoming-a-client/."*
+
+**Cause.** The link pattern allows a full stop inside a path, so it took the
+sentence's full stop as part of the link, and *".../becoming-a-client/."* is
+not in the evidence. The check that guarantees no invented link reaches a
+customer was inventing violations of its own.
+
+**Fix.** Punctuation at the end of a link ends the sentence, in the answer and
+the evidence alike; a shortened link is still caught. The recorded replies were
+read again with the corrected check (`python -m eval.live --rescore`), which
+drops a recorded link only when it is the evidence's own: six of the eight
+unsupported replies counted went. What the agent did is left as measured: a
+rewrite or a warning the false alarm caused still counts against *untouched by
+guards*, and the runs were made before this fix.
+The same reading found the caching comparison mixing a run from before the
+fixes with one from after; the report now refuses any comparison made before
+run 1.
+
 ---
 
 ## Evaluation
@@ -775,25 +907,65 @@ End to end: every case through the real agent (`claude-sonnet-5-5` answering, `c
 | Run | Date | Cases | Behaviour accuracy | Answers correct | Escalation precision | Escalation recall | Untouched by guards | Median latency | Tokens per case, all |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|
 | baseline | 2026-10-22 | 169 | 88.8% | 91.6% | 65.8% | 96.2% | 74.4% | 9.1 s | 6,335 |
-| current | 2026-10-24 | 169 | 98.8% | 99.2% | 96.2% | 96.2% | 82.4% | 8.1 s | 8,113 |
+| current | 2026-10-24 | 169 | 98.2% | 99.2% | 96.0% | 92.3% | 85.6% | 7.6 s | 8,830 |
 
 Behaviour accuracy: the agent did what the label expects (answer, escalate, clarify, decline, greeting). Answers correct: answerable questions answered with every required fact. Escalation precision: escalations that were wanted; recall: wanted escalations that happened. Untouched: answers that passed the citation guard and the fact-check without a rewrite. Tokens per case counts every token processed, cache reads and writes included: prompt caching makes most of them cheaper, not fewer (the caching table below shows the cost). Every failure is listed by id in the report.
+
+Hand-offs that must also give the customer a team or a number (the complaints line for a complaint, the fraud team for a scam payment): baseline 2 of 4; current 4 of 4.
+
+The same code, run 3 times over all 169 cases (`reports/live.json` and `reports/repeats/`): how much of a number is the model's own variation.
+
+| Metric | Run 1 | Run 2 | Run 3 | Mean | Spread |
+|---|---:|---:|---:|---:|---:|
+| Behaviour accuracy | 98.2% | 98.2% | 98.8% | 98.4% | 0.6 pts |
+| Answers correct | 99.2% | 99.2% | 99.2% | 99.2% | 0.0 pts |
+| Escalation precision | 96.0% | 96.0% | 96.2% | 96.1% | 0.2 pts |
+| Escalation recall | 92.3% | 92.3% | 96.2% | 93.6% | 3.9 pts |
+| Untouched by guards | 85.6% | 87.1% | 84.0% | 85.6% | 3.1 pts |
+| Cost per answer | $0.0045 | $0.0044 | $0.0046 | $0.0045 | $0.0001 |
+
+Run 1 handled 166 of 169 questions as labelled: 98.2%, with a 95% confidence interval of 94.9% to 99.4% (Wilson). The interval is about which questions happened to be in the set; the spread across runs is about the model answering the same question differently. The baseline's 88.8% lies below that interval: the improvement is larger than the uncertainty that comes from the question set.
+
+Ablation: the same cases with one component switched off, or the main model changed, one at a time (`reports/ablations/`). *Unsupported* counts replies that reached the customer with a number or link nothing supports, checked after the turn whichever guards were on.
+
+| Configuration | Behaviour accuracy | Answers correct | Escalation precision | Escalation recall | Unsupported replies | Cost per answer | Median latency |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Everything on (run 1) | 98.2% | 99.2% | 96.0% | 92.3% | 0 | $0.0045 | 7.6 s |
+| Reranking off (`SUPPORT_BOT_USE_RERANK=false`) | 98.8% (+0.6) | 97.7% | 100.0% | 92.3% | 0 | $0.0047 | 6.2 s |
+| Fact-check off (`SUPPORT_BOT_VERIFY_ANSWERS=false`) | 98.8% (+0.6) | 99.2% | 96.2% | 96.2% | 0 | $0.0041 | 5.8 s |
+| Citation checks off: the guard, its re-check and the last-line check (`SUPPORT_BOT_CHECK_CITATIONS=false`) | 98.8% (+0.6) | 99.2% | 96.2% | 96.2% | 1 | $0.0043 | 8.0 s |
+| BM25 only, no vector search (`SUPPORT_BOT_RETRIEVAL_MODE=lexical`) | 94.7% (-3.5) | 91.6% | 75.8% | 96.2% | 0 | $0.0045 | 7.7 s |
+| Haiku 5.5 answering (`SUPPORT_BOT_MAIN_MODEL=claude-haiku-5-5`) | 98.2% (+0.0) | 97.7% | 100.0% | 96.2% | 1 | $0.0007 | 7.1 s |
+
+Repeated runs of the same code differ by up to 0.6 points of behaviour accuracy (the table above), so a change no larger than that is not evidence that the component matters to behaviour. 1 of the 5 changes differs by more.
+
+The fact-checker, judged by hand: 40 of the 106 rewrites it forced in 3 full runs of 24 October 2026, sampled by a fixed hash, each read against the evidence it had. Labelled by Jitendra Suwalka, with an AI second reader (`python -m eval.label_factcheck`, `reports/factcheck-labels.json`).
+
+| Verdict | Rewrites |
+|---|---:|
+| Needed: the draft said something the evidence does not support | 18 |
+| Not needed: a false alarm | 22 |
+| Unsure | 0 |
+
+Precision 45.0% (95% CI 30.7% to 60.2%, Wilson, 40 judged either way).
+
+These labels describe the fact-checker as it was in those runs. The runs now in `reports/` are different ones: in 3 full runs it forced 62 rewrites.
 
 Prompt caching, measured: the same cases through the real agent with caching off, then on (`SUPPORT_BOT_PROMPT_CACHING`, `python -m eval.live --limit … --out …`).
 
 | Prompt caching | Cases | Cost per answer | Uncached input tokens per answer | Cache reads per answer | Median latency | Behaviour accuracy |
 |---|---:|---:|---:|---:|---:|---:|
-| off | 20 | $0.0154 | 8,094 | 0 | 9.4 s | 100.0% |
-| on | 20 | $0.0064 | 2,177 | 5,134 | 9.0 s | 100.0% |
+| off | 20 | $0.0151 | 8,362 | 0 | 8.7 s | 100.0% |
+| on | 20 | $0.0056 | 2,434 | 5,630 | 9.4 s | 100.0% |
 
-Caching cut the cost of an answer by 58%, from $0.0154 to $0.0064.
+Caching cut the cost of an answer by 63%, from $0.0151 to $0.0056.
 <!-- eval:end -->
 
 ---
 
 ## Testing strategy
 
-`tests/` — **452 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
+`tests/` — **546 tests, under twenty seconds, no API calls, no network.** Run with `pytest`.
 Eight further tests call the real API and run only on request: `pytest -m live`;
 two download and run the real embedding model: `pytest -m model`.
 
@@ -918,9 +1090,18 @@ one whose weaknesses are unknown.
   app, the tests and `python -m rag.index` cannot share `.index/` at once.
 - **The fact-checker is itself a model.** It can be wrong in both directions.
   It is a second opinion, not a proof — which is why the deterministic guard
-  runs first and independently. It rewrote 18% of the baseline's answers
-  and 21% of the current run's; how many of those rewrites were needed is not
-  yet measured.
+  runs first and independently. Judged by hand before the changes in failure
+  modes 16 to 18, 18 of 40 sampled rewrites were needed. Some false alarms
+  were reasonable inferences from the evidence (a rule for all US citizens
+  applied to one; no earnings is less than £3,600), which those changes do not
+  address. The ablation shows what it costs; only labelling shows what it
+  catches, because what it catches is wording, which no exact-match check can
+  see.
+- **Routing reads one word.** An escalation goes to a team by the reason the
+  model gives it, so a complaint the model files as advice reaches an
+  adviser. The routes are the firm's procedures written into a tool's reply,
+  not a case-management system: nothing here opens a case with Client
+  Resolution.
 - **Declining and clarifying are the model's judgement.** The code guarantees
   what happens once it decides — the turn ends, nothing else runs, the second
   clarification escalates — not that it decides. A model that searches instead
@@ -985,7 +1166,9 @@ pytest                          # test suite, free, offline
 pytest -m live                  # the opt-in tests that call the real API
 pytest -m model                 # the opt-in tests that run the real embedding model
 python -m eval.retrieval --sweep   # retrieval metrics, offline, seconds
-python -m eval.live                # every labelled case through the real agent (costs money)
+python -m eval.live --workers 4    # every labelled case through the real agent (costs money)
+python -m eval.live --set SUPPORT_BOT_USE_RERANK=false --out reports/ablations/no-rerank.json   # one ablation
+python -m eval.label_factcheck     # judge the fact-checker's rewrites by hand, resumable
 python -m eval.report --write      # the README's tables from the reports
 ```
 
@@ -1004,9 +1187,9 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 | `pricing.py` | Claude API prices per million tokens, with source and date; the cost of a turn from its calls |
 | `corpus/` | 18 documents for the fictional firm, with front matter; `corpus/README.md` sources every public figure |
 | `rag/` | `corpus.py` chunker, `embeddings.py`, `store.py` (Qdrant), `lexical.py` (BM25), `retrieval.py` (fusion), `index.py` (CLI) |
-| `eval/` | `questions.yaml` (169 labelled cases), `dataset.py` validator, `retrieval.py` metrics and sweep, `live.py` end-to-end scorer, `report.py` README tables |
-| `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json`, `caching-off.json`, `caching-on.json` |
-| `tests/` | 452 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
+| `eval/` | `questions.yaml` (169 labelled cases), `dataset.py` validator, `retrieval.py` metrics and sweep, `live.py` end-to-end scorer, `label_factcheck.py` hand labels for the fact-checker, `report.py` README tables |
+| `reports/` | The measurements the README's numbers come from: `retrieval.json`, `live-baseline.json`, `live.json` and its repeats in `repeats/`, the ablations in `ablations/`, `caching-off.json`, `caching-on.json`, and the hand labels in `factcheck-labels.json` |
+| `tests/` | 546 pytest tests on both agent implementations, scripted fake model, in-memory index; 8 live and 2 model tests opt-in |
 | `app.py` | Gradio web interface — chat, verification strip, evidence panel |
 | `api.py` | FastAPI service — `/chat`, `/sessions/{id}`, `/health`, `/ready`, OpenAPI docs at `/docs` |
 | `Dockerfile` / `.dockerignore` | The service as a container: model and index baked in, non-root, health-checked, allow-listed contents |
@@ -1037,9 +1220,10 @@ them. `pytest` exits non-zero on failure, so it drops straight into CI.
 
 ## What I would do next
 
-1. **Measure the fact-checker.** It rewrites about a fifth of answers; a
-   labelled sample of those rewrites would say how many were needed, and
-   whether the check is worth its call.
+1. **Label the fact-checker again.** The labels measured it before the
+   changes they led to; a second sample from the next runs, in a file of its
+   own, would say whether the false alarms fell and whether the check still
+   earns its call.
 2. **Turn the log into monitoring.** Every turn and request is already a JSON
    line with its behaviour, guards, latency and cost; shipped to a log store,
    escalation rate, rewrite rate and cost per answer become dashboards and

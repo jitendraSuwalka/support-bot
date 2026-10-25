@@ -53,6 +53,7 @@ class FakeClient:
         self.script = list(script)
         self.helper = helper or {}
         self.calls = []
+        self.helper_calls = []
         self.messages = types.SimpleNamespace(create=self._create)
 
     def _create(self, **kwargs):
@@ -64,7 +65,12 @@ class FakeClient:
                 prompt = first
 
         if model == agent.HELPER_MODEL:
-            if "expand" in prompt.lower():
+            self.helper_calls.append(prompt)
+            # The fact-check prompt carries the customer's words, which may say
+            # "expand" or "relevant": it is told apart by how it begins.
+            if prompt.startswith("You are a strict fact-checker"):
+                payload = self.helper.get("verify", '{"grounded": true, "unsupported": []}')
+            elif "expand" in prompt.lower():
                 payload = self.helper.get("expand", "[]")
             elif "relevant" in prompt.lower():
                 payload = self.helper.get("rerank", '{"relevant": [0]}')

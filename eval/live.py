@@ -20,7 +20,8 @@ the final turn's AgentResult is scored against its label:
 From the per-case rows: behaviour accuracy overall, by expected behaviour and
 by kind; escalation precision and recall (did advice reach a human, and did
 factual questions stay with the assistant); answer correctness (right
-behaviour and every fact present); the share of answers that passed both
+behaviour and every fact present); hand-offs that also gave the facts their
+label asks for (the complaints line, the fraud team); the share of answers that passed both
 checks untouched; guard activity; latency and tokens. Every number is
 traceable to the rows, and the failures are listed by id.
 
@@ -29,6 +30,8 @@ This costs money: about four model calls per case. Run it with
     python -m eval.live --ids isa-01,status-01
     python -m eval.live --kind advice
     python -m eval.live --limit 10
+    python -m eval.live --workers 4     # four cases at a time: same results, a quarter of the wait
+    python -m eval.live --set SUPPORT_BOT_USE_RERANK=false --out reports/ablations/no-rerank.json
 
 When a label is corrected after a run, the run's rows are still what the
 agent did; only the scoring is stale. ``--rescore reports/live-baseline.json``
@@ -41,11 +44,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import re
 import statistics
+import subprocess
 import sys
+import threading
 import time
 from collections import Counter, defaultdict
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 
@@ -86,6 +94,15 @@ class Observation:
     cache_read_tokens: int = 0
     cache_write_tokens: int = 0
     cost_usd: float | None = None
+    # Numbers and links in the final reply that the evidence, the switchboard
+    # and the customer's own words do not contain, checked after the turn by
+    # the same exact-match test, whichever guards were switched on: what an
+    # ablation needs to show what reaches the customer. None in older reports.
+    unsupported_details: list[str] | None = None
+    # When the fact-checker forced a rewrite: the claims it flagged, the draft
+    # it read and the evidence it read it against, for judging later whether
+    # the rewrite was needed (python -m eval.label_factcheck).
+    factcheck: dict | None = None
 
 
 # =========================================================
@@ -112,6 +129,25 @@ def tokens_used(result: agent.AgentResult) -> tuple[int, int]:
         sum(event.data.get("input_tokens", 0) for event in events),
         sum(event.data.get("output_tokens", 0) for event in events),
     )
+
+
+def unsupported_details(case: Case, result: agent.AgentResult) -> list[str]:
+    """The citation check on the final reply, run after the turn whatever the settings."""
+    evidence = "\n\n".join([*result.evidence, agent.SWITCHBOARD])
+    said = "\n".join([*case.before, case.question])
+    return agent.check_citations(result.answer, evidence, said)
+
+
+def factcheck_record(result: agent.AgentResult) -> dict | None:
+    flagged = result.trace.find("unsupported")
+    if not flagged:
+        return None
+    return {
+        "claims": list(flagged[0].data.get("claims", [])),
+        "before": flagged[0].data.get("before", ""),
+        "after": result.answer,
+        "evidence": "\n\n".join(result.evidence),
+    }
 
 
 def observe(case: Case, result: agent.AgentResult, seconds: float) -> Observation:
@@ -147,6 +183,8 @@ def observe(case: Case, result: agent.AgentResult, seconds: float) -> Observatio
         cache_read_tokens=cost.cache_read_tokens,
         cache_write_tokens=cost.cache_write_tokens,
         cost_usd=None if cost.usd is None else round(cost.usd, 6),
+        unsupported_details=unsupported_details(case, result),
+        factcheck=factcheck_record(result),
     )
 
 
@@ -160,7 +198,8 @@ def run_case(case: Case, runner: Runner) -> Observation:
             runner(messages, state)
         messages.append({"role": "user", "content": case.question})
         result = runner(messages, state)
-    except Exception as error:  # one failed call must not end a ten-minute run
+        return observe(case, result, time.perf_counter() - started)
+    except Exception as error:  # one failed case must not throw away a paid-for run
         return Observation(
             id=case.id,
             kind=case.kind,
@@ -180,7 +219,29 @@ def run_case(case: Case, runner: Runner) -> Observation:
             output_tokens=0,
             error=f"{type(error).__name__}: {error}",
         )
-    return observe(case, result, time.perf_counter() - started)
+
+
+_LINK_READ_WITH_ITS_FULL_STOP = re.compile(
+    r"URL '([^']+)' was not given\. Evidence has '([^']+)'\."
+)
+
+
+def recheck(details: list[str] | None) -> list[str] | None:
+    """Recorded unsupported details, read again with the citation check as it now is.
+
+    The check once read a link at the end of a sentence with its full stop
+    (fixed in 2.1.0). A recorded link that, read as it now is, is the
+    evidence's own link is dropped; everything else stands as recorded.
+    """
+    if details is None:
+        return None
+    kept = []
+    for detail in details:
+        link = _LINK_READ_WITH_ITS_FULL_STOP.match(detail)
+        if link and agent.normalise_url(link[1]) == agent.normalise_url(link[2]):
+            continue
+        kept.append(detail)
+    return kept
 
 
 def rescore(report: dict, cases: list[Case]) -> dict:
@@ -188,8 +249,10 @@ def rescore(report: dict, cases: list[Case]) -> dict:
 
     The rows record what the agent did (observed, answer, tools, escalated);
     expected, the fact check and the tool check are recomputed from the
-    current label, and the summary is rebuilt. The original generation time
-    and settings stay; `rescored` records when the labels were applied.
+    current label, the recorded unsupported details are read again with the
+    citation check as it now is (`recheck`), and the summary is rebuilt. The
+    original generation time and settings stay; `rescored` records when the
+    labels were applied.
     """
     by_id = {case.id: case for case in cases}
     rows = []
@@ -211,6 +274,7 @@ def rescore(report: dict, cases: list[Case]) -> dict:
                 facts_ok=(not missing) if case.must_contain else None,
                 missing_facts=missing,
                 tools_ok=set(case.tools) <= credited,
+                unsupported_details=recheck(row.unsupported_details),
             )
         )
     return {
@@ -254,6 +318,10 @@ def summarise(rows: list[Observation]) -> dict:
         and not {"citation_rewrite", "factcheck_rewrite", "citation_remaining"} & set(row.guards)
     ]
 
+    # A hand-off can have facts to give too: the complaints line, the fraud team.
+    handoffs = [row for row in expected_escalate if row.facts_ok is not None]
+    handoffs_given = [row for row in handoffs if row.behaviour_ok and row.facts_ok]
+
     guard_counts = Counter(label for row in scored for label in row.guards)
     seconds = [row.seconds for row in scored]
     return {
@@ -291,9 +359,26 @@ def summarise(rows: list[Observation]) -> dict:
             },
             "untouched_by_guards": ratio(len(untouched), len(observed_answers)),
         },
+        "handoffs": {
+            "with_facts": len(handoffs),
+            "given": len(handoffs_given),
+            "failed": {
+                row.id: row.missing_facts if row.behaviour_ok else ["not escalated"]
+                for row in handoffs
+                if row not in handoffs_given
+            },
+        },
         "tools_accuracy": ratio(sum(row.tools_ok for row in scored), len(scored)),
         "guards": dict(sorted(guard_counts.items())),
         "warnings": [row.id for row in scored if row.warning],
+        # Replies carrying a number or link nothing supports, whatever the
+        # guards did: None when the rows predate the measurement.
+        "unsupported_replies": (
+            [row.id for row in scored if row.unsupported_details]
+            if any(row.unsupported_details is not None for row in scored)
+            else None
+        ),
+        "factcheck_rewrites": sum(1 for row in scored if row.factcheck),
         "wrong_behaviour": {
             row.id: f"expected {row.expected}, observed {row.observed}"
             for row in scored
@@ -352,9 +437,15 @@ def render(summary: dict) -> str:
     for name, group in summary["behaviour_by_expected"].items():
         lines.append(f"{name:10} {group['n']:>4} {group['accuracy']:>9}  {group['observed']}")
     lines.append(f"guards fired: {summary['guards']}")
+    unsupported = summary.get("unsupported_replies")
     lines.append(
         f"answers untouched by guards {summary['answers']['untouched_by_guards']}; "
         f"warnings on {len(summary['warnings'])} cases"
+        + (
+            f"; replies with an unsupported number or link: {len(unsupported)}"
+            if unsupported is not None
+            else ""
+        )
     )
     lines.append(
         f"latency mean {summary['latency_seconds']['mean']}s, "
@@ -386,21 +477,49 @@ def render(summary: dict) -> str:
 
 
 def evaluate_cases(
-    cases: list[Case], runner: Runner = agent.run_agent, progress=None
+    cases: list[Case], runner: Runner = agent.run_agent, progress=None, workers: int = 1
 ) -> list[Observation]:
-    rows = []
-    for index, case in enumerate(cases, start=1):
+    """Every case through the runner, rows in case order.
+
+    With ``workers`` above one, that many cases run at once. Each case is its
+    own conversation with its own policy state, so they are independent; the
+    model calls dominate the time, so four workers take about a quarter of it.
+    Progress lines appear in the order cases finish, numbered as they do.
+    """
+    rows: list[Observation | None] = [None] * len(cases)
+    done = 0
+    lock = threading.Lock()
+
+    def one(index: int, case: Case) -> None:
+        nonlocal done
         row = run_case(case, runner)
-        rows.append(row)
-        if progress:
-            mark = "ok " if row.behaviour_ok and row.facts_ok is not False else "BAD"
-            progress(
-                f"[{index:3}/{len(cases)}] {mark} {case.id:18} expected {case.expected:8} "
-                f"observed {row.observed:8} {row.seconds:5.1f}s"
-                + (f"  missing {row.missing_facts}" if row.missing_facts else "")
-                + (f"  {row.error}" if row.error else "")
-            )
-    return rows
+        with lock:
+            rows[index] = row
+            done += 1
+            if progress:
+                mark = "ok " if row.behaviour_ok and row.facts_ok is not False else "BAD"
+                progress(
+                    f"[{done:3}/{len(cases)}] {mark} {case.id:18} expected {case.expected:8} "
+                    f"observed {row.observed:8} {row.seconds:5.1f}s"
+                    + (f"  missing {row.missing_facts}" if row.missing_facts else "")
+                    + (f"  {row.error}" if row.error else "")
+                )
+
+    if workers <= 1:
+        for index, case in enumerate(cases):
+            one(index, case)
+    else:
+        pool = ThreadPoolExecutor(max_workers=workers)
+        try:
+            for future in [pool.submit(one, i, case) for i, case in enumerate(cases)]:
+                future.result()
+        except BaseException:
+            # Ctrl+C or a failure: cases not yet started are cancelled, so the
+            # run stops spending at once instead of finishing the queue first.
+            pool.shutdown(wait=False, cancel_futures=True)
+            raise
+        pool.shutdown()
+    return [row for row in rows if row is not None]
 
 
 def select(cases: list[Case], ids: str | None, kind: str | None, limit: int | None) -> list[Case]:
@@ -417,16 +536,83 @@ def select(cases: list[Case], ids: str | None, kind: str | None, limit: int | No
     return cases
 
 
+def without_set(argv: list[str]) -> list[str]:
+    """The arguments with every --set NAME=VALUE taken out."""
+    kept, skip = [], False
+    for arg in argv:
+        if skip:
+            skip = False
+        elif arg == "--set":
+            skip = True
+        elif not arg.startswith("--set="):
+            kept.append(arg)
+    return kept
+
+
+def run_with_settings(assignments: list[str], argv: list[str]) -> int:
+    """Run the evaluation again in a fresh process with some settings changed.
+
+    The agent reads its settings once, when it is imported, so a changed
+    setting needs a new process: this one checks the names and values, then
+    starts ``python -m eval.live`` with them in its environment and the rest
+    of the arguments unchanged. The report records the settings it ran with.
+    """
+    from dataclasses import fields
+
+    from config import ENV_PREFIX, Settings
+
+    known = {ENV_PREFIX + field.name.upper() for field in fields(Settings)}
+    changes = {}
+    for assignment in assignments:
+        name, sep, value = assignment.partition("=")
+        if not sep or not name.startswith("SUPPORT_BOT_"):
+            raise SystemExit(f"--set wants SUPPORT_BOT_NAME=value, got {assignment!r}")
+        if name not in known:  # a typo would otherwise run the full agent, unchanged
+            raise SystemExit(f"--set: no setting called {name}")
+        changes[name] = value
+    try:
+        Settings.from_env({**os.environ, **changes})
+    except ValueError as error:
+        raise SystemExit(f"--set: {error}") from None
+    command = [sys.executable, "-m", "eval.live", *without_set(argv)]
+    return subprocess.run(command, env={**os.environ, **changes}).returncode
+
+
 def main(argv: list[str] | None = None, runner: Runner = agent.run_agent) -> int:
-    parser = argparse.ArgumentParser(prog="python -m eval.live", description=__doc__)
+    parser = argparse.ArgumentParser(
+        prog="python -m eval.live", description=__doc__, allow_abbrev=False
+    )
     parser.add_argument("--ids", help="comma-separated case ids to run")
     parser.add_argument("--kind", help="only cases of this kind")
     parser.add_argument("--limit", type=int, help="run the first N selected cases")
     parser.add_argument("--out", type=Path, default=DEFAULT_REPORT, help="where to write the JSON")
     parser.add_argument(
+        "--workers", type=int, default=1, help="cases run at once (default 1; 4 is a good choice)"
+    )
+    parser.add_argument(
         "--rescore", type=Path, help="re-score this report against the current labels, in place"
     )
-    args = parser.parse_args(argv)
+    parser.add_argument(
+        "--set",
+        action="append",
+        default=[],
+        metavar="NAME=VALUE",
+        help="run with a setting changed, e.g. SUPPORT_BOT_USE_RERANK=false (repeatable)",
+    )
+    raw = sys.argv[1:] if argv is None else list(argv)
+    args = parser.parse_args(raw)
+
+    partial = args.set or args.ids or args.kind or args.limit
+    if partial and not args.rescore and args.out.resolve() == DEFAULT_REPORT.resolve():
+        # reports/live.json is run 1, which the README, the repeats, the
+        # ablations and the labelling all read: only a full, unchanged run
+        # may write it.
+        raise SystemExit(
+            "a run with --set, --ids, --kind or --limit needs its own --out; "
+            "reports/live.json is kept for the full run"
+        )
+    if args.set:
+        return run_with_settings(args.set, raw)
 
     if args.rescore:
         report = rescore(json.loads(args.rescore.read_text(encoding="utf-8")), load_cases())
@@ -439,7 +625,9 @@ def main(argv: list[str] | None = None, runner: Runner = agent.run_agent) -> int
     if not cases:
         raise SystemExit("no cases selected")
     started = time.perf_counter()
-    rows = evaluate_cases(cases, runner, progress=lambda line: print(line, file=sys.stderr))
+    rows = evaluate_cases(
+        cases, runner, progress=lambda line: print(line, file=sys.stderr), workers=args.workers
+    )
     summary = summarise(rows)
     report = {
         "generated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -447,6 +635,7 @@ def main(argv: list[str] | None = None, runner: Runner = agent.run_agent) -> int
         "agent_impl": agent.SETTINGS.agent_impl,
         "settings": agent.SETTINGS.describe(),
         "selection": {"ids": args.ids, "kind": args.kind, "limit": args.limit},
+        "workers": args.workers,
         "seconds": round(time.perf_counter() - started, 1),
         "summary": summary,
         "rows": [asdict(row) for row in rows],

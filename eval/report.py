@@ -13,7 +13,13 @@ reports/caching-on.json exist (the same cases with prompt caching off and
 on), a third table compares their cost, tokens and latency. A second pair
 of markers near the top of the README, ``<!-- headline:start -->`` and
 ``<!-- headline:end -->``, carries the four headline numbers from the same
-reports. The README carries the block between
+reports. Three further sections appear when their reports exist: the
+variation across repeated runs of the same code (reports/repeats/*.json,
+beside reports/live.json as run 1) with a 95% confidence interval, an
+ablation table of the same cases with one component switched off or the
+main model changed (reports/ablations/*.json), and the precision of the
+fact-checker's rewrites as labelled by hand (reports/factcheck-labels.json).
+The README carries the block between
 ``<!-- eval:start -->`` and ``<!-- eval:end -->``, and a test asserts that it
 is exactly what this module renders from the reports in the repository, so a
 number in the README can be measured and regenerated, never typed.
@@ -25,7 +31,10 @@ import argparse
 import json
 import re
 import sys
+import time
 from pathlib import Path
+
+from eval.label_factcheck import rewrites, runs
 
 ROOT = Path(__file__).resolve().parent.parent
 REPORTS = ROOT / "reports"
@@ -39,6 +48,30 @@ LIVE_RUNS = (("baseline", "live-baseline.json"), ("current", "live.json"))
 RETRIEVAL = "retrieval.json"
 # The same cases run with prompt caching off and on (Step 4.3).
 CACHING_RUNS = (("off", "caching-off.json"), ("on", "caching-on.json"))
+# Repeats of the current run on the same code: reports/repeats/*.json.
+REPEATS = "repeats"
+# The same cases with one thing changed, in the order the table shows them:
+# file, label, and the one setting that must differ from run 1, and to what.
+ABLATIONS = (
+    ("no-rerank.json", "Reranking off", "use_rerank", False),
+    ("no-factcheck.json", "Fact-check off", "verify_answers", False),
+    (
+        "no-citation-checks.json",
+        "Citation checks off: the guard, its re-check and the last-line check",
+        "check_citations",
+        False,
+    ),
+    ("lexical-only.json", "BM25 only, no vector search", "retrieval_mode", "lexical"),
+    ("haiku-main.json", "Haiku 5.5 answering", "main_model", "claude-haiku-5-5"),
+)
+
+
+class ReportMismatch(ValueError):
+    """A report is not the comparison its file name says it is."""
+
+
+def _setting_name(field: str) -> str:
+    return "SUPPORT_BOT_" + field.upper()
 
 
 def load_reports(directory: Path = REPORTS) -> tuple[dict | None, dict[str, dict]]:
@@ -55,14 +88,317 @@ def load_reports(directory: Path = REPORTS) -> tuple[dict | None, dict[str, dict
     return retrieval, runs
 
 
+def _run_one(directory: Path) -> dict | None:
+    path = directory / "live.json"
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+
+
+def _not_before_run_one(report: dict, first: dict | None, name: str) -> None:
+    """Refuse a run made before run 1: it measured earlier code.
+
+    The measurement is run 1 first, then everything compared with it. A
+    comparison left over from an earlier measurement once reached the README:
+    caching on from the code before the 2.1 fixes, against caching off after.
+    """
+    if first and report.get("generated", "") < first.get("generated", ""):
+        raise ReportMismatch(
+            f"{name} was generated on {report.get('generated')}, before run 1 "
+            f"({first.get('generated')}): it measured earlier code, so run it again"
+        )
+
+
 def load_caching(directory: Path = REPORTS) -> dict[str, dict]:
     """The prompt-caching comparison runs that exist, off first."""
+    first = _run_one(directory)
     runs = {}
     for label, name in CACHING_RUNS:
         path = directory / name
         if path.exists():
             runs[label] = json.loads(path.read_text(encoding="utf-8"))
+            _not_before_run_one(runs[label], first, name)
     return runs
+
+
+def _same_cases(report: dict, first: dict, name: str) -> None:
+    if report["summary"]["cases"] != first["summary"]["cases"]:
+        raise ReportMismatch(
+            f"{name} covers {report['summary']['cases']} cases, run 1 covers "
+            f"{first['summary']['cases']}: compare like with like"
+        )
+
+
+def load_repeats(directory: Path = REPORTS) -> list[dict]:
+    """Run 1 (reports/live.json) and its repeats, in name order; empty without repeats.
+
+    A repeat must be the same code and settings over the same cases, or its
+    spread would not be the model's own variation.
+    """
+    repeats = sorted((directory / REPEATS).glob("*.json"))
+    first_path = directory / "live.json"
+    if not repeats or not first_path.exists():
+        return []
+    first = json.loads(first_path.read_text(encoding="utf-8"))
+    runs = [first]
+    for path in repeats:
+        run = json.loads(path.read_text(encoding="utf-8"))
+        _same_cases(run, first, f"repeats/{path.name}")
+        _not_before_run_one(run, first, f"repeats/{path.name}")
+        if run.get("settings") != first.get("settings"):
+            raise ReportMismatch(f"repeats/{path.name} ran with different settings from run 1")
+        runs.append(run)
+    return runs
+
+
+def load_ablations(directory: Path = REPORTS) -> list[tuple[str, dict]]:
+    """The ablation runs that exist, with their labels, in table order.
+
+    Each must have run with exactly the setting its file name promises, over
+    the same cases as run 1; a stray file in the folder is refused rather
+    than silently left out.
+    """
+    folder = directory / "ablations"
+    if not folder.exists():
+        return []
+    expected = {name for name, *_ in ABLATIONS}
+    stray = sorted(path.name for path in folder.glob("*.json") if path.name not in expected)
+    if stray:
+        raise ReportMismatch(
+            f"ablations/{', '.join(stray)}: not a known ablation; expected names: "
+            + ", ".join(sorted(expected))
+        )
+    first_path = directory / "live.json"
+    first = json.loads(first_path.read_text(encoding="utf-8")) if first_path.exists() else None
+    found = []
+    for name, label, field, value in ABLATIONS:
+        path = folder / name
+        if not path.exists():
+            continue
+        report = json.loads(path.read_text(encoding="utf-8"))
+        ran_with = (report.get("settings") or {}).get(field)
+        if ran_with != value:
+            raise ReportMismatch(
+                f"ablations/{name} ran with {_setting_name(field)}={ran_with!r}, "
+                f"not {value!r}: rerun it with --set {_setting_name(field)}={value}"
+            )
+        if first is not None:
+            _same_cases(report, first, f"ablations/{name}")
+            _not_before_run_one(report, first, f"ablations/{name}")
+        setting = f"`{_setting_name(field)}={str(value).lower() if value is False else value}`"
+        found.append((f"{label} ({setting})", report))
+    return found
+
+
+def wilson(successes: int, n: int, z: float = 1.96) -> tuple[float, float]:
+    """The Wilson score interval for a proportion: sound near 0% and 100%,
+    where the textbook normal interval runs past the ends."""
+    if n == 0:
+        return (0.0, 1.0)
+    p = successes / n
+    centre = (p + z * z / (2 * n)) / (1 + z * z / n)
+    half = z * ((p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5) / (1 + z * z / n)
+    return (max(0.0, centre - half), min(1.0, centre + half))
+
+
+def behaviour_counts(summary: dict) -> tuple[int, int]:
+    """(cases handled as labelled, cases scored), from the lists the summary keeps."""
+    scored = summary["cases"] - len(summary.get("errors", []))
+    return scored - len(summary.get("wrong_behaviour", {})), scored
+
+
+def behaviour_interval(summary: dict) -> tuple[float, float]:
+    return wilson(*behaviour_counts(summary))
+
+
+def _unsupported(summary: dict) -> str:
+    ids = summary.get("unsupported_replies")
+    return "not measured" if ids is None else str(len(ids))
+
+
+def _cost(summary: dict) -> str:
+    cost = (summary.get("cost_usd") or {}).get("per_case_mean")
+    return "unpriced" if cost is None else f"${cost:.4f}"
+
+
+def stability_table(runs: list[dict], baseline: dict | None = None) -> str:
+    """The same code run several times: each metric per run, its mean and spread."""
+    metrics = (
+        ("Behaviour accuracy", lambda s: s["behaviour_accuracy"]),
+        ("Answers correct", lambda s: s["answers"]["correct"]),
+        ("Escalation precision", lambda s: s["escalation"]["precision"]),
+        ("Escalation recall", lambda s: s["escalation"]["recall"]),
+        ("Untouched by guards", lambda s: s["answers"]["untouched_by_guards"]),
+    )
+    summaries = [run["summary"] for run in runs]
+    header = " | ".join(f"Run {i}" for i in range(1, len(runs) + 1))
+    lines = [
+        f"The same code, run {len(runs)} times over all {summaries[0]['cases']} cases "
+        "(`reports/live.json` and `reports/repeats/`): how much of a number is the "
+        "model's own variation.",
+        "",
+        f"| Metric | {header} | Mean | Spread |",
+        "|---|" + "---:|" * (len(runs) + 2),
+    ]
+    for name, read in metrics:
+        values = [read(s) for s in summaries]
+        cells = " | ".join(_pct(v) for v in values)
+        spread = 100 * (max(values) - min(values))
+        lines.append(f"| {name} | {cells} | {_pct(sum(values) / len(values))} | {spread:.1f} pts |")
+    costs = [(s.get("cost_usd") or {}).get("per_case_mean") for s in summaries]
+    if all(c is not None for c in costs):
+        lines.append(
+            "| Cost per answer | "
+            + " | ".join(f"${c:.4f}" for c in costs)
+            + f" | ${sum(costs) / len(costs):.4f} | ${max(costs) - min(costs):.4f} |"
+        )
+    low, high = behaviour_interval(summaries[0])
+    ok, n = behaviour_counts(summaries[0])
+    lines += [
+        "",
+        f"Run 1 handled {ok} of {n} questions as labelled: {_pct(ok / n)}, with a 95% "
+        f"confidence interval of {_pct(low)} to {_pct(high)} (Wilson). The interval is "
+        "about which questions happened to be in the set; the spread across runs is about "
+        "the model answering the same question differently.",
+    ]
+    if baseline is not None:
+        before = baseline["summary"]["behaviour_accuracy"]
+        if before < low:
+            lines[-1] += (
+                f" The baseline's {_pct(before)} lies below that interval: the improvement is "
+                "larger than the uncertainty that comes from the question set."
+            )
+        else:
+            lines[-1] += (
+                f" The baseline's {_pct(before)} lies inside that interval: the difference is "
+                "within the uncertainty that comes from the question set."
+            )
+    return "\n".join(lines)
+
+
+def behaviour_spread(repeats: list[dict] | None) -> float | None:
+    """How far behaviour accuracy moved between runs of the same code, in points."""
+    if not repeats or len(repeats) < 2:
+        return None
+    values = [run["summary"]["behaviour_accuracy"] for run in repeats]
+    return round(100 * (max(values) - min(values)), 1)
+
+
+def ablation_table(
+    full: dict, ablations: list[tuple[str, dict]], spread: float | None = None
+) -> str:
+    """The same cases with one thing changed, against everything switched on.
+
+    `spread` is how far behaviour accuracy moved between repeated runs of the
+    same code: a change no larger than that is not evidence of an effect.
+    """
+    lines = [
+        "Ablation: the same cases with one component switched off, or the main model "
+        "changed, one at a time (`reports/ablations/`). *Unsupported* counts replies that "
+        "reached the customer with a number or link nothing supports, checked after the "
+        "turn whichever guards were on.",
+        "",
+        "| Configuration | Behaviour accuracy | Answers correct | Escalation precision | "
+        "Escalation recall | Unsupported replies | Cost per answer | Median latency |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|",
+    ]
+    base = full["summary"]["behaviour_accuracy"]
+    for label, report in [("Everything on (run 1)", full), *ablations]:
+        s = report["summary"]
+        delta = 100 * (s["behaviour_accuracy"] - base)
+        accuracy = _pct(s["behaviour_accuracy"]) + (
+            f" ({delta:+.1f})" if report is not full else ""
+        )
+        lines.append(
+            f"| {label} | {accuracy} | {_pct(s['answers']['correct'])} | "
+            f"{_pct(s['escalation']['precision'])} | {_pct(s['escalation']['recall'])} | "
+            f"{_unsupported(s)} | {_cost(s)} | {s['latency_seconds']['median']:.1f} s |"
+        )
+    if spread is not None:
+        larger = sum(
+            round(abs(100 * (report["summary"]["behaviour_accuracy"] - base)), 1) > spread
+            for _, report in ablations
+        )
+        lines += [
+            "",
+            f"Repeated runs of the same code differ by up to {spread:.1f} points of behaviour "
+            "accuracy (the table above), so a change no larger than that is not evidence that "
+            f"the component matters to behaviour. {larger} of the {len(ablations)} changes "
+            f"{'differs' if larger == 1 else 'differ'} by more.",
+        ]
+    return "\n".join(lines)
+
+
+def load_labels(directory: Path = REPORTS) -> dict | None:
+    """The hand labels of the fact-checker's rewrites, if any have been given."""
+    path = directory / "factcheck-labels.json"
+    if not path.exists():
+        return None
+    labels = json.loads(path.read_text(encoding="utf-8"))
+    return labels if labels.get("items") else None
+
+
+def _runs(count: int) -> str:
+    return f"{count} full run" + ("" if count == 1 else "s")
+
+
+def _dates(stamps) -> str:
+    """'2026-10-24T19:48:52Z' stamps as '24 October 2026' (or '24 and 25 October 2026')."""
+    days = sorted({time.strptime(stamp[:10], "%Y-%m-%d") for stamp in stamps if stamp})
+    if not days:
+        return ""
+    text = [f"{day.tm_mday} {time.strftime('%B %Y', day)}" for day in days]
+    if len({time.strftime("%B %Y", day) for day in days}) == 1 and len(days) > 1:
+        return " and ".join(str(day.tm_mday) for day in days[:-1]) + f" and {text[-1]}"
+    return " and ".join(text)
+
+
+def factcheck_table(labels: dict, now: dict | None = None) -> str:
+    """How often the fact-checker's forced rewrites were needed, judged by hand.
+
+    `now` is the runs the reports hold today and the rewrites in them: when they
+    are not the runs the sample was drawn from, the table says so, because the
+    labels then describe the fact-checker as it was.
+    """
+    counts = {"needed": 0, "not needed": 0, "unsure": 0}
+    for item in labels["items"]:
+        counts[item["verdict"]] += 1
+    judged = counts["needed"] + counts["not needed"]
+    drawn, population = labels.get("drawn_from"), labels.get("population")
+    count = len(labels["items"])
+    if drawn and population:
+        when = _dates(drawn.values())
+        source = (
+            f"{count} of the {population} rewrites it forced in {_runs(len(drawn))}"
+            + (f" of {when}" if when else "")
+            + ", sampled by a fixed hash"
+        )
+    else:
+        source = f"{count} of its forced rewrites, sampled from the runs"
+    who = f" Labelled by {labels['labelled_by']}" if labels.get("labelled_by") else " Labelled"
+    lines = [
+        f"The fact-checker, judged by hand: {source}, each read against the evidence it had."
+        f"{who} (`python -m eval.label_factcheck`, `reports/factcheck-labels.json`).",
+        "",
+        "| Verdict | Rewrites |",
+        "|---|---:|",
+        f"| Needed: the draft said something the evidence does not support | {counts['needed']} |",
+        f"| Not needed: a false alarm | {counts['not needed']} |",
+        f"| Unsure | {counts['unsure']} |",
+    ]
+    if judged:
+        low, high = wilson(counts["needed"], judged)
+        lines += [
+            "",
+            f"Precision {_pct(counts['needed'] / judged)} (95% CI {_pct(low)} to {_pct(high)}, "
+            f"Wilson, {judged} judged either way).",
+        ]
+    if now and drawn and now["drawn_from"] != drawn:
+        lines += [
+            "",
+            "These labels describe the fact-checker as it was in those runs. The runs now in "
+            f"`reports/` are different ones: in {_runs(len(now['drawn_from']))} it forced "
+            f"{now['population']} rewrites.",
+        ]
+    return "\n".join(lines)
 
 
 def caching_table(runs: dict[str, dict]) -> str:
@@ -176,11 +512,29 @@ def live_table(runs: dict[str, dict]) -> str:
         "writes included: prompt caching makes most of them cheaper, not fewer (the caching "
         "table below shows the cost). Every failure is listed by id in the report.",
     ]
+    measured = [
+        (label, r["summary"]["handoffs"])
+        for label, r in runs.items()
+        if r["summary"].get("handoffs", {}).get("with_facts")
+    ]
+    if measured:
+        counts = "; ".join(f"{label} {h['given']} of {h['with_facts']}" for label, h in measured)
+        label, last = measured[-1]
+        failed = ", ".join(f"{case} ({', '.join(why)})" for case, why in last["failed"].items())
+        lines += [
+            "",
+            "Hand-offs that must also give the customer a team or a number (the complaints "
+            f"line for a complaint, the fraud team for a scam payment): {counts}."
+            + (f" Missing in the {label} run: {failed}." if failed else ""),
+        ]
     return "\n".join(lines)
 
 
 def headline(
-    retrieval: dict | None, runs: dict[str, dict], caching: dict[str, dict] | None = None
+    retrieval: dict | None,
+    runs: dict[str, dict],
+    caching: dict[str, dict] | None = None,
+    repeats: list[dict] | None = None,
 ) -> str:
     """The numbers a reader should see first, each from a report, as bullets."""
     lines = []
@@ -191,8 +545,16 @@ def headline(
             f"- **{_pct(latest['behaviour_accuracy'])}** of {latest['cases']} labelled customer "
             "questions handled as the label says — answered, escalated, clarified or declined"
         )
+        notes = []
+        if repeats:
+            low, high = behaviour_interval(repeats[0]["summary"])
+            values = [run["summary"]["behaviour_accuracy"] for run in repeats]
+            notes.append(f"95% CI {_pct(low)}–{_pct(high)}")
+            notes.append(f"{len(repeats)} runs: {_pct(min(values))}–{_pct(max(values))}")
         if len(runs) > 1:
-            line += f" (the first measurement: {_pct(first['behaviour_accuracy'])})"
+            notes.append(f"the first measurement: {_pct(first['behaviour_accuracy'])}")
+        if notes:
+            line += f" ({'; '.join(notes)})"
         lines.append(line + ".")
         esc = latest["escalation"]
         lines.append(
@@ -219,13 +581,25 @@ def headline(
 
 
 def render(
-    retrieval: dict | None, runs: dict[str, dict], caching: dict[str, dict] | None = None
+    retrieval: dict | None,
+    runs: dict[str, dict],
+    caching: dict[str, dict] | None = None,
+    repeats: list[dict] | None = None,
+    ablations: list[tuple[str, dict]] | None = None,
+    labels: dict | None = None,
+    now: dict | None = None,
 ) -> str:
     parts = []
     if retrieval:
         parts.append(retrieval_table(retrieval))
     if runs:
         parts.append(live_table(runs))
+    if repeats:
+        parts.append(stability_table(repeats, runs.get("baseline")))
+    if ablations and "current" in runs:
+        parts.append(ablation_table(runs["current"], ablations, behaviour_spread(repeats)))
+    if labels:
+        parts.append(factcheck_table(labels, now))
     if caching:
         parts.append(caching_table(caching))
     if not parts:
@@ -234,11 +608,18 @@ def render(
 
 
 def current_block(directory: Path = REPORTS) -> str:
-    return render(*load_reports(directory), load_caching(directory))
+    return render(
+        *load_reports(directory),
+        load_caching(directory),
+        load_repeats(directory),
+        load_ablations(directory),
+        load_labels(directory),
+        {"drawn_from": runs(directory), "population": len(rewrites(directory))},
+    )
 
 
 def current_headline(directory: Path = REPORTS) -> str:
-    return headline(*load_reports(directory), load_caching(directory))
+    return headline(*load_reports(directory), load_caching(directory), load_repeats(directory))
 
 
 def _block_pattern(start: str, end: str) -> re.Pattern:
@@ -273,8 +654,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--readme", type=Path, default=README, help="the README to update")
     args = parser.parse_args(argv)
 
-    block = current_block(args.reports)
-    top = current_headline(args.reports)
+    try:
+        block = current_block(args.reports)
+        top = current_headline(args.reports)
+    except ReportMismatch as error:
+        print(f"report refused: {error}", file=sys.stderr)
+        return 1
     if not args.write:
         print(top + "\n\n" + block)
         return 0

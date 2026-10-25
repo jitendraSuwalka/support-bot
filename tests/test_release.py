@@ -3,6 +3,8 @@ and its notes carry measured numbers, never typed ones."""
 
 import re
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -181,3 +183,25 @@ def test_the_notes_for_this_version_carry_no_other_version():
     text = release_notes.notes(release_notes.check())
     assert not re.search(r"^## ", text, re.M)  # only this entry's own ### sections
     assert "## 1.0.0" not in text
+
+
+def test_the_release_notes_need_nothing_beyond_the_standard_library():
+    # The release job writes the notes before it installs anything. Step 6.2
+    # had eval.report import the labelling tool, which imported the question
+    # set and PyYAML: the 2.1.0 release would have failed at its first step.
+    code = (
+        "import sys\n"
+        "allowed = set(sys.stdlib_module_names) | {'eval', 'scripts'}\n"
+        "class Block:\n"
+        "    def find_spec(self, name, path=None, target=None):\n"
+        "        if name.split('.')[0] not in allowed:\n"
+        "            raise ImportError('the release notes imported ' + name)\n"
+        "sys.meta_path.insert(0, Block())\n"
+        "from scripts import release_notes\n"
+        "from eval import report\n"
+        "assert release_notes.main(['--check']) == 0\n"
+        "report.current_headline()\n"  # what the notes append
+        "report.current_block()\n"  # every table, the hand labels' included
+    )
+    result = subprocess.run([sys.executable, "-c", code], cwd=ROOT, capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr

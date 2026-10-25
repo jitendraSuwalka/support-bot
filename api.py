@@ -53,7 +53,7 @@ import agent
 import observability
 from config import Settings
 
-VERSION = "2.0.0"
+VERSION = "2.1.0"
 REQUEST_ID_HEADER = "X-Request-ID"
 HTTP_LOGGER = f"{observability.LOGGER_NAME}.http"
 _REQUEST_ID = re.compile(r"^[A-Za-z0-9._-]{8,64}$")

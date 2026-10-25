@@ -235,3 +235,173 @@ def test_tokens_per_case_include_the_cache():
         "tokens": {"input": 100, "output": 20, "cache_read": 300, "cache_write": 80},
     }
     assert report._all_tokens_per_case(summary) == 250
+
+
+# --- repeated runs, confidence intervals and ablations ------------------------------------
+
+
+SETTINGS = {
+    "use_rerank": True,
+    "verify_answers": True,
+    "check_citations": True,
+    "retrieval_mode": "hybrid",
+    "main_model": "claude-sonnet-5-5",
+}
+
+
+def full_run(accuracy_wrong, untouched=0.8, cost=0.005, unsupported=(), median=8.0, **changed):
+    """A run's summary as eval.live writes it, with `accuracy_wrong` wrong behaviours."""
+    wrong = {f"c{i}": "expected answer, observed escalate" for i in range(accuracy_wrong)}
+    return {
+        "generated": "2026-10-25T10:00:00Z",
+        "models": {"main": "main-model", "helper": "helper-model"},
+        "settings": {**SETTINGS, **changed},
+        "summary": {
+            "cases": 169,
+            "errors": [],
+            "wrong_behaviour": wrong,
+            "behaviour_accuracy": round((169 - accuracy_wrong) / 169, 3),
+            "answers": {"correct": 0.99, "untouched_by_guards": untouched},
+            "escalation": {"precision": 0.962, "recall": 0.962},
+            "latency_seconds": {"median": median},
+            "tokens": {"input": 1, "output": 1},
+            "cost_usd": {"per_case_mean": cost},
+            "unsupported_replies": list(unsupported),
+        },
+    }
+
+
+def test_the_wilson_interval_matches_known_values():
+    low, high = report.wilson(50, 100)
+    assert (round(low, 4), round(high, 4)) == (0.4038, 0.5962)
+    assert report.wilson(0, 10)[0] == 0.0 and report.wilson(10, 10)[1] == 1.0
+    low, high = report.wilson(167, 169)
+    assert (round(low, 3), round(high, 3)) == (0.958, 0.997)
+
+
+def test_behaviour_counts_come_from_the_lists_not_the_rounded_ratio():
+    summary = full_run(2)["summary"]
+    assert report.behaviour_counts(summary) == (167, 169)
+    summary["errors"] = ["x"]
+    assert report.behaviour_counts(summary) == (166, 168)
+
+
+def test_the_stability_table_shows_each_run_its_mean_spread_and_interval():
+    runs = [full_run(2), full_run(3, untouched=0.82), full_run(2, cost=0.006)]
+    text = report.stability_table(runs, baseline=live("2026-10-22T19:07:44Z", 0.888))
+    assert "| Behaviour accuracy | 98.8% | 98.2% | 98.8% | 98.6% | 0.6 pts |" in text
+    assert "| Cost per answer | $0.0050 | $0.0050 | $0.0060 | $0.0053 | $0.0010 |" in text
+    assert "Run 1 handled 167 of 169 questions as labelled: 98.8%" in text
+    assert "95.8% to 99.7% (Wilson)" in text
+    assert "The baseline's 88.8% lies below that interval" in text
+    near = report.stability_table(runs, baseline=live("x", 0.97))
+    assert "lies inside that interval" in near
+
+
+def test_the_ablation_table_compares_each_change_with_everything_on():
+    ablations = [
+        ("Reranking off", full_run(9, cost=0.004)),
+        ("Citation guard off", full_run(2, unsupported=("a", "b"))),
+    ]
+    older = full_run(2)
+    older["summary"]["unsupported_replies"] = None
+    text = report.ablation_table(full_run(2), [*ablations, ("Older", older)])
+    assert "| Everything on (run 1) | 98.8% | 99.0% | 96.2% | 96.2% | 0 | $0.0050 | 8.0 s |" in text
+    assert "| Reranking off | 94.7% (-4.1) |" in text
+    assert "| Citation guard off | 98.8% (+0.0) | 99.0% | 96.2% | 96.2% | 2 |" in text
+    assert "| Older | 98.8% (+0.0) | 99.0% | 96.2% | 96.2% | not measured |" in text
+
+
+def test_repeats_and_ablations_are_read_from_their_folders(tmp_path):
+    assert report.load_repeats(tmp_path) == [] and report.load_ablations(tmp_path) == []
+    (tmp_path / "live.json").write_text(json.dumps(full_run(2)), encoding="utf-8")
+    (tmp_path / "repeats").mkdir()
+    (tmp_path / "repeats" / "live-2.json").write_text(json.dumps(full_run(3)), encoding="utf-8")
+    (tmp_path / "ablations").mkdir()
+    (tmp_path / "ablations" / "haiku-main.json").write_text(
+        json.dumps(full_run(10, main_model="claude-haiku-5-5")), encoding="utf-8"
+    )
+    (tmp_path / "ablations" / "no-rerank.json").write_text(
+        json.dumps(full_run(9, use_rerank=False)), encoding="utf-8"
+    )
+    repeats = report.load_repeats(tmp_path)
+    assert [len(r["summary"]["wrong_behaviour"]) for r in repeats] == [2, 3]
+    labels = [label for label, _ in report.load_ablations(tmp_path)]
+    assert labels == [
+        "Reranking off (`SUPPORT_BOT_USE_RERANK=false`)",
+        "Haiku 5.5 answering (`SUPPORT_BOT_MAIN_MODEL=claude-haiku-5-5`)",
+    ]
+    block = report.current_block(tmp_path)
+    assert "run 2 times" in block and "Ablation:" in block
+    top = report.current_headline(tmp_path)
+    assert "(95% CI 95.8%–99.7%; 2 runs: 98.2%–98.8%)" in top
+
+
+def write(path, data):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data), encoding="utf-8")
+
+
+def test_an_ablation_that_did_not_run_with_its_setting_is_refused(tmp_path):
+    write(tmp_path / "live.json", full_run(2))
+    write(tmp_path / "ablations" / "no-rerank.json", full_run(9))  # --set was forgotten
+    with pytest.raises(report.ReportMismatch, match="SUPPORT_BOT_USE_RERANK=True"):
+        report.load_ablations(tmp_path)
+
+
+def test_an_ablation_over_other_cases_or_a_stray_file_is_refused(tmp_path):
+    write(tmp_path / "live.json", full_run(2))
+    short = full_run(0, use_rerank=False)
+    short["summary"]["cases"] = 20
+    write(tmp_path / "ablations" / "no-rerank.json", short)
+    with pytest.raises(report.ReportMismatch, match="covers 20 cases, run 1 covers 169"):
+        report.load_ablations(tmp_path)
+    (tmp_path / "ablations" / "no-rerank.json").unlink()
+    write(tmp_path / "ablations" / "no-rerank-2.json", full_run(0, use_rerank=False))
+    with pytest.raises(report.ReportMismatch, match="not a known ablation"):
+        report.load_ablations(tmp_path)
+
+
+def test_a_repeat_with_other_settings_is_refused(tmp_path):
+    write(tmp_path / "live.json", full_run(2))
+    write(tmp_path / "repeats" / "live-2.json", full_run(2, use_rerank=False))
+    with pytest.raises(report.ReportMismatch, match="different settings from run 1"):
+        report.load_repeats(tmp_path)
+
+
+def test_the_cli_reports_a_mismatch_plainly(tmp_path, capsys):
+    write(tmp_path / "live.json", full_run(2))
+    write(tmp_path / "ablations" / "no-rerank.json", full_run(9))
+    assert report.main(["--reports", str(tmp_path)]) == 1
+    assert "ablations/no-rerank.json ran with" in capsys.readouterr().err
+
+
+def test_the_live_table_says_which_hand_offs_gave_their_facts():
+    old, new = live("2026-10-22T19:07:44Z", 0.888), live("2026-10-25T10:00:00Z", 0.982)
+    assert "Hand-offs that must" not in report.live_table({"baseline": old, "current": new})
+    old["summary"]["handoffs"] = {"with_facts": 3, "given": 1, "failed": {"x": ["F"], "y": ["G"]}}
+    new["summary"]["handoffs"] = {"with_facts": 3, "given": 2, "failed": {"x": ["F"]}}
+    text = report.live_table({"baseline": old, "current": new})
+    assert "baseline 1 of 3; current 2 of 3. Missing in the current run: x (F)." in text
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["caching-on.json", "repeats/live-2.json", "ablations/no-rerank.json"],
+)
+def test_a_comparison_made_before_run_1_is_refused(tmp_path, path):
+    # The 2.1 measurement: caching on from the code before the fixes reached the
+    # README beside caching off from the code after them.
+    write(tmp_path / "live.json", full_run(2))  # generated 2026-10-25T10:00:00Z
+    older = full_run(3, use_rerank=False) if "rerank" in path else full_run(3)
+    older["generated"] = "2026-10-24T20:51:54Z"
+    write(tmp_path / path, older)
+    with pytest.raises(report.ReportMismatch, match="before run 1"):
+        report.current_block(tmp_path)
+
+
+def test_the_ablation_note_agrees_with_its_count():
+    full = full_run(2)
+    one_more = full_run(4, use_rerank=False)  # 1.2 points off, beyond a 0.6 spread
+    text = report.ablation_table(full, [("Reranking off", one_more)], 0.6)
+    assert "1 of the 1 changes differs by more." in text

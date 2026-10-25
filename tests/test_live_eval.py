@@ -232,6 +232,22 @@ def test_summary_arithmetic():
     }
 
 
+def test_hand_offs_with_facts_to_give_are_counted_apart():
+    summary = summarise(
+        [
+            obs("complaint", "handoff", "escalate", "escalate", facts_ok=True),
+            obs("fraud", "handoff", "escalate", "escalate", facts_ok=False, missing_facts=["F"]),
+            obs("bereaved", "handoff", "escalate", "answer", facts_ok=True),
+            obs("advice", "advice", "escalate", "escalate"),  # no facts asked for
+        ]
+    )
+    assert summary["handoffs"] == {
+        "with_facts": 3,
+        "given": 1,
+        "failed": {"fraud": ["F"], "bereaved": ["not escalated"]},
+    }
+
+
 def test_tokens_per_case_count_the_cached_tokens_too():
     """The API's input count leaves cache reads and writes out; a cached run
     processes them all the same, so the mean includes them."""
@@ -282,6 +298,36 @@ def test_the_cli_runs_the_selection_through_the_runner_and_writes_the_report(tmp
     assert report["agent_impl"] in ("loop", "graph")
     captured = capsys.readouterr()
     assert "report written to" in captured.out and "[  1/3]" in captured.err
+
+
+def test_cases_run_in_parallel_give_the_same_rows_in_case_order():
+    """Four workers finish cases in any order; the rows come back in case order
+    and identical to a run one case at a time."""
+    import random
+    import time as clock
+
+    cases = live.select(live.load_cases(), None, None, 12)
+
+    def runner(messages, state):
+        clock.sleep(random.uniform(0, 0.02))  # finish out of order
+        return result(f"answer to {messages[-1]['content']}")
+
+    one_at_a_time = live.evaluate_cases(cases, runner)
+    lines = []
+    in_parallel = live.evaluate_cases(cases, runner, progress=lines.append, workers=4)
+    strip = [{**asdict(r), "seconds": 0} for r in one_at_a_time]
+    assert [{**asdict(r), "seconds": 0} for r in in_parallel] == strip
+    assert [r.id for r in in_parallel] == [c.id for c in cases]
+    assert sorted(int(line[1:4]) for line in lines) == list(range(1, 13))
+
+
+def test_the_report_records_how_many_workers_ran(tmp_path):
+    out = tmp_path / "live.json"
+    live.main(
+        ["--ids", "greeting-01", "--out", str(out), "--workers", "2"],
+        runner=lambda m, s: result("Hello!"),
+    )
+    assert json.loads(out.read_text(encoding="utf-8"))["workers"] == 2
 
 
 # --- re-scoring an earlier run against corrected labels --------------------------------------
@@ -372,3 +418,136 @@ def test_each_row_carries_its_cost_and_cache_tokens():
     assert summary["cost_usd"]["total"] == round(row.cost_usd, 4)
     assert summary["cost_usd"]["priced_cases"] == 1
     assert "cost $" in live.render(summary)
+
+
+# --- what the guards let through, and what the fact-checker flagged ----------------------
+
+
+def test_a_reply_is_checked_for_unsupported_details_after_the_turn_whatever_the_guards():
+    evidence = ["search -> [Fees] The fee is 1.2% a year."]
+    clean = observe(case(), result("The fee is 1.2% a year.", evidence=evidence), 1.0)
+    invented = observe(case(), result("The fee is 0.9% a year.", evidence=evidence), 1.0)
+    assert clean.unsupported_details == []
+    assert invented.unsupported_details == ["Number '0.9' does not appear in the evidence."]
+    # The switchboard and what the customer wrote are allowed, as in the guard.
+    said = case(question="I'm 70. Can I call you?")
+    reply = result(f"At 70, yes: call {agent.SWITCHBOARD}.", evidence=evidence)
+    assert observe(said, reply, 1.0).unsupported_details == []
+
+
+def test_the_summary_counts_unsupported_replies_and_says_when_they_were_not_measured():
+    measured = [
+        observe(case(id="a"), result("The fee is 1.2%.", evidence=["1.2%"]), 1.0),
+        observe(case(id="b"), result("The fee is 19%.", evidence=["1.2%"]), 1.0),
+    ]
+    assert summarise(measured)["unsupported_replies"] == ["b"]
+    older = [Observation(**{**asdict(measured[0]), "unsupported_details": None})]
+    assert summarise(older)["unsupported_replies"] is None
+
+
+def test_a_fact_check_rewrite_is_recorded_with_its_claims_draft_and_evidence():
+    flagged = result("Fees are 1.2% a year.", evidence=["search -> [Fees] 1.2% a year"])
+    flagged.trace.log(
+        "unsupported", "x", claims=["fees are capped"], before="Fees are 1.2%, capped."
+    )
+    row = observe(case(), flagged, 1.0)
+    assert row.factcheck == {
+        "claims": ["fees are capped"],
+        "before": "Fees are 1.2%, capped.",
+        "after": "Fees are 1.2% a year.",
+        "evidence": "search -> [Fees] 1.2% a year",
+    }
+    assert observe(case(), result("x"), 1.0).factcheck is None
+    assert summarise([row])["factcheck_rewrites"] == 1
+
+
+# --- running with a setting changed ------------------------------------------------------
+
+
+def test_set_runs_a_fresh_process_with_the_setting_and_the_other_arguments(monkeypatch):
+    seen = {}
+
+    def fake_run(command, env):
+        seen["command"], seen["env"] = command, env
+
+        class Done:
+            returncode = 0
+
+        return Done()
+
+    monkeypatch.setattr(live.subprocess, "run", fake_run)
+    argv = ["--set", "SUPPORT_BOT_USE_RERANK=false", "--workers", "4", "--out", "x.json"]
+    assert live.main(argv) == 0
+    assert seen["command"][1:] == ["-m", "eval.live", "--workers", "4", "--out", "x.json"]
+    assert seen["env"]["SUPPORT_BOT_USE_RERANK"] == "false"
+
+
+def test_set_refuses_an_unknown_name_or_a_bad_value_before_spending_anything(tmp_path):
+    out = ["--out", str(tmp_path / "x.json")]
+    with pytest.raises(SystemExit, match="SUPPORT_BOT_NAME=value"):
+        live.main(["--set", "USE_RERANK=false", *out])
+    with pytest.raises(SystemExit, match="--set"):
+        live.main(["--set", "SUPPORT_BOT_USE_RERANK=perhaps", *out])
+    with pytest.raises(SystemExit, match="no setting called SUPPORT_BOT_USE_RERNK"):
+        live.main(["--set", "SUPPORT_BOT_USE_RERNK=false", *out])
+
+
+@pytest.mark.parametrize(
+    "argv", [["--set", "SUPPORT_BOT_USE_RERANK=false"], ["--limit", "20"], ["--ids", "isa-01"]]
+)
+def test_a_partial_or_changed_run_cannot_overwrite_run_one(argv):
+    with pytest.raises(SystemExit, match="needs its own --out"):
+        live.main(argv, runner=lambda m, s: result("x"))
+
+
+def test_an_abbreviated_set_is_not_accepted(tmp_path):
+    with pytest.raises(SystemExit):
+        live.main(["--se", "SUPPORT_BOT_USE_RERANK=false", "--out", str(tmp_path / "x.json")])
+
+
+def test_a_failure_while_reading_a_result_is_an_error_row_not_a_lost_run(monkeypatch):
+    def broken(case, result, seconds):
+        raise KeyError("trace")
+
+    monkeypatch.setattr(live, "observe", broken)
+    row = run_case(case(), lambda m, s: result("x"))
+    assert row.observed == "error" and row.error == "KeyError: 'trace'"
+
+
+def test_an_interrupted_parallel_run_stops_without_running_the_queue():
+    import time as clock
+
+    cases = live.select(live.load_cases(), None, None, 40)
+    started = []
+
+    def runner(messages, state):
+        started.append(1)
+        if len(started) == 3:
+            raise KeyboardInterrupt
+        clock.sleep(0.05)
+        return result("x")
+
+    with pytest.raises(KeyboardInterrupt):
+        live.evaluate_cases(cases, runner, workers=4)
+    clock.sleep(0.3)
+    assert len(started) < 12  # the queue was cancelled, not worked through
+
+
+def test_without_set_keeps_every_other_argument():
+    argv = ["--set", "A=1", "--limit", "3", "--set=B=2", "--out", "o.json"]
+    assert live.without_set(argv) == ["--limit", "3", "--out", "o.json"]
+
+
+def test_a_link_once_read_with_its_full_stop_is_dropped_on_rescoring():
+    misread = (
+        "URL 'https://www.fernhillwealth.example/becoming-a-client/.' was not given. "
+        "Evidence has 'fernhillwealth.example/becoming-a-client'. Do not shorten or extend a URL."
+    )
+    shortened = (
+        "URL 'https://www.fernhillwealth.example/client-support/' was not given. "
+        "Evidence has 'fernhillwealth.example/client-support/cash-and-dealing'. "
+        "Do not shorten or extend a URL."
+    )
+    number = "Number '6,000' does not appear in the evidence."
+    assert live.recheck([misread, shortened, number]) == [shortened, number]
+    assert live.recheck(None) is None  # not measured stays not measured
