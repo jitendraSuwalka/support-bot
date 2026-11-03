@@ -10,7 +10,7 @@
 # Docker through /health. CI builds this image and smoke-tests it on every
 # push (scripts/container_smoke_test.sh).
 
-FROM python:3.12-slim-bookworm
+FROM python:3.15-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
